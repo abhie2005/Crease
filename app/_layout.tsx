@@ -1,0 +1,68 @@
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
+import { AuthProvider, useAuth } from '@/providers/AuthProvider';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
+
+function RootLayoutNav() {
+  const { user, userProfile, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+    const inProfileGroup = segments[0] === 'profile';
+
+    if (!user) {
+      // User is not signed in
+      if (!inAuthGroup) {
+        router.replace('/auth/login');
+      }
+    } else if (user && !userProfile) {
+      // User is signed in but no profile
+      if (!inProfileGroup) {
+        router.replace('/profile/setup');
+      }
+    } else if (user && userProfile) {
+      // User is signed in and has profile
+      if (inAuthGroup || inProfileGroup) {
+        router.replace('/');
+      }
+    }
+  }, [user, userProfile, loading, segments]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ headerShown: false }} />
+      <Stack.Screen name="index" />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff'
+  }
+});
+
