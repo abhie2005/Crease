@@ -30,6 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       favicon: './assets/favicon.png'
     },
     plugins: ['expo-router'],
+    scheme: 'cricketclub',
     extra: {
       firebase: {
         apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
