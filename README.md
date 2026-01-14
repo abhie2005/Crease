@@ -1,15 +1,18 @@
 # Crease
 
-A React Native mobile app built with Expo and TypeScript for managing cricket matches, scoring, and team administration.
+A production-ready React Native mobile app built with Expo, TypeScript, and Firebase for cricket club management, live scoring, and match administration.
 
-## Features
+## Features (MVP Complete)
 
-- **Authentication**: Email/password authentication using Firebase Auth
-- **Profile Management**: User profile setup with name and student ID
-- **Matches**: View matches list with real-time updates
-- **Match Details**: View detailed match information
-- **Admin Features**: Create matches (admin/president only)
-- **Umpire Scoring**: Live scoring interface for umpires
+✅ **Authentication**: Email/password authentication with Firebase Auth
+✅ **Profile Management**: User profile setup with name, student ID, and role
+✅ **Matches List**: Real-time matches list on home screen
+✅ **Match Details**: View match information with live score updates
+✅ **Admin Features**: Create matches with team and umpire assignment
+✅ **Umpire Scoring**: Complete live scoring panel with runs, wickets, overs
+✅ **Route Guards**: Automatic navigation based on auth and profile status
+✅ **Real-time Updates**: All match data updates in real-time via Firestore listeners
+✅ **Role-Based Access**: Admin/president and umpire-specific features
 
 ## Tech Stack
 
@@ -79,12 +82,20 @@ These are loaded from `process.env` in `app.config.ts` and passed to the Firebas
 /
 ├── app/                    # Expo Router routes
 │   ├── (auth)/            # Auth group routes
+│   │   ├── _layout.tsx
 │   │   ├── login.tsx
 │   │   └── signup.tsx
 │   ├── profile/
+│   │   ├── index.tsx
 │   │   └── setup.tsx
-│   ├── _layout.tsx        # Root layout with AuthProvider
-│   └── index.tsx          # Home screen
+│   ├── match/
+│   │   └── [id].tsx       # Match details (dynamic route)
+│   ├── admin/
+│   │   └── create-match.tsx
+│   ├── umpire/
+│   │   └── [id].tsx       # Umpire scoring panel (dynamic route)
+│   ├── _layout.tsx        # Root layout with AuthProvider & route guards
+│   └── index.tsx          # Home screen with matches list
 ├── src/
 │   ├── components/        # Reusable UI components
 │   │   ├── Button.tsx
