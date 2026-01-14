@@ -1,4 +1,4 @@
-# CricketClub
+# Crease
 
 A React Native mobile app built with Expo and TypeScript for managing cricket matches, scoring, and team administration.
 

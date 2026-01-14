@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,13 +15,27 @@ import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 
 export default function ProfileSetupScreen() {
-  const { user } = useAuth();
+  const { user, userProfile, refreshUserProfile } = useAuth();
   const [name, setName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
   const router = useRouter();
 
+  // Navigate to home once profile is saved and available
+  useEffect(() => {
+    if (profileSaved && userProfile) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:useEffect',message:'Profile saved and available, navigating home',data:{hasProfile:!!userProfile},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      router.replace('/');
+    }
+  }, [profileSaved, userProfile, router]);
+
   const handleSave = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:24',message:'handleSave called',data:{hasName:!!name.trim(),hasStudentId:!!studentId.trim(),userId:user?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     if (!name.trim() || !studentId.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -34,13 +48,33 @@ export default function ProfileSetupScreen() {
 
     setLoading(true);
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:36',message:'Before createOrUpdateUser',data:{uid:user.uid,name:name.trim(),studentId:studentId.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       await createOrUpdateUser(user.uid, {
         name: name.trim(),
         studentId: studentId.trim()
       });
-      // Navigation will be handled by AuthProvider
-      router.replace('/');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:42',message:'After createOrUpdateUser, before refresh',data:{uid:user.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      // Small delay to ensure Firestore write propagates
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Refresh user profile in AuthProvider
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:62',message:'Before refreshUserProfile',data:{uid:user.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      await refreshUserProfile();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:66',message:'After refreshUserProfile, setting profileSaved flag',data:{uid:user.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      // Set flag to trigger navigation once userProfile state updates
+      setProfileSaved(true);
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:45',message:'Error saving profile',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       Alert.alert('Error', error.message || 'Failed to save profile');
     } finally {
       setLoading(false);

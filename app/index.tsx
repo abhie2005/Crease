@@ -76,7 +76,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>CricketClub</Text>
+        <Text style={styles.title}>Crease</Text>
         <View style={styles.headerRight}>
           {userProfile && (
             <Text style={styles.userInfo}>

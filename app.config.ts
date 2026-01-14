@@ -3,8 +3,8 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 export default ({ config }: ConfigContext): ExpoConfig => {
   return {
     ...config,
-    name: 'CricketClub',
-    slug: 'cricketclub',
+    name: 'Crease',
+    slug: 'crease',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
@@ -17,20 +17,20 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     assetBundlePatterns: ['**/*'],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.cricketclub.app'
+      bundleIdentifier: 'com.crease.app'
     },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#ffffff'
       },
-      package: 'com.cricketclub.app'
+      package: 'com.crease.app'
     },
     web: {
       favicon: './assets/favicon.png'
     },
     plugins: ['expo-router'],
-    scheme: 'cricketclub',
+    scheme: 'crease',
     extra: {
       firebase: {
         apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',

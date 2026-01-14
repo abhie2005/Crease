@@ -97,7 +97,7 @@ export default function SignUpScreen() {
               <Text style={styles.footerText}>Already have an account? </Text>
               <Text
                 style={styles.footerLink}
-                onPress={() => router.push('/auth/login')}
+                onPress={() => router.push('/login')}
               >
                 Sign In
               </Text>
