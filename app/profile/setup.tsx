@@ -28,7 +28,7 @@ export default function ProfileSetupScreen() {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/profile/setup.tsx:useEffect',message:'Profile saved and available, navigating home',data:{hasProfile:!!userProfile},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
-      router.replace('/');
+      router.replace('/(tabs)');
     }
   }, [profileSaved, userProfile, router]);
 

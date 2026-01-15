@@ -38,8 +38,9 @@ function RootLayoutNav() {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/_layout.tsx:29',message:'User and profile exist, checking if should redirect home',data:{inAuthGroup,inProfileGroup},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
       // #endregion
-      if (inAuthGroup || inProfileGroup) {
-        router.replace('/');
+      const inTabsGroup = segments[0] === '(tabs)';
+      if (inAuthGroup || (inProfileGroup && segments[1] === 'setup')) {
+        router.replace('/(tabs)');
       }
     }
   }, [user, userProfile, loading, segments]);
@@ -55,6 +56,7 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="index" />
     </Stack>
   );
