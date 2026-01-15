@@ -5,7 +5,8 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
@@ -83,7 +84,11 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Crease</Text>
+        <Image
+          source={require('../assets/crease-text-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <View style={styles.headerRight}>
           {userProfile && (
             <Text style={styles.userInfo}>
@@ -140,10 +145,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0'
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333'
+  logo: {
+    width: 120,
+    height: 40,
+    marginTop: -4
   },
   headerRight: {
     flexDirection: 'row',
