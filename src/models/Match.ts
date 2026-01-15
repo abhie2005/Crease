@@ -21,6 +21,7 @@ export interface Match {
   teamA: Team;
   teamB: Team;
   score: Score;
+  scheduledDate?: Timestamp; // Optional scheduled date/time
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

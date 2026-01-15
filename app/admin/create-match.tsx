@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Switch
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { createMatch } from '@/services/matches';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import { DateTimePicker } from '@/components/DateTimePicker';
 
 export default function CreateMatchScreen() {
   const { userProfile } = useAuth();
@@ -22,6 +24,8 @@ export default function CreateMatchScreen() {
   const [umpireUid, setUmpireUid] = useState('');
   const [teamAPlayers, setTeamAPlayers] = useState('');
   const [teamBPlayers, setTeamBPlayers] = useState('');
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -43,6 +47,12 @@ export default function CreateMatchScreen() {
       return;
     }
 
+    // If scheduling is enabled, ensure a date is selected
+    if (isScheduled && !scheduledDate) {
+      Alert.alert('Error', 'Please select a date and time or turn off scheduling');
+      return;
+    }
+
     setLoading(true);
     try {
       const teamAPlayerUids = teamAPlayers
@@ -59,7 +69,8 @@ export default function CreateMatchScreen() {
         userProfile.uid,
         umpireUid.trim(),
         { name: teamAName.trim(), playerUids: teamAPlayerUids },
-        { name: teamBName.trim(), playerUids: teamBPlayerUids }
+        { name: teamBName.trim(), playerUids: teamBPlayerUids },
+        isScheduled && scheduledDate ? scheduledDate : undefined
       );
 
       Alert.alert('Success', 'Match created successfully', [
@@ -90,6 +101,22 @@ export default function CreateMatchScreen() {
 
         <View style={styles.content}>
           <Text style={styles.sectionTitle}>Match Details</Text>
+
+          <View style={styles.scheduleRow}>
+            <Text style={styles.scheduleLabel}>Schedule this match</Text>
+            <Switch
+              value={isScheduled}
+              onValueChange={setIsScheduled}
+            />
+          </View>
+
+          {isScheduled && (
+            <DateTimePicker
+              label="Select date and time"
+              value={scheduledDate}
+              onChange={setScheduledDate}
+            />
+          )}
 
           <Input
             label="Team A Name"
@@ -187,6 +214,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
+    color: '#333'
+  },
+  scheduleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12
+  },
+  scheduleLabel: {
+    fontSize: 16,
     color: '#333'
   },
   errorText: {

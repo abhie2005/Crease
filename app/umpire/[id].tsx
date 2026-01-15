@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatch, updateMatchScore, updateMatchStatus } from '@/services/matches';
 import { Match, Score } from '@/models/Match';
+import { CountdownTimer } from '@/components/CountdownTimer';
 
 export default function UmpireScoringScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -169,6 +170,9 @@ export default function UmpireScoringScreen() {
 
       <ScrollView style={styles.scrollContent}>
         <View style={styles.content}>
+          {match.scheduledDate && match.status === 'upcoming' && (
+            <CountdownTimer scheduledDate={match.scheduledDate} />
+          )}
           <Text style={styles.matchTitle}>
             {match.teamA.name} vs {match.teamB.name}
           </Text>

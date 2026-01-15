@@ -5,12 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
-import { subscribeToMatch } from '@/services/matches';
+import { subscribeToMatch, deleteMatch } from '@/services/matches';
 import { Match } from '@/models/Match';
+import { CountdownTimer } from '@/components/CountdownTimer';
 
 export default function MatchDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -32,6 +34,45 @@ export default function MatchDetailsScreen() {
 
   const isUmpire = match && userProfile && match.umpireUid === userProfile.uid;
   const canManage = userProfile && (userProfile.role === 'admin' || userProfile.role === 'president');
+
+  const handleDelete = async () => {
+    if (!id) return;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete',message:'Delete match initiated',data:{matchId:id,userId:userProfile?.uid,userRole:userProfile?.role,canManage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+
+    Alert.alert(
+      'Delete Match',
+      'Are you sure you want to delete this match? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete:onPress',message:'Before deleteMatch call',data:{matchId:id,userId:userProfile?.uid,userRole:userProfile?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+              await deleteMatch(id);
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete:onPress',message:'Delete match succeeded',data:{matchId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+              // #endregion
+              router.replace('/');
+            } catch (error: any) {
+              setLoading(false);
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete:onPress:catch',message:'Delete match failed',data:{matchId:id,errorMessage:error?.message,errorCode:error?.code,errorName:error?.name,userId:userProfile?.uid,userRole:userProfile?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+              // #endregion
+              Alert.alert('Error', error.message || 'Failed to delete match');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const statusColors = {
     upcoming: '#FFA500',
@@ -67,6 +108,9 @@ export default function MatchDetailsScreen() {
       </View>
 
       <View style={styles.content}>
+        {match.scheduledDate && match.status === 'upcoming' && (
+          <CountdownTimer scheduledDate={match.scheduledDate} />
+        )}
         <View style={styles.statusBadgeContainer}>
           <View
             style={[
@@ -124,11 +168,14 @@ export default function MatchDetailsScreen() {
         )}
 
         {canManage && (
-          <View style={styles.adminInfo}>
-            <Text style={styles.adminInfoText}>
-              Admin controls coming soon
+          <TouchableOpacity
+            style={[styles.umpireButton, styles.deleteButton]}
+            onPress={handleDelete}
+          >
+            <Text style={styles.umpireButtonText}>
+              🗑️ Delete Match
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
     </ScrollView>
@@ -256,6 +303,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600'
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    marginTop: 8
   },
   adminInfo: {
     backgroundColor: '#fff',

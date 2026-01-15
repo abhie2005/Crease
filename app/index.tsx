@@ -12,6 +12,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatches } from '@/services/matches';
 import { Match } from '@/models/Match';
 import { logOut } from '@/firebase/auth';
+import { CountdownTimer } from '@/components/CountdownTimer';
 
 export default function HomeScreen() {
   const { userProfile } = useAuth();
@@ -61,6 +62,12 @@ export default function HomeScreen() {
             <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
           </View>
         </View>
+        {item.status === 'upcoming' && (item as any).scheduledDate && (
+          <CountdownTimer
+            scheduledDate={(item as any).scheduledDate}
+            compact
+          />
+        )}
         {item.status === 'live' && (
           <View style={styles.scoreContainer}>
             <Text style={styles.scoreText}>

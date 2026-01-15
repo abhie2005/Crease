@@ -1,6 +1,12 @@
-# Crease
+# Crease 🏏
 
 A production-ready React Native mobile app built with Expo, TypeScript, and Firebase for cricket club management, live scoring, and match administration.
+
+## 📚 Documentation
+
+**[View the Complete Wiki](wiki/)** | [Getting Started](wiki/Getting-Started.md) | [Architecture](wiki/Project-Architecture.md) | [Contributing](wiki/Contribution-Guide.md) | [Roadmap](wiki/Roadmap.md)
+
+> Comprehensive documentation covering setup, architecture, Firebase configuration, real-time scoring, contribution guidelines, and future plans.
 
 ## Features (MVP Complete)
 
