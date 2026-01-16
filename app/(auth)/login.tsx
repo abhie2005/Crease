@@ -6,7 +6,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { logIn } from '@/firebase/auth';
@@ -58,7 +59,11 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Crease</Text>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.subtitle}>Sign in to continue</Text>
 
           <View style={styles.form}>
@@ -110,25 +115,26 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24
+    padding: 24,
+    alignItems: 'center'
   },
   content: {
     width: '100%',
     maxWidth: 400,
-    alignSelf: 'center'
+    alignItems: 'center'
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
-    color: '#333'
+  logo: {
+    width: 200,
+    height: 200,
+    alignSelf: 'center',
+    marginBottom: 16
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 32,
-    color: '#666'
+    color: '#666',
+    width: '100%'
   },
   form: {
     width: '100%'
