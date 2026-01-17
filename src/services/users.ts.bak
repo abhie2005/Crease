@@ -26,7 +26,12 @@ export const createOrUpdateUser = async (
   uid: string,
   data: { name: string; studentId: string; username?: string; role?: User['role'] }
 ): Promise<void> => {
-  data: { name: string; studentId: string; username?: string; role?: User['role'] }
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:createOrUpdateUser',message:'Creating/updating user',data:{uid,name:data.name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
+  const userRef = userDoc(uid);
+  const existingUser = await getDoc(userRef);
+  
   const userData: User = {
     uid,
     name: data.name,

@@ -6,7 +6,7 @@ export interface User {
   uid: string;
   name: string;
   studentId: string;
-  username?: string;
+  username?: string; // Optional for backward compatibility
   role: UserRole;
   createdAt: Timestamp;
   updatedAt: Timestamp;

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useEffect, useState, useRef } from 'react';
+=======
+import React, { useEffect, useState } from 'react';
+>>>>>>> main
 import {
   View,
   Text,
@@ -6,26 +10,39 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+<<<<<<< HEAD
   RefreshControl
+=======
+  Image
+>>>>>>> main
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatches } from '@/services/matches';
 import { Match } from '@/models/Match';
+<<<<<<< HEAD
+=======
+import { logOut } from '@/firebase/auth';
+>>>>>>> main
 import { CountdownTimer } from '@/components/CountdownTimer';
 
 export default function HomeScreen() {
   const { userProfile } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+=======
+  const router = useRouter();
+>>>>>>> main
 
   useEffect(() => {
     const unsubscribe = subscribeToMatches((matchesList) => {
       setMatches(matchesList);
       setLoading(false);
+<<<<<<< HEAD
       setRefreshing(false);
       // Clear timeout if listener fires before timeout
       if (refreshTimeoutRef.current) {
@@ -51,6 +68,19 @@ export default function HomeScreen() {
       setRefreshing(false);
       refreshTimeoutRef.current = null;
     }, 2000); // 2 second fallback timeout
+=======
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+>>>>>>> main
   };
 
   const renderMatchItem = ({ item }: { item: Match }) => {
@@ -64,7 +94,10 @@ export default function HomeScreen() {
       <TouchableOpacity
         style={styles.matchCard}
         onPress={() => router.push(`/match/${(item as any).id}`)}
+<<<<<<< HEAD
         activeOpacity={0.7}
+=======
+>>>>>>> main
       >
         <View style={styles.matchHeader}>
           <Text style={styles.matchTeams}>
@@ -80,12 +113,19 @@ export default function HomeScreen() {
           </View>
         </View>
         {item.status === 'upcoming' && (item as any).scheduledDate && (
+<<<<<<< HEAD
           <View style={styles.countdownContainer}>
             <CountdownTimer
               scheduledDate={(item as any).scheduledDate}
               compact
             />
           </View>
+=======
+          <CountdownTimer
+            scheduledDate={(item as any).scheduledDate}
+            compact
+          />
+>>>>>>> main
         )}
         {item.status === 'live' && (
           <View style={styles.scoreContainer}>
@@ -102,6 +142,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+<<<<<<< HEAD
         <Text style={styles.title}>Crease</Text>
         {userProfile && (userProfile.role === 'admin' || userProfile.role === 'president') && (
           <TouchableOpacity
@@ -114,11 +155,40 @@ export default function HomeScreen() {
         )}
       </View>
 
+=======
+        <Image
+          source={require('../../assets/crease-text-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <View style={styles.headerRight}>
+          {userProfile && (
+            <Text style={styles.userInfo}>
+              {userProfile.name} ({userProfile.role})
+            </Text>
+          )}
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {userProfile && (userProfile.role === 'admin' || userProfile.role === 'president') && (
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={() => router.push('/admin/create-match')}
+        >
+          <Text style={styles.createButtonText}>+ Create Match</Text>
+        </TouchableOpacity>
+      )}
+
+>>>>>>> main
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
       ) : matches.length === 0 ? (
+<<<<<<< HEAD
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🏏</Text>
           <Text style={styles.emptyTitle}>No matches yet</Text>
@@ -127,6 +197,10 @@ export default function HomeScreen() {
               ? 'Create your first match to get started!'
               : 'Matches will appear here once they are created.'}
           </Text>
+=======
+        <View style={styles.centerContainer}>
+          <Text style={styles.emptyText}>No matches yet</Text>
+>>>>>>> main
         </View>
       ) : (
         <FlatList
@@ -134,6 +208,7 @@ export default function HomeScreen() {
           renderItem={renderMatchItem}
           keyExtractor={(item) => (item as any).id}
           contentContainerStyle={styles.listContent}
+<<<<<<< HEAD
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -142,6 +217,8 @@ export default function HomeScreen() {
             />
           }
           showsVerticalScrollIndicator={false}
+=======
+>>>>>>> main
         />
       )}
     </View>
@@ -161,6 +238,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
+<<<<<<< HEAD
     borderBottomColor: '#e0e0e0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -182,6 +260,43 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: '#fff',
     fontSize: 14,
+=======
+    borderBottomColor: '#e0e0e0'
+  },
+  logo: {
+    width: 120,
+    height: 40,
+    marginTop: -4
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  userInfo: {
+    fontSize: 14,
+    color: '#666'
+  },
+  logoutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6
+  },
+  logoutText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600'
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+    margin: 16,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+>>>>>>> main
     fontWeight: '600'
   },
   centerContainer: {
@@ -189,6 +304,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
+<<<<<<< HEAD
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -218,12 +334,28 @@ const styles = StyleSheet.create({
   matchCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
+=======
+  emptyText: {
+    fontSize: 16,
+    color: '#999'
+  },
+  listContent: {
+    padding: 16
+  },
+  matchCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+>>>>>>> main
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
+<<<<<<< HEAD
     shadowRadius: 6,
+=======
+    shadowRadius: 4,
+>>>>>>> main
     elevation: 3
   },
   matchHeader: {
@@ -239,13 +371,20 @@ const styles = StyleSheet.create({
     flex: 1
   },
   statusBadge: {
+<<<<<<< HEAD
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6
+=======
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4
+>>>>>>> main
   },
   statusText: {
     color: '#fff',
     fontSize: 10,
+<<<<<<< HEAD
     fontWeight: '700',
     letterSpacing: 0.5
   },
@@ -260,6 +399,12 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0'
+=======
+    fontWeight: '600'
+  },
+  scoreContainer: {
+    marginTop: 8
+>>>>>>> main
   },
   scoreText: {
     fontSize: 16,

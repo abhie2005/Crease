@@ -83,6 +83,15 @@ export default function ProfileScreen() {
                 <View style={styles.divider} />
 
                 <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Username</Text>
+                  <Text style={[styles.infoValue, !userProfile.username && styles.notSet]}>
+                    {userProfile.username || 'Not set'}
+                  </Text>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Role</Text>
                   <View style={styles.roleBadge}>
                     <Text style={styles.roleText}>
@@ -185,6 +194,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
     textAlign: 'right'
+  },
+  notSet: {
+    color: '#999',
+    fontStyle: 'italic'
   },
   divider: {
     height: 1,
