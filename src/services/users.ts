@@ -2,14 +2,19 @@ import {
   doc,
   setDoc,
   getDoc,
-  serverTimestamp
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  limit
 } from 'firebase/firestore';
-import { userDoc } from '@/firebase/firestore';
+import { userDoc, usersCollection } from '@/firebase/firestore';
 import { User, DEFAULT_USER_ROLE } from '@/models/User';
+import { normalizeUsername } from '@/utils/usernameValidation';
 
 export const createOrUpdateUser = async (
   uid: string,
-  data: { name: string; studentId: string; role?: User['role'] }
+  data: { name: string; studentId: string; username?: string; role?: User['role'] }
 ): Promise<void> => {
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:createOrUpdateUser',message:'Creating/updating user',data:{uid,name:data.name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
@@ -25,6 +30,11 @@ export const createOrUpdateUser = async (
     createdAt: existingUser.exists() ? existingUser.data().createdAt : serverTimestamp() as any,
     updatedAt: serverTimestamp() as any
   };
+
+  // Add username if provided (store normalized/lowercase)
+  if (data.username) {
+    userData.username = normalizeUsername(data.username);
+  }
 
   await setDoc(userRef, userData, { merge: true });
   // #region agent log
@@ -53,3 +63,61 @@ export const getUser = async (uid: string): Promise<User | null> => {
   return userData;
 };
 
+/**
+ * Checks if a username is available (not taken by another user)
+ * @param username - The username to check (will be normalized to lowercase)
+ * @param excludeUid - Optional UID to exclude from check (for updating own username)
+ * @returns true if available, false if taken
+ */
+export const checkUsernameAvailability = async (
+  username: string,
+  excludeUid?: string
+): Promise<boolean> => {
+  const normalized = normalizeUsername(username);
+  
+  // Query Firestore for users with this username
+  const q = query(
+    usersCollection,
+    where('username', '==', normalized),
+    limit(1)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  
+  // If no results, username is available
+  if (querySnapshot.empty) {
+    return true;
+  }
+  
+  // If excludeUid is provided, check if the only match is the excluded user
+  if (excludeUid) {
+    const doc = querySnapshot.docs[0];
+    return doc.id === excludeUid;
+  }
+  
+  // Username is taken
+  return false;
+};
+
+/**
+ * Gets a user by their username (case-insensitive)
+ * @param username - The username to search for
+ * @returns User document or null if not found
+ */
+export const getUserByUsername = async (username: string): Promise<User | null> => {
+  const normalized = normalizeUsername(username);
+  
+  const q = query(
+    usersCollection,
+    where('username', '==', normalized),
+    limit(1)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  
+  if (querySnapshot.empty) {
+    return null;
+  }
+  
+  return querySnapshot.docs[0].data();
+};
