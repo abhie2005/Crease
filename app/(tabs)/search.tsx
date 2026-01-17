@@ -32,6 +32,10 @@ export default function SearchScreen() {
       return;
     }
 
+    // Set loading immediately when query changes to show searching state
+    setLoading(true);
+    setError(null);
+
     const timeoutId = setTimeout(() => {
       performSearch(searchQuery.trim());
     }, 500);

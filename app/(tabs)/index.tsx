@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,20 +20,37 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToMatches((matchesList) => {
       setMatches(matchesList);
       setLoading(false);
       setRefreshing(false);
+      // Clear timeout if listener fires before timeout
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      // Clean up timeout on unmount
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    // The listener will automatically update when data changes
+    // Set a timeout to ensure refreshing state is reset even if no data changes
+    // This prevents the refresh indicator from getting stuck
+    refreshTimeoutRef.current = setTimeout(() => {
+      setRefreshing(false);
+      refreshTimeoutRef.current = null;
+    }, 2000); // 2 second fallback timeout
   };
 
   const renderMatchItem = ({ item }: { item: Match }) => {

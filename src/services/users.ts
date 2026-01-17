@@ -59,21 +59,21 @@ export const getUser = async (uid: string): Promise<User | null> => {
 
 /**
  * Search users by username (prefix matching, case-insensitive)
- * @param query Search query
+ * @param searchQuery Search query
  * @param currentUserId Optional user ID to exclude from results
  * @param resultLimit Maximum number of results to return (default: 20)
  * @returns Array of matching users
  */
 export const searchUsersByUsername = async (
-  query: string,
+  searchQuery: string,
   currentUserId?: string,
   resultLimit: number = 20
 ): Promise<User[]> => {
-  if (!query || !query.trim()) {
+  if (!searchQuery || !searchQuery.trim()) {
     return [];
   }
 
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = searchQuery.trim().toLowerCase();
   
   // Firestore prefix query using >= and <= with \uf8ff sentinel
   const q = query(
