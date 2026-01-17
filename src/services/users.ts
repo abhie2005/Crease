@@ -11,9 +11,21 @@ import {
 import { userDoc, usersCollection } from '@/firebase/firestore';
 import { User, DEFAULT_USER_ROLE } from '@/models/User';
 
+/**
+ * Normalize username to lowercase for case-insensitive storage and search
+ * @param username Username to normalize
+ * @returns Normalized username in lowercase, or undefined if input is empty
+ */
+const normalizeUsername = (username?: string): string | undefined => {
+  if (!username || !username.trim()) {
+    return undefined;
+  }
+  return username.trim().toLowerCase();
+};
+
 export const createOrUpdateUser = async (
   uid: string,
-  data: { name: string; studentId: string; role?: User['role'] }
+  data: { name: string; studentId: string; role?: User['role']; username?: string }
 ): Promise<void> => {
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:createOrUpdateUser',message:'Creating/updating user',data:{uid,name:data.name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
@@ -25,6 +37,7 @@ export const createOrUpdateUser = async (
     uid,
     name: data.name,
     studentId: data.studentId,
+    username: normalizeUsername(data.username),
     role: data.role || DEFAULT_USER_ROLE,
     createdAt: existingUser.exists() ? existingUser.data().createdAt : serverTimestamp() as any,
     updatedAt: serverTimestamp() as any
@@ -59,6 +72,8 @@ export const getUser = async (uid: string): Promise<User | null> => {
 
 /**
  * Search users by username (prefix matching, case-insensitive)
+ * Note: Usernames are stored in lowercase in Firestore for case-insensitive matching.
+ * This function normalizes the search query to lowercase to match stored usernames.
  * @param searchQuery Search query
  * @param currentUserId Optional user ID to exclude from results
  * @param resultLimit Maximum number of results to return (default: 20)
@@ -73,9 +88,11 @@ export const searchUsersByUsername = async (
     return [];
   }
 
+  // Normalize query to lowercase to match stored usernames (which are stored in lowercase)
   const normalizedQuery = searchQuery.trim().toLowerCase();
   
   // Firestore prefix query using >= and <= with \uf8ff sentinel
+  // This works because usernames are stored in lowercase
   const q = query(
     usersCollection,
     where('username', '>=', normalizedQuery),
@@ -99,6 +116,8 @@ export const searchUsersByUsername = async (
 
 /**
  * Get user by username (exact match, case-insensitive)
+ * Note: Usernames are stored in lowercase in Firestore for case-insensitive matching.
+ * This function normalizes the search query to lowercase to match stored usernames.
  * @param username Username to search for
  * @returns User if found, null otherwise
  */
@@ -107,6 +126,7 @@ export const getUserByUsername = async (username: string): Promise<User | null> 
     return null;
   }
 
+  // Normalize username to lowercase to match stored usernames (which are stored in lowercase)
   const normalizedUsername = username.trim().toLowerCase();
   
   const q = query(
