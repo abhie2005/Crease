@@ -6,6 +6,7 @@ export interface User {
   uid: string;
   name: string;
   studentId: string;
+  username?: string;
   role: UserRole;
   createdAt: Timestamp;
   updatedAt: Timestamp;
