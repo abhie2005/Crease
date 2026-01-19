@@ -58,6 +58,7 @@ export default function CreateMatchScreen() {
   useEffect(() => {
     if (!searchQuery.trim() || !activeTeam) {
       setSearchResults([]);
+      setSearching(false);
       return;
     }
 
@@ -136,11 +137,13 @@ export default function CreateMatchScreen() {
     }
 
     setLoading(true);
+    let matchId: string | null = null;
+    
     try {
       const teamAPlayerUids = teamAPlayers.map(p => p.uid);
       const teamBPlayerUids = teamBPlayers.map(p => p.uid);
 
-      const matchId = await createMatch(
+      matchId = await createMatch(
         userProfile.uid,
         umpireUid.trim(),
         { name: teamAName.trim(), playerUids: teamAPlayerUids },
@@ -150,20 +153,39 @@ export default function CreateMatchScreen() {
 
       // If "start immediately" is checked, update match status to live
       if (startImmediately && !isScheduled) {
-        await updateMatchStatus(matchId, 'live');
-      }
-
-      const statusMessage = startImmediately && !isScheduled 
-        ? 'Match created and started successfully! 🏏' 
-        : 'Match created successfully';
-
-      Alert.alert('Success', statusMessage, [
-        {
-          text: 'OK',
-          onPress: () => router.push(`/match/${matchId}`)
+        try {
+          await updateMatchStatus(matchId, 'live');
+          
+          Alert.alert('Success', 'Match created and started successfully! 🏏', [
+            {
+              text: 'OK',
+              onPress: () => router.push(`/match/${matchId}`)
+            }
+          ]);
+        } catch (statusError: any) {
+          // Match was created but failed to start - inform user and navigate to match
+          Alert.alert(
+            'Partial Success',
+            `Match created successfully, but failed to start it automatically: ${statusError.message || 'Unknown error'}\n\nYou can start it manually from the match page.`,
+            [
+              {
+                text: 'OK',
+                onPress: () => router.push(`/match/${matchId}`)
+              }
+            ]
+          );
         }
-      ]);
+      } else {
+        // No auto-start, just show success
+        Alert.alert('Success', 'Match created successfully', [
+          {
+            text: 'OK',
+            onPress: () => router.push(`/match/${matchId}`)
+          }
+        ]);
+      }
     } catch (error: any) {
+      // Only reaches here if createMatch fails
       Alert.alert('Error', error.message || 'Failed to create match');
     } finally {
       setLoading(false);

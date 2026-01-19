@@ -25,6 +25,7 @@ export default function SearchScreen() {
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      setLoading(false);
       return;
     }
 
