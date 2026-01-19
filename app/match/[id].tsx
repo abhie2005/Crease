@@ -9,9 +9,12 @@ import {
   Alert
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatch, deleteMatch } from '@/services/matches';
+import { getUsersByUids } from '@/services/users';
 import { Match } from '@/models/Match';
+import { User } from '@/models/User';
 import { CountdownTimer } from '@/components/CountdownTimer';
 
 export default function MatchDetailsScreen() {
@@ -19,6 +22,11 @@ export default function MatchDetailsScreen() {
   const { userProfile } = useAuth();
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
+  const [teamAPlayers, setTeamAPlayers] = useState<User[]>([]);
+  const [teamBPlayers, setTeamBPlayers] = useState<User[]>([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(false);
+  const [teamAExpanded, setTeamAExpanded] = useState(false);
+  const [teamBExpanded, setTeamBExpanded] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -31,6 +39,43 @@ export default function MatchDetailsScreen() {
 
     return unsubscribe;
   }, [id]);
+
+  useEffect(() => {
+    if (!match) return;
+    
+    const fetchPlayers = async () => {
+      try {
+        console.log('[MatchDetails] Starting player fetch');
+        console.log('[MatchDetails] Team A UIDs:', match.teamA.playerUids);
+        console.log('[MatchDetails] Team B UIDs:', match.teamB.playerUids);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers',message:'Starting player fetch',data:{teamAUids:match.teamA.playerUids,teamBUids:match.teamB.playerUids,teamACount:match.teamA.playerUids.length,teamBCount:match.teamB.playerUids.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        setLoadingPlayers(true);
+        const [playersA, playersB] = await Promise.all([
+          getUsersByUids(match.teamA.playerUids),
+          getUsersByUids(match.teamB.playerUids)
+        ]);
+        console.log('[MatchDetails] Players fetched - Team A:', playersA.length, playersA);
+        console.log('[MatchDetails] Players fetched - Team B:', playersB.length, playersB);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers',message:'Players fetched successfully',data:{playersACount:playersA.length,playersBCount:playersB.length,playersA:playersA.map(p=>({uid:p.uid,name:p.name,username:p.username})),playersB:playersB.map(p=>({uid:p.uid,name:p.name,username:p.username}))},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        setTeamAPlayers(playersA);
+        setTeamBPlayers(playersB);
+      } catch (error) {
+        console.log('[MatchDetails] Error fetching players:', error);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers:catch',message:'Error fetching players',data:{errorMessage:error instanceof Error ? error.message : String(error),errorStack:error instanceof Error ? error.stack : undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        console.error('Error fetching players:', error);
+      } finally {
+        setLoadingPlayers(false);
+      }
+    };
+    
+    fetchPlayers();
+  }, [match]);
 
   const isUmpire = match && userProfile && match.umpireUid === userProfile.uid;
   const canManage = userProfile && (userProfile.role === 'admin' || userProfile.role === 'president');
@@ -78,6 +123,66 @@ export default function MatchDetailsScreen() {
     upcoming: '#FFA500',
     live: '#FF0000',
     completed: '#00AA00'
+  };
+
+  const renderTeamCard = (
+    teamName: string,
+    team: { name: string; playerUids: string[] },
+    players: User[],
+    expanded: boolean,
+    toggleExpanded: () => void
+  ) => {
+    return (
+      <View style={styles.teamCard}>
+        <Text style={styles.teamTitle}>{teamName}</Text>
+        <Text style={styles.teamName}>{team.name}</Text>
+        
+        <TouchableOpacity 
+          style={styles.playerCountBadge}
+          onPress={toggleExpanded}
+        >
+          <Text style={styles.playerCount}>
+            {team.playerUids.length} players
+          </Text>
+          <Ionicons 
+            name={expanded ? "chevron-up" : "chevron-down"} 
+            size={16} 
+            color="#007AFF" 
+          />
+        </TouchableOpacity>
+        
+        {expanded && (
+          <View style={styles.playerList}>
+            {loadingPlayers ? (
+              <ActivityIndicator size="small" color="#007AFF" style={styles.playerLoader} />
+            ) : players.length > 0 ? (
+              players.map((player) => (
+                <TouchableOpacity
+                  key={player.uid}
+                  style={styles.playerItem}
+                  onPress={() => player.username && router.push(`/user/${player.username}`)}
+                >
+                  <View style={styles.playerAvatar}>
+                    <Text style={styles.playerAvatarText}>
+                      {player.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.playerInfo}>
+                    <Text style={styles.playerName}>{player.name}</Text>
+                    {player.username && (
+                      <Text style={styles.playerUsername}>@{player.username}</Text>
+                    )}
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#999" />
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={styles.noPlayersText}>No player data available</Text>
+            )}
+          </View>
+        )}
+      </View>
+    );
   };
 
   if (loading) {
@@ -139,21 +244,21 @@ export default function MatchDetailsScreen() {
         )}
 
         <View style={styles.teamsContainer}>
-          <View style={styles.teamCard}>
-            <Text style={styles.teamTitle}>Team A</Text>
-            <Text style={styles.teamName}>{match.teamA.name}</Text>
-            <Text style={styles.playerCount}>
-              {match.teamA.playerUids.length} players
-            </Text>
-          </View>
-
-          <View style={styles.teamCard}>
-            <Text style={styles.teamTitle}>Team B</Text>
-            <Text style={styles.teamName}>{match.teamB.name}</Text>
-            <Text style={styles.playerCount}>
-              {match.teamB.playerUids.length} players
-            </Text>
-          </View>
+          {renderTeamCard(
+            "Team A",
+            match.teamA,
+            teamAPlayers,
+            teamAExpanded,
+            () => setTeamAExpanded(!teamAExpanded)
+          )}
+          
+          {renderTeamCard(
+            "Team B",
+            match.teamB,
+            teamBPlayers,
+            teamBExpanded,
+            () => setTeamBExpanded(!teamBExpanded)
+          )}
         </View>
 
         {isUmpire && match.status !== 'completed' && (
@@ -291,6 +396,68 @@ const styles = StyleSheet.create({
   playerCount: {
     fontSize: 14,
     color: '#666'
+  },
+  playerCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    marginTop: 8
+  },
+  playerList: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0'
+  },
+  playerLoader: {
+    paddingVertical: 12
+  },
+  playerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 8
+  },
+  playerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12
+  },
+  playerAvatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff'
+  },
+  playerInfo: {
+    flex: 1
+  },
+  playerName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2
+  },
+  playerUsername: {
+    fontSize: 12,
+    color: '#666'
+  },
+  noPlayersText: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 8
   },
   umpireButton: {
     backgroundColor: '#007AFF',

@@ -38,7 +38,9 @@ function RootLayoutNav() {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/_layout.tsx:29',message:'User and profile exist, checking if should redirect home',data:{inAuthGroup,inProfileGroup},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
       // #endregion
-      if (inAuthGroup || inProfileGroup) {
+      const inTabsGroup = segments[0] === '(tabs)';
+      const onIndex = segments.length === 0 || (segments.length === 1 && segments[0] === 'index');
+      if (inAuthGroup || inProfileGroup || onIndex) {
         router.replace('/(tabs)');
       }
     }
