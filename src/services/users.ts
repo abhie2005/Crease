@@ -11,18 +11,23 @@ import {
 } from 'firebase/firestore';
 import { userDoc, usersCollection } from '@/firebase/firestore';
 import { User, DEFAULT_USER_ROLE } from '@/models/User';
-import { normalizeUsername } from '@/utils/usernameValidation';
+/**
+ * Normalize username to lowercase for case-insensitive storage and search
+ * @param username Username to normalize
+ * @returns Normalized username in lowercase, or undefined if input is empty
+ */
+const normalizeUsernameLocal = (username?: string): string | undefined => {
+  if (!username || !username.trim()) {
+    return undefined;
+  }
+  return username.trim().toLowerCase();
+};
 
 export const createOrUpdateUser = async (
   uid: string,
   data: { name: string; studentId: string; username?: string; role?: User['role'] }
 ): Promise<void> => {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:createOrUpdateUser',message:'Creating/updating user',data:{uid,name:data.name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
-  const userRef = userDoc(uid);
-  const existingUser = await getDoc(userRef);
-  
+  data: { name: string; studentId: string; username?: string; role?: User['role'] }
   const userData: User = {
     uid,
     name: data.name,
@@ -34,7 +39,7 @@ export const createOrUpdateUser = async (
 
   // Add username if provided (store normalized/lowercase)
   if (data.username) {
-    userData.username = normalizeUsername(data.username);
+    userData.username = normalizeUsernameLocal(data.username);
   }
 
   await setDoc(userRef, userData, { merge: true });
@@ -74,7 +79,7 @@ export const checkUsernameAvailability = async (
   username: string,
   excludeUid?: string
 ): Promise<boolean> => {
-  const normalized = normalizeUsername(username);
+  const normalized = normalizeUsernameLocal(username);
   
   // Query Firestore for users with this username
   const q = query(
@@ -148,7 +153,7 @@ export const searchUsersByUsername = async (
  * @returns User document or null if not found
  */
 export const getUserByUsername = async (username: string): Promise<User | null> => {
-  const normalized = normalizeUsername(username);
+  const normalized = normalizeUsernameLocal(username);
   
   const q = query(
     usersCollection,
