@@ -57,7 +57,7 @@ export const createMatch = async (
   teamB: Team,
   scheduledDate?: Date
 ): Promise<string> => {
-  const matchData: Omit<Match, 'id'> = {
+  const matchData: any = {
     status: 'upcoming',
     createdBy,
     umpireUid,
@@ -69,10 +69,14 @@ export const createMatch = async (
       overs: 0,
       balls: 0
     },
-    scheduledDate: scheduledDate ? Timestamp.fromDate(scheduledDate) : undefined,
-    createdAt: serverTimestamp() as any,
-    updatedAt: serverTimestamp() as any
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
   };
+
+  // Only add scheduledDate if it's provided (Firestore doesn't accept undefined)
+  if (scheduledDate) {
+    matchData.scheduledDate = Timestamp.fromDate(scheduledDate);
+  }
 
   const docRef = await addDoc(matchesCollection, matchData);
   return docRef.id;

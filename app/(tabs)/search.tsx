@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -8,223 +7,138 @@ import {
   TouchableOpacity,
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Input } from '@/components/Input';
 import { useAuth } from '@/providers/AuthProvider';
 import { searchUsersByUsername } from '@/services/users';
 import { User } from '@/models/User';
-import { Input } from '@/components/Input';
 
 export default function SearchScreen() {
   const { user } = useAuth();
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<User[]>([]);
+  const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   // Debounced search
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setResults([]);
+      setSearchResults([]);
       setLoading(false);
-      setError(null);
       return;
     }
 
-    // Set loading immediately when query changes to show searching state
     setLoading(true);
-    setError(null);
-
-    const timeoutId = setTimeout(() => {
-      performSearch(searchQuery.trim());
-    }, 500);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const results = await searchUsersByUsername(
+          searchQuery.trim(),
+          user?.uid,
+          20
+        );
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, user?.uid]);
 
-  const performSearch = async (query: string) => {
-    if (!query.trim()) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const searchResults = await searchUsersByUsername(query, user?.uid);
-      setResults(searchResults);
-    } catch (err: any) {
-      setError(err.message || 'Failed to search users');
-      setResults([]);
-    } finally {
-      setLoading(false);
+  const handleUserPress = (username?: string) => {
+    if (username) {
+      router.push(`/user/${username}`);
     }
   };
 
-  const handleUserPress = (user: User) => {
-    if (user.username) {
-      router.push(`/user/${user.username}`);
-    }
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return '#FF6B6B';
-      case 'president':
-        return '#FFA500';
-      case 'player':
-        return '#007AFF';
-      default:
-        return '#666';
-    }
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Admin';
-      case 'president':
-        return 'President';
-      case 'player':
-        return 'Player';
-      default:
-        return role;
-    }
-  };
-
-  const renderResultItem = ({ item }: { item: User }) => {
-    if (!item.username) {
-      return null;
-    }
-
+  const renderUserItem = ({ item }: { item: User }) => {
     return (
       <TouchableOpacity
-        style={styles.resultCard}
-        onPress={() => handleUserPress(item)}
-        activeOpacity={0.7}
+        style={styles.userCard}
+        onPress={() => handleUserPress(item.username)}
       >
-        <View style={styles.resultContent}>
-          <View style={styles.resultHeader}>
-            <Text style={styles.username}>@{item.username}</Text>
-            <View
-              style={[
-                styles.roleBadge,
-                { backgroundColor: getRoleBadgeColor(item.role) }
-              ]}
-            >
-              <Text style={styles.roleText}>{getRoleDisplayName(item.role)}</Text>
-            </View>
+        <View style={styles.userInfo}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {item.name.charAt(0).toUpperCase()}
+            </Text>
           </View>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.studentId}>Student ID: {item.studentId}</Text>
+          <View style={styles.userDetails}>
+            <Text style={styles.userName}>{item.name}</Text>
+            {item.username && (
+              <Text style={styles.username}>@{item.username}</Text>
+            )}
+            <Text style={styles.role}>{item.role}</Text>
+          </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color="#999" />
       </TouchableOpacity>
-    );
-  };
-
-  const renderEmptyState = () => {
-    if (loading) {
-      return (
-        <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.emptyText}>Searching...</Text>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="alert-circle" size={48} color="#FF6B6B" />
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      );
-    }
-
-    if (searchQuery.trim()) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="search" size={48} color="#999" />
-          <Text style={styles.emptyText}>
-            No users found matching "{searchQuery}"
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="search" size={64} color="#ccc" />
-        <Text style={styles.emptyTitle}>Search Users</Text>
-        <Text style={styles.emptySubtitle}>
-          Start typing to search for users by username
-        </Text>
-      </View>
     );
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Search</Text>
-      </View>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Search Users</Text>
+        </View>
 
-      <View style={styles.searchContainer}>
-        <Input
-          placeholder="Search by username..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+        <View style={styles.searchContainer}>
+          <Input
+            placeholder="Search by username..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+          />
+        </View>
+
         {loading && (
-          <View style={styles.loadingIndicator}>
-            <ActivityIndicator size="small" color="#007AFF" />
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
           </View>
         )}
+
+        {!loading && searchQuery.trim() && searchResults.length === 0 && (
+          <View style={styles.centerContainer}>
+            <Text style={styles.emptyText}>No users found</Text>
+          </View>
+        )}
+
+        {!loading && !searchQuery.trim() && (
+          <View style={styles.centerContainer}>
+            <Text style={styles.placeholderText}>
+              Start typing a username to search...
+            </Text>
+          </View>
+        )}
+
+        {!loading && searchResults.length > 0 && (
+          <FlatList
+            data={searchResults}
+            renderItem={renderUserItem}
+            keyExtractor={(item) => item.uid}
+            contentContainerStyle={styles.listContent}
+          />
+        )}
       </View>
-
-      <FlatList
-        data={results}
-        renderItem={renderResultItem}
-        keyExtractor={(item) => item.uid}
-        contentContainerStyle={
-          results.length === 0 ? styles.emptyList : styles.list
-        }
-        ListEmptyComponent={renderEmptyState}
-        keyboardShouldPersistTaps="handled"
-      />
     </SafeAreaView>
-=======
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-
-export default function SearchScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Search</Text>
-      <Text style={styles.subtitle}>Search functionality coming soon</Text>
-    </View>
->>>>>>> main
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-<<<<<<< HEAD
     backgroundColor: '#f5f5f5'
   },
+  content: {
+    flex: 1,
+    padding: 16
+  },
   header: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
+    marginBottom: 16
   },
   headerTitle: {
     fontSize: 28,
@@ -232,117 +146,71 @@ const styles = StyleSheet.create({
     color: '#333'
   },
   searchContainer: {
+    marginBottom: 16
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999'
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center'
+  },
+  listContent: {
+    paddingBottom: 16
+  },
+  userCard: {
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
-  },
-  loadingIndicator: {
-    marginTop: 8,
-    marginLeft: 8
-  },
-  list: {
-    padding: 16
-  },
-  emptyList: {
-    flex: 1
-  },
-  resultCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2
+    elevation: 3
   },
-  resultContent: {
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12
+  },
+  avatarText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff'
+  },
+  userDetails: {
     flex: 1
   },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8
+  userName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4
   },
   username: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333'
-  },
-  roleBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8
-  },
-  roleText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600'
-  },
-  name: {
     fontSize: 14,
     color: '#666',
     marginBottom: 4
   },
-  studentId: {
+  role: {
     fontSize: 12,
-    color: '#999'
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 16,
-    marginBottom: 8
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 16
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#FF6B6B',
-    textAlign: 'center',
-    marginTop: 16
+    color: '#999',
+    textTransform: 'capitalize'
   }
 });
-=======
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingTop: 60
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666'
-  }
-});
->>>>>>> main

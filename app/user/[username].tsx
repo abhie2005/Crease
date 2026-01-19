@@ -3,43 +3,35 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
-  TouchableOpacity
+  ScrollView
 } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { getUserByUsername } from '@/services/users';
 import { User } from '@/models/User';
 
 export default function UserProfileScreen() {
-  const router = useRouter();
   const { username } = useLocalSearchParams<{ username: string }>();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
       if (!username) {
-        setError('Username is required');
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        setError(null);
         const userData = await getUserByUsername(username);
-        
-        if (!userData) {
-          setError('User not found');
-        } else {
-          setUser(userData);
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load user profile');
+        setUser(userData);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -48,76 +40,22 @@ export default function UserProfileScreen() {
     fetchUser();
   }, [username]);
 
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrator';
-      case 'president':
-        return 'President';
-      case 'player':
-        return 'Player';
-      default:
-        return role;
-    }
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return '#FF6B6B';
-      case 'president':
-        return '#FFA500';
-      case 'player':
-        return '#007AFF';
-      default:
-        return '#666';
-    }
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>User Profile</Text>
-          <View style={styles.backButton} />
-        </View>
-        <View style={styles.loadingContainer}>
+        <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (error || !user) {
+  if (!user) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>User Profile</Text>
-          <View style={styles.backButton} />
-        </View>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={64} color="#FF6B6B" />
-          <Text style={styles.errorTitle}>User Not Found</Text>
-          <Text style={styles.errorText}>
-            {error || 'The user you are looking for does not exist.'}
-          </Text>
-          <TouchableOpacity
-            style={styles.backButtonStyle}
-            onPress={() => router.back()}
-          >
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>User not found</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -127,64 +65,37 @@ export default function UserProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>User Profile</Text>
-        <View style={styles.backButton} />
-      </View>
-
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          <View style={styles.profileCard}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>
-                {user.name.charAt(0).toUpperCase()}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.title}>User Profile</Text>
+
+          <View style={styles.profileInfo}>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Name:</Text>
+              <Text style={styles.value}>{user.name}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Username:</Text>
+              <Text style={[styles.value, !user.username && styles.notSet]}>
+                {user.username || 'Not set'}
               </Text>
             </View>
 
-            <View style={styles.infoSection}>
-              {user.username && (
-                <>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Username</Text>
-                    <Text style={styles.infoValue}>@{user.username}</Text>
-                  </View>
-                  <View style={styles.divider} />
-                </>
-              )}
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Student ID:</Text>
+              <Text style={styles.value}>{user.studentId}</Text>
+            </View>
 
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Name</Text>
-                <Text style={styles.infoValue}>{user.name}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Student ID</Text>
-                <Text style={styles.infoValue}>{user.studentId}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Role</Text>
-                <View
-                  style={[
-                    styles.roleBadge,
-                    { backgroundColor: getRoleBadgeColor(user.role) }
-                  ]}
-                >
-                  <Text style={styles.roleText}>
-                    {getRoleDisplayName(user.role)}
-                  </Text>
-                </View>
-              </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Role:</Text>
+              <Text style={styles.value}>{user.role}</Text>
             </View>
           </View>
         </View>
@@ -198,134 +109,69 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5'
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333'
-  },
   scrollView: {
     flex: 1
   },
   content: {
-    padding: 16
+    flex: 1,
+    padding: 24
   },
-  profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3
+  header: {
+    marginBottom: 16
   },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#007AFF',
+  backButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600'
+  },
+  centerContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
+    padding: 24
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#999',
     marginBottom: 24
   },
-  avatarText: {
+  title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff'
+    color: '#333',
+    marginBottom: 24
   },
-  infoSection: {
+  profileInfo: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
     marginBottom: 24
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    minHeight: 44
   },
-  infoLabel: {
-    fontSize: 14,
+  label: {
+    fontSize: 16,
     color: '#666',
     fontWeight: '500'
   },
-  infoValue: {
+  value: {
     fontSize: 16,
     color: '#333',
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'right'
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 4
-  },
-  roleBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12
-  },
-  roleText: {
-    color: '#fff',
-    fontSize: 12,
     fontWeight: '600'
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666'
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32
-  },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 16,
-    marginBottom: 8
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22
-  },
-  backButtonStyle: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600'
+  notSet: {
+    color: '#999',
+    fontStyle: 'italic'
   }
 });
