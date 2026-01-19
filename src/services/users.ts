@@ -27,7 +27,9 @@ export const createOrUpdateUser = async (
   uid: string,
   data: { name: string; studentId: string; username?: string; role?: User['role'] }
 ): Promise<void> => {
-  data: { name: string; studentId: string; username?: string; role?: User['role'] }
+  const userRef = userDoc(uid);
+  const existingUser = await getDoc(userRef);
+  
   const userData: User = {
     uid,
     name: data.name,
@@ -123,7 +125,7 @@ export const searchUsersByUsername = async (
   }
 
   // Normalize query to lowercase to match stored usernames (which are stored in lowercase)
-  const normalizedQuery = normalizeUsername(searchQuery);
+  const normalizedQuery = normalizeUsernameLocal(searchQuery);
   
   // Firestore prefix query using >= and <= with \uf8ff sentinel
   // This works because usernames are stored in lowercase
