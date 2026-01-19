@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  Animated
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
-import { subscribeToMatch, deleteMatch } from '@/services/matches';
+import { subscribeToMatch, deleteMatch, updateMatchStatus } from '@/services/matches';
 import { getUsersByUids } from '@/services/users';
 import { Match } from '@/models/Match';
 import { User } from '@/models/User';
@@ -28,6 +29,7 @@ export default function MatchDetailsScreen() {
   const [teamAExpanded, setTeamAExpanded] = useState(false);
   const [teamBExpanded, setTeamBExpanded] = useState(false);
   const router = useRouter();
+  const blinkAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!id) return;
@@ -40,6 +42,30 @@ export default function MatchDetailsScreen() {
     return unsubscribe;
   }, [id]);
 
+  // Blinking animation for LIVE status
+  useEffect(() => {
+    if (match?.status === 'live') {
+      const blinkAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(blinkAnim, {
+            toValue: 0.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(blinkAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      blinkAnimation.start();
+      return () => blinkAnimation.stop();
+    } else {
+      blinkAnim.setValue(1);
+    }
+  }, [match?.status, blinkAnim]);
+
   useEffect(() => {
     if (!match) return;
     
@@ -48,19 +74,32 @@ export default function MatchDetailsScreen() {
         console.log('[MatchDetails] Starting player fetch');
         console.log('[MatchDetails] Team A UIDs:', match.teamA.playerUids);
         console.log('[MatchDetails] Team B UIDs:', match.teamB.playerUids);
+        
+        // Filter out empty strings and ensure we have valid UIDs
+        const teamAUids = (match.teamA.playerUids || []).filter(uid => uid && uid.trim().length > 0);
+        const teamBUids = (match.teamB.playerUids || []).filter(uid => uid && uid.trim().length > 0);
+        
+        console.log('[MatchDetails] Filtered Team A UIDs:', teamAUids);
+        console.log('[MatchDetails] Filtered Team B UIDs:', teamBUids);
+        
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers',message:'Starting player fetch',data:{teamAUids:match.teamA.playerUids,teamBUids:match.teamB.playerUids,teamACount:match.teamA.playerUids.length,teamBCount:match.teamB.playerUids.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers',message:'Starting player fetch',data:{teamAUids:teamAUids,teamBUids:teamBUids,teamACount:teamAUids.length,teamBCount:teamBUids.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
+        
         setLoadingPlayers(true);
+        
         const [playersA, playersB] = await Promise.all([
-          getUsersByUids(match.teamA.playerUids),
-          getUsersByUids(match.teamB.playerUids)
+          teamAUids.length > 0 ? getUsersByUids(teamAUids) : Promise.resolve([]),
+          teamBUids.length > 0 ? getUsersByUids(teamBUids) : Promise.resolve([])
         ]);
-        console.log('[MatchDetails] Players fetched - Team A:', playersA.length, playersA);
-        console.log('[MatchDetails] Players fetched - Team B:', playersB.length, playersB);
+        
+        console.log('[MatchDetails] Players fetched - Team A:', playersA.length, playersA.map(p => ({ uid: p.uid, name: p.name })));
+        console.log('[MatchDetails] Players fetched - Team B:', playersB.length, playersB.map(p => ({ uid: p.uid, name: p.name })));
+        
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers',message:'Players fetched successfully',data:{playersACount:playersA.length,playersBCount:playersB.length,playersA:playersA.map(p=>({uid:p.uid,name:p.name,username:p.username})),playersB:playersB.map(p=>({uid:p.uid,name:p.name,username:p.username}))},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'D'})}).catch(()=>{});
         // #endregion
+        
         setTeamAPlayers(playersA);
         setTeamBPlayers(playersB);
       } catch (error) {
@@ -69,6 +108,8 @@ export default function MatchDetailsScreen() {
         fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers:catch',message:'Error fetching players',data:{errorMessage:error instanceof Error ? error.message : String(error),errorStack:error instanceof Error ? error.stack : undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
         console.error('Error fetching players:', error);
+        setTeamAPlayers([]);
+        setTeamBPlayers([]);
       } finally {
         setLoadingPlayers(false);
       }
@@ -79,6 +120,19 @@ export default function MatchDetailsScreen() {
 
   const isUmpire = match && userProfile && match.umpireUid === userProfile.uid;
   const canManage = userProfile && (userProfile.role === 'admin' || userProfile.role === 'president');
+
+  const handleStartMatch = async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      await updateMatchStatus(id, 'live');
+      Alert.alert('Success', 'Match is now LIVE');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to start match');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -217,14 +271,25 @@ export default function MatchDetailsScreen() {
           <CountdownTimer scheduledDate={match.scheduledDate} />
         )}
         <View style={styles.statusBadgeContainer}>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: statusColors[match.status] }
-            ]}
-          >
-            <Text style={styles.statusText}>{match.status.toUpperCase()}</Text>
-          </View>
+          {match.status === 'live' ? (
+            <Animated.View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: statusColors[match.status], opacity: blinkAnim }
+              ]}
+            >
+              <Text style={styles.statusText}>{match.status.toUpperCase()}</Text>
+            </Animated.View>
+          ) : (
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: statusColors[match.status] }
+              ]}
+            >
+              <Text style={styles.statusText}>{match.status.toUpperCase()}</Text>
+            </View>
+          )}
         </View>
 
         <Text style={styles.matchTitle}>
@@ -260,6 +325,17 @@ export default function MatchDetailsScreen() {
             () => setTeamBExpanded(!teamBExpanded)
           )}
         </View>
+
+        {canManage && match.status === 'upcoming' && (
+          <TouchableOpacity
+            style={[styles.umpireButton, styles.startButton]}
+            onPress={handleStartMatch}
+          >
+            <Text style={styles.umpireButtonText}>
+              🚀 Start Match (Make Live)
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {isUmpire && match.status !== 'completed' && (
           <TouchableOpacity
@@ -470,6 +546,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600'
+  },
+  startButton: {
+    backgroundColor: '#34C759',
+    marginBottom: 16
   },
   deleteButton: {
     backgroundColor: '#FF3B30',
