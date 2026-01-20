@@ -27,8 +27,10 @@ export default function CreateMatchScreen() {
   const [teamAName, setTeamAName] = useState('');
   const [teamBName, setTeamBName] = useState('');
   const [umpireUid, setUmpireUid] = useState('');
+  const [selectedUmpire, setSelectedUmpire] = useState<User | null>(null);
   const [teamAPlayers, setTeamAPlayers] = useState<User[]>([]);
   const [teamBPlayers, setTeamBPlayers] = useState<User[]>([]);
+  const [totalOvers, setTotalOvers] = useState('20');
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [startImmediately, setStartImmediately] = useState(false);
@@ -36,6 +38,7 @@ export default function CreateMatchScreen() {
   
   // Search states
   const [activeTeam, setActiveTeam] = useState<'A' | 'B' | null>(null);
+  const [umpireSearchOpen, setUmpireSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
@@ -56,7 +59,7 @@ export default function CreateMatchScreen() {
 
   // Debounced search
   useEffect(() => {
-    if (!searchQuery.trim() || !activeTeam) {
+    if (!searchQuery.trim() || (!activeTeam && !umpireSearchOpen)) {
       setSearchResults([]);
       setSearching(false);
       return;
@@ -71,13 +74,18 @@ export default function CreateMatchScreen() {
           10
         );
         
-        // Filter out players already in BOTH teams (can't be on both teams)
-        const teamAUids = teamAPlayers.map(p => p.uid);
-        const teamBUids = teamBPlayers.map(p => p.uid);
-        const allSelectedUids = [...teamAUids, ...teamBUids];
-        
-        const filteredResults = results.filter(user => !allSelectedUids.includes(user.uid));
-        setSearchResults(filteredResults);
+        if (activeTeam) {
+          // Filter out players already in BOTH teams (can't be on both teams)
+          const teamAUids = teamAPlayers.map(p => p.uid);
+          const teamBUids = teamBPlayers.map(p => p.uid);
+          const allSelectedUids = [...teamAUids, ...teamBUids];
+          
+          const filteredResults = results.filter(user => !allSelectedUids.includes(user.uid));
+          setSearchResults(filteredResults);
+        } else {
+          // For umpire search, show all results
+          setSearchResults(results);
+        }
       } catch (error) {
         console.error('Search error:', error);
         setSearchResults([]);
@@ -87,7 +95,7 @@ export default function CreateMatchScreen() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, activeTeam, teamAPlayers, teamBPlayers, userProfile?.uid]);
+  }, [searchQuery, activeTeam, umpireSearchOpen, teamAPlayers, teamBPlayers, userProfile?.uid]);
 
   const handleAddPlayer = (player: User) => {
     if (activeTeam === 'A') {
@@ -119,14 +127,47 @@ export default function CreateMatchScreen() {
     setSearchResults([]);
   };
 
+  const openUmpireSearch = () => {
+    setUmpireSearchOpen(true);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const closeUmpireSearch = () => {
+    setUmpireSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const handleSelectUmpire = (user: User) => {
+    setSelectedUmpire(user);
+    setUmpireUid(user.uid);
+    closeUmpireSearch();
+  };
+
+  const handleRemoveUmpire = () => {
+    setSelectedUmpire(null);
+    setUmpireUid('');
+  };
+
   const handleCreate = async () => {
-    if (!teamAName.trim() || !teamBName.trim() || !umpireUid.trim()) {
-      Alert.alert('Error', 'Please fill in team names and umpire UID');
+    if (!teamAName.trim() || !teamBName.trim()) {
+      Alert.alert('Error', 'Please fill in team names');
       return;
     }
 
-    if (teamAPlayers.length === 0 || teamBPlayers.length === 0) {
-      Alert.alert('Error', 'Please add at least one player to each team');
+    if (!selectedUmpire) {
+      Alert.alert('Error', 'Please select an umpire');
+      return;
+    }
+
+    if (!totalOvers || parseInt(totalOvers) <= 0) {
+      Alert.alert('Error', 'Please enter valid total overs (must be greater than 0)');
+      return;
+    }
+
+    if (teamAPlayers.length < 2 || teamBPlayers.length < 2) {
+      Alert.alert('Error', 'Please add at least 2 players to each team (for opening batsmen)');
       return;
     }
 
@@ -148,6 +189,7 @@ export default function CreateMatchScreen() {
         umpireUid.trim(),
         { name: teamAName.trim(), playerUids: teamAPlayerUids },
         { name: teamBName.trim(), playerUids: teamBPlayerUids },
+        parseInt(totalOvers),
         isScheduled && scheduledDate ? scheduledDate : undefined
       );
 
@@ -357,11 +399,56 @@ export default function CreateMatchScreen() {
             )}
           </View>
 
+          {/* Umpire Selection */}
+          <View style={styles.playersSection}>
+            <View style={styles.playersSectionHeader}>
+              <Text style={styles.playersSectionTitle}>
+                Umpire {selectedUmpire ? '(1)' : '(Required)'}
+              </Text>
+              {!selectedUmpire && (
+                <TouchableOpacity
+                  style={styles.addPlayerButton}
+                  onPress={openUmpireSearch}
+                >
+                  <Ionicons name="add-circle" size={24} color="#007AFF" />
+                  <Text style={styles.addPlayerText}>Select Umpire</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {selectedUmpire ? (
+              <View style={styles.selectedPlayersList}>
+                <View style={styles.playerChip}>
+                  <View style={styles.playerChipAvatar}>
+                    <Text style={styles.playerChipAvatarText}>
+                      {selectedUmpire.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.playerChipInfo}>
+                    <Text style={styles.playerChipName}>{selectedUmpire.name}</Text>
+                    {selectedUmpire.username && (
+                      <Text style={styles.playerChipUsername}>@{selectedUmpire.username}</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    onPress={handleRemoveUmpire}
+                    style={styles.removeButton}
+                  >
+                    <Ionicons name="close-circle" size={20} color="#FF3B30" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.noPlayersText}>No umpire selected</Text>
+            )}
+          </View>
+
           <Input
-            label="Umpire UID"
-            value={umpireUid}
-            onChangeText={setUmpireUid}
-            placeholder="Enter umpire user ID"
+            label="Total Overs"
+            value={totalOvers}
+            onChangeText={setTotalOvers}
+            keyboardType="numeric"
+            placeholder="Enter total overs (e.g., 20 for T20)"
           />
 
           <Button
@@ -440,6 +527,103 @@ export default function CreateMatchScreen() {
                     Found {searchResults.length} player{searchResults.length !== 1 ? 's' : ''}
                   </Text>
                   {searchResults.map((item) => renderSearchResult(item))}
+                </>
+              )}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
+
+      {/* Umpire Search Modal */}
+      {umpireSearchOpen && (
+        <TouchableOpacity 
+          style={styles.searchOverlay} 
+          activeOpacity={1} 
+          onPress={closeUmpireSearch}
+        >
+          <TouchableOpacity 
+            style={styles.searchModal} 
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.searchModalHeader}>
+              <View style={styles.searchModalTitleContainer}>
+                <Text style={styles.searchModalTitle}>
+                  Select Umpire
+                </Text>
+                <Text style={styles.searchModalSubtitle}>
+                  Choose a user to be the match umpire
+                </Text>
+              </View>
+              <TouchableOpacity onPress={closeUmpireSearch}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchInputContainer}>
+              <Input
+                placeholder="Search by username..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+              />
+            </View>
+
+            <ScrollView style={styles.searchResultsContainer} contentContainerStyle={styles.searchResultsContent}>
+              {searching && (
+                <View style={styles.searchLoader}>
+                  <ActivityIndicator size="large" color="#007AFF" />
+                  <Text style={styles.searchLoadingText}>Searching...</Text>
+                </View>
+              )}
+
+              {!searching && searchQuery.trim() && searchResults.length === 0 && (
+                <View style={styles.searchEmptyState}>
+                  <Ionicons name="search-outline" size={48} color="#ccc" />
+                  <Text style={styles.searchEmptyText}>No users found</Text>
+                  <Text style={styles.searchEmptySubtext}>Try searching by username</Text>
+                </View>
+              )}
+
+              {!searching && !searchQuery.trim() && (
+                <View style={styles.searchEmptyState}>
+                  <Ionicons name="person-outline" size={48} color="#ccc" />
+                  <Text style={styles.searchPlaceholderText}>
+                    Start typing to search for an umpire...
+                  </Text>
+                  <Text style={styles.searchEmptySubtext}>Search by @username</Text>
+                </View>
+              )}
+
+              {!searching && searchResults.length > 0 && (
+                <>
+                  <Text style={styles.searchResultsCount}>
+                    Found {searchResults.length} user{searchResults.length !== 1 ? 's' : ''}
+                  </Text>
+                  {searchResults.map((item) => (
+                    <TouchableOpacity
+                      key={item.uid}
+                      style={styles.searchResultItem}
+                      onPress={() => handleSelectUmpire(item)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.searchResultAvatar}>
+                        <Text style={styles.searchResultAvatarText}>
+                          {item.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.searchResultInfo}>
+                        <Text style={styles.searchResultName}>{item.name}</Text>
+                        {item.username && (
+                          <Text style={styles.searchResultUsername}>@{item.username}</Text>
+                        )}
+                        <Text style={styles.searchResultRole}>{item.role}</Text>
+                      </View>
+                      <View style={styles.addIconContainer}>
+                        <Ionicons name="checkmark-circle" size={28} color="#34C759" />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
                 </>
               )}
             </ScrollView>

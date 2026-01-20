@@ -6,19 +6,39 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  ScrollView
+  ScrollView,
+  Modal
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
-import { subscribeToMatch, updateMatchScore, updateMatchStatus } from '@/services/matches';
-import { Match, Score } from '@/models/Match';
+import { 
+  subscribeToMatch, 
+  updateMatchStatus, 
+  addRuns as addRunsService, 
+  addDotBall as addDotBallService,
+  addWide as addWideService,
+  addNoBall as addNoBallService,
+  addWicket as addWicketService,
+  switchInnings
+} from '@/services/matches';
+import { getUsersByUids } from '@/services/users';
+import { Match } from '@/models/Match';
+import { User } from '@/models/User';
 import { CountdownTimer } from '@/components/CountdownTimer';
+import { Button } from '@/components/Button';
 
 export default function UmpireScoringScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userProfile } = useAuth();
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
+  const [scoring, setScoring] = useState(false);
+  const [batsmenModalVisible, setBatsmenModalVisible] = useState(false);
+  const [dismissedBatsmanUid, setDismissedBatsmanUid] = useState<string | null>(null);
+  const [teamAPlayers, setTeamAPlayers] = useState<User[]>([]);
+  const [teamBPlayers, setTeamBPlayers] = useState<User[]>([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -31,6 +51,33 @@ export default function UmpireScoringScreen() {
 
     return unsubscribe;
   }, [id]);
+
+  useEffect(() => {
+    if (!match) return;
+    
+    const fetchPlayers = async () => {
+      try {
+        setLoadingPlayers(true);
+        
+        const teamAUids = (match.teamA.playerUids || []).filter(uid => uid && uid.trim().length > 0);
+        const teamBUids = (match.teamB.playerUids || []).filter(uid => uid && uid.trim().length > 0);
+        
+        const [playersA, playersB] = await Promise.all([
+          teamAUids.length > 0 ? getUsersByUids(teamAUids) : Promise.resolve([]),
+          teamBUids.length > 0 ? getUsersByUids(teamBUids) : Promise.resolve([])
+        ]);
+        
+        setTeamAPlayers(playersA);
+        setTeamBPlayers(playersB);
+      } catch (error) {
+        console.error('Error fetching players:', error);
+      } finally {
+        setLoadingPlayers(false);
+      }
+    };
+    
+    fetchPlayers();
+  }, [match?.teamA.playerUids, match?.teamB.playerUids]);
 
   if (loading) {
     return (
@@ -64,75 +111,139 @@ export default function UmpireScoringScreen() {
   }
 
   const addRuns = async (runs: number) => {
-    if (!id) return;
+    if (!id || scoring || !match) return;
+    const onStrikeBatsman = (match.currentBatsmen || []).find(b => b.isOnStrike);
+    if (!onStrikeBatsman) {
+      Alert.alert('Error', 'No batsman on strike');
+      return;
+    }
+    
     try {
-      const newScore: Score = {
-        ...match.score,
-        runs: match.score.runs + runs
-      };
-      await updateMatchScore(id, newScore);
+      setScoring(true);
+      await addRunsService(id, runs, onStrikeBatsman.uid);
+      await checkInningsComplete();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to update score');
+    } finally {
+      setScoring(false);
     }
   };
 
-  const addWicket = async () => {
-    if (!id) return;
+  const addDotBall = async () => {
+    if (!id || scoring || !match) return;
+    const onStrikeBatsman = (match.currentBatsmen || []).find(b => b.isOnStrike);
+    if (!onStrikeBatsman) {
+      Alert.alert('Error', 'No batsman on strike');
+      return;
+    }
+    
     try {
-      const newScore: Score = {
-        ...match.score,
-        wickets: match.score.wickets + 1
-      };
-      await updateMatchScore(id, newScore);
+      setScoring(true);
+      await addDotBallService(id, onStrikeBatsman.uid);
+      await checkInningsComplete();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update score');
+      Alert.alert('Error', error.message || 'Failed to add dot ball');
+    } finally {
+      setScoring(false);
     }
   };
 
-  const nextBall = async () => {
-    if (!id) return;
+  const addWide = async (extraRuns: number) => {
+    if (!id || scoring) return;
     try {
-      let newBalls = match.score.balls + 1;
-      let newOvers = match.score.overs;
+      setScoring(true);
+      await addWideService(id, extraRuns);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to add wide');
+    } finally {
+      setScoring(false);
+    }
+  };
 
-      if (newBalls >= 6) {
-        newBalls = 0;
-        newOvers = newOvers + 1;
+  const addNoBall = async (extraRuns: number) => {
+    if (!id || scoring) return;
+    try {
+      setScoring(true);
+      await addNoBallService(id, extraRuns);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to add no ball');
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  const handleWicket = () => {
+    if (!match) return;
+    const onStrikeBatsman = (match.currentBatsmen || []).find(b => b.isOnStrike);
+    if (!onStrikeBatsman) {
+      Alert.alert('Error', 'No batsman on strike');
+      return;
+    }
+    setDismissedBatsmanUid(onStrikeBatsman.uid);
+    setBatsmenModalVisible(true);
+  };
+
+  const handleSelectNewBatsman = async (newBatsmanUid: string) => {
+    if (!id || !dismissedBatsmanUid) return;
+    
+    try {
+      setScoring(true);
+      setBatsmenModalVisible(false);
+      await addWicketService(id, dismissedBatsmanUid, newBatsmanUid);
+      setDismissedBatsmanUid(null);
+      await checkInningsComplete();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to record wicket');
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  const checkInningsComplete = async () => {
+    if (!match || !id) return;
+    
+    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+    
+    // Check if innings is complete (all overs bowled or 10 wickets)
+    if (currentInnings.overs >= match.totalOvers || currentInnings.wickets >= 10) {
+      if (match.currentInnings === 1) {
+        // Switch to 2nd innings
+        Alert.alert(
+          'First Innings Complete',
+          `${match.battingTeam === 'teamA' ? match.teamA.name : match.teamB.name} scored ${currentInnings.runs}/${currentInnings.wickets}. Ready to start 2nd innings?`,
+          [
+            {
+              text: 'Start 2nd Innings',
+              onPress: async () => {
+                await switchInnings(id);
+                // Navigate to toss screen for 2nd innings setup
+                router.replace(`/umpire/toss/${id}`);
+              }
+            }
+          ]
+        );
+      } else {
+        // Match complete
+        await updateMatchStatus(id, 'completed');
+        const teamAScore = match.teamAInnings.runs;
+        const teamBScore = match.teamBInnings.runs;
+        const winner = teamAScore > teamBScore ? match.teamA.name : teamBScore > teamAScore ? match.teamB.name : 'Tie';
+        
+        Alert.alert(
+          'Match Complete',
+          winner === 'Tie' ? 'Match ended in a tie!' : `${winner} won the match!`,
+          [
+            { text: 'OK', onPress: () => router.back() }
+          ]
+        );
       }
-
-      const newScore: Score = {
-        ...match.score,
-        balls: newBalls,
-        overs: newOvers
-      };
-      await updateMatchScore(id, newScore);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update score');
     }
   };
 
-  const endOver = async () => {
+  const startMatch = () => {
     if (!id) return;
-    try {
-      const newScore: Score = {
-        ...match.score,
-        balls: 0,
-        overs: match.score.overs + 1
-      };
-      await updateMatchScore(id, newScore);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update score');
-    }
-  };
-
-  const startMatch = async () => {
-    if (!id) return;
-    try {
-      await updateMatchStatus(id, 'live');
-      Alert.alert('Success', 'Match started');
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to start match');
-    }
+    // Navigate to toss screen for match setup
+    router.push(`/umpire/toss/${id}`);
   };
 
   const completeMatch = async () => {
@@ -189,59 +300,192 @@ export default function UmpireScoringScreen() {
 
           {match.status === 'upcoming' && (
             <View style={styles.section}>
-              <Button title="Start Match" onPress={startMatch} />
+              <Button title="Conduct Toss & Start Match" onPress={startMatch} />
             </View>
           )}
 
-          {match.status === 'live' && (
+          {match.status === 'live' && match.battingTeam && (
             <>
+              {/* Innings and Team Info */}
+              <View style={styles.inningsInfo}>
+                <Text style={styles.inningsLabel}>
+                  {match.currentInnings === 1 ? '1st' : '2nd'} Innings  •  Overs: {(match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings).overs}.{(match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings).balls}/{match.totalOvers}
+                </Text>
+                <Text style={styles.teamBatting}>
+                  {match.battingTeam === 'teamA' ? match.teamA.name : match.teamB.name} Batting
+                </Text>
+                {match.currentInnings === 2 && (
+                  <Text style={styles.targetText}>
+                    Target: {(match.battingTeam === 'teamA' ? match.teamBInnings.runs : match.teamAInnings.runs) + 1} runs
+                  </Text>
+                )}
+              </View>
+
+              {/* Current Batsmen */}
+              {match.currentBatsmen && match.currentBatsmen.length > 0 && (
+                <View style={styles.batsmenSection}>
+                  <Text style={styles.sectionTitle}>Current Batsmen</Text>
+                  {match.currentBatsmen.map((batsman) => {
+                    const player = [...teamAPlayers, ...teamBPlayers].find(p => p.uid === batsman.uid);
+                    return (
+                      <View 
+                        key={batsman.uid} 
+                        style={[
+                          styles.batsmanCard,
+                          batsman.isOnStrike && styles.batsmanOnStrike
+                        ]}
+                      >
+                        <View style={styles.batsmanInfo}>
+                          <Text style={styles.batsmanName}>
+                            {player?.name || 'Unknown'}
+                            {batsman.isOnStrike && ' *'}
+                          </Text>
+                          <Text style={styles.batsmanStats}>
+                            {batsman.runs} runs ({batsman.balls} balls)
+                          </Text>
+                        </View>
+                        {batsman.isOnStrike && (
+                          <Ionicons name="radio-button-on" size={20} color="#FF9500" />
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Runs */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Runs</Text>
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity style={styles.scoreButton} onPress={() => addRuns(1)}>
-                    <Text style={styles.scoreButtonText}>+1</Text>
+                <View style={styles.buttonGrid}>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.dotButton, scoring && styles.disabledButton]} 
+                    onPress={addDotBall}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>Dot</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.scoreButton} onPress={() => addRuns(2)}>
-                    <Text style={styles.scoreButtonText}>+2</Text>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    onPress={() => addRuns(1)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>1</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.scoreButton} onPress={() => addRuns(4)}>
-                    <Text style={styles.scoreButtonText}>+4</Text>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    onPress={() => addRuns(2)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>2</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.scoreButton} onPress={() => addRuns(6)}>
-                    <Text style={styles.scoreButtonText}>+6</Text>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    onPress={() => addRuns(3)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>3</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    onPress={() => addRuns(4)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>4</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    onPress={() => addRuns(6)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>6</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Wicket */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Wicket</Text>
+                <TouchableOpacity
+                  style={[styles.scoreButton, styles.wicketButton, scoring && styles.disabledButton]}
+                  onPress={handleWicket}
+                  disabled={scoring}
+                >
+                  <Text style={styles.scoreButtonText}>Wicket</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Extras - Wide */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Wide (1 + extra runs)</Text>
+                <View style={styles.buttonGrid}>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addWide(0)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>Wd +0</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addWide(1)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>Wd +1</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addWide(2)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>Wd +2</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addWide(4)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>Wd +4</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Extras - No Ball */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>No Ball (1 + extra runs)</Text>
+                <View style={styles.buttonGrid}>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addNoBall(0)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>NB +0</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addNoBall(1)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>NB +1</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addNoBall(2)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>NB +2</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    onPress={() => addNoBall(4)}
+                    disabled={scoring}
+                  >
+                    <Text style={styles.scoreButtonText}>NB +4</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Wicket & Balls</Text>
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={[styles.scoreButton, styles.wicketButton]}
-                    onPress={addWicket}
-                  >
-                    <Text style={styles.scoreButtonText}>Wicket</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.scoreButton, styles.ballButton]}
-                    onPress={nextBall}
-                  >
-                    <Text style={styles.scoreButtonText}>Next Ball</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Over Management</Text>
-                <Button title="End Over" onPress={endOver} variant="secondary" />
-              </View>
-
-              <View style={styles.section}>
-                <Button
-                  title="Complete Match"
-                  onPress={completeMatch}
-                  variant="secondary"
-                />
+                <Button title="Complete Match" onPress={completeMatch} />
               </View>
             </>
           )}
@@ -253,6 +497,56 @@ export default function UmpireScoringScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Batsman Selection Modal */}
+      <Modal
+        visible={batsmenModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setBatsmenModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select New Batsman</Text>
+              <TouchableOpacity onPress={() => setBatsmenModalVisible(false)}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              {loadingPlayers ? (
+                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
+              ) : (
+                <>
+                  {(match?.battingTeam === 'teamA' ? teamAPlayers : teamBPlayers)
+                    .filter(player => !(match?.currentBatsmen || []).some(b => b.uid === player.uid))
+                    .map((player) => (
+                      <TouchableOpacity
+                        key={player.uid}
+                        style={styles.playerSelectItem}
+                        onPress={() => handleSelectNewBatsman(player.uid)}
+                      >
+                        <View style={styles.playerSelectAvatar}>
+                          <Text style={styles.playerSelectAvatarText}>
+                            {player.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={styles.playerSelectInfo}>
+                          <Text style={styles.playerSelectName}>{player.name}</Text>
+                          {player.username && (
+                            <Text style={styles.playerSelectUsername}>@{player.username}</Text>
+                          )}
+                        </View>
+                        <Ionicons name="checkmark-circle-outline" size={24} color="#007AFF" />
+                      </TouchableOpacity>
+                    ))}
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -365,6 +659,9 @@ const styles = StyleSheet.create({
   ballButton: {
     backgroundColor: '#34C759'
   },
+  disabledButton: {
+    opacity: 0.5
+  },
   errorText: {
     fontSize: 18,
     color: '#999',
@@ -387,5 +684,138 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600'
+  },
+  inningsInfo: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center'
+  },
+  inningsLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4
+  },
+  teamBatting: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4
+  },
+  targetText: {
+    fontSize: 14,
+    color: '#FF9500',
+    fontWeight: '600'
+  },
+  batsmenSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16
+  },
+  batsmanCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginTop: 8,
+    backgroundColor: '#f9f9f9'
+  },
+  batsmanOnStrike: {
+    borderColor: '#FF9500',
+    backgroundColor: '#fff9f0',
+    borderWidth: 2
+  },
+  batsmanInfo: {
+    flex: 1
+  },
+  batsmanName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4
+  },
+  batsmanStats: {
+    fontSize: 14,
+    color: '#666'
+  },
+  buttonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8
+  },
+  dotButton: {
+    backgroundColor: '#666'
+  },
+  extraButton: {
+    backgroundColor: '#FF9500'
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end'
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: 34
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0'
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333'
+  },
+  modalScroll: {
+    padding: 16
+  },
+  playerSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginBottom: 8,
+    backgroundColor: '#fff'
+  },
+  playerSelectAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12
+  },
+  playerSelectAvatarText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600'
+  },
+  playerSelectInfo: {
+    flex: 1
+  },
+  playerSelectName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  playerSelectUsername: {
+    fontSize: 14,
+    color: '#666'
   }
 });

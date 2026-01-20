@@ -9,7 +9,7 @@ import {
   Alert,
   Animated
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router'; 
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatch, deleteMatch, updateMatchStatus } from '@/services/matches';
@@ -17,6 +17,7 @@ import { getUsersByUids } from '@/services/users';
 import { Match } from '@/models/Match';
 import { User } from '@/models/User';
 import { CountdownTimer } from '@/components/CountdownTimer';
+import { Button } from '@/components/Button'; // to start match
 
 export default function MatchDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -116,7 +117,9 @@ export default function MatchDetailsScreen() {
     };
     
     fetchPlayers();
-  }, [match]);
+    // Only re-fetch players when player UIDs change, not when the entire match updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.teamA.playerUids, match?.teamB.playerUids]);
 
   const isUmpire = match && userProfile && match.umpireUid === userProfile.uid;
   const canManage = userProfile && (userProfile.role === 'admin' || userProfile.role === 'president');
@@ -297,15 +300,72 @@ export default function MatchDetailsScreen() {
         </Text>
 
         {(match.status === 'live' || match.status === 'completed') && (
-          <View style={styles.scoreCard}>
-            <Text style={styles.scoreTitle}>Score</Text>
-            <Text style={styles.scoreText}>
-              {match.score.runs}/{match.score.wickets}
-            </Text>
-            <Text style={styles.oversText}>
-              ({match.score.overs}.{match.score.balls} overs)
-            </Text>
-          </View>
+          <>
+            {match.totalOvers && (
+              <Text style={styles.matchFormat}>
+                {match.totalOvers} Overs Match
+                {match.currentInnings && ` • ${match.currentInnings === 1 ? '1st' : '2nd'} Innings`}
+              </Text>
+            )}
+            
+            {/* Team A Innings Score */}
+            {match.teamAInnings && match.teamAInnings.runs > 0 && (
+              <View style={styles.scoreCard}>
+                <Text style={styles.scoreTitle}>
+                  {match.teamA.name} 
+                  {match.battingTeam === 'teamA' && match.status === 'live' && ' (Batting)'}
+                </Text>
+                <Text style={styles.scoreText}>
+                  {match.teamAInnings.runs}/{match.teamAInnings.wickets}
+                </Text>
+                <Text style={styles.oversText}>
+                  ({match.teamAInnings.overs}.{match.teamAInnings.balls} / {match.totalOvers} overs)
+                </Text>
+              </View>
+            )}
+
+            {/* Team B Innings Score */}
+            {match.teamBInnings && match.teamBInnings.runs > 0 && (
+              <View style={styles.scoreCard}>
+                <Text style={styles.scoreTitle}>
+                  {match.teamB.name}
+                  {match.battingTeam === 'teamB' && match.status === 'live' && ' (Batting)'}
+                </Text>
+                <Text style={styles.scoreText}>
+                  {match.teamBInnings.runs}/{match.teamBInnings.wickets}
+                </Text>
+                <Text style={styles.oversText}>
+                  ({match.teamBInnings.overs}.{match.teamBInnings.balls} / {match.totalOvers} overs)
+                </Text>
+              </View>
+            )}
+
+            {/* Match Result */}
+            {match.status === 'completed' && match.teamAInnings && match.teamBInnings && (
+              <View style={styles.resultCard}>
+                <Text style={styles.resultText}>
+                  {match.teamAInnings.runs > match.teamBInnings.runs
+                    ? `${match.teamA.name} won by ${match.teamAInnings.runs - match.teamBInnings.runs} runs`
+                    : match.teamBInnings.runs > match.teamAInnings.runs
+                    ? `${match.teamB.name} won by ${10 - match.teamBInnings.wickets} wickets`
+                    : 'Match Tied'}
+                </Text>
+              </View>
+            )}
+
+            {/* Fallback to old score if new innings data not available */}
+            {(!match.teamAInnings || (match.teamAInnings.runs === 0 && match.teamBInnings.runs === 0)) && (
+              <View style={styles.scoreCard}>
+                <Text style={styles.scoreTitle}>Current Score</Text>
+                <Text style={styles.scoreText}>
+                  {match.score.runs}/{match.score.wickets}
+                </Text>
+                <Text style={styles.oversText}>
+                  ({match.score.overs}.{match.score.balls} overs)
+                </Text>
+              </View>
+            )}
+          </>
         )}
 
         <View style={styles.teamsContainer}>
@@ -569,5 +629,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#999',
     marginBottom: 16
+  },
+  matchFormat: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontWeight: '600'
+  },
+  resultCard: {
+    backgroundColor: '#34C759',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 24
+  },
+  resultText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center'
   }
 });
