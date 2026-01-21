@@ -202,11 +202,32 @@ export const addRuns = async (
     const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
     const currentBatsmen = [...match.currentBatsmen];
     
+    // Check if innings is already complete before advancing ball
+    const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
+    const maxBalls = match.totalOvers * 6;
+    if (totalBallsBowled >= maxBalls) {
+      throw new Error('Innings already complete - all overs bowled');
+    }
+    
     // Update batsman stats
     const batsmanIndex = currentBatsmen.findIndex((b: any) => b.uid === batsmanUid);
     if (batsmanIndex !== -1) {
       currentBatsmen[batsmanIndex].runs += runs;
       currentBatsmen[batsmanIndex].balls += 1;
+    }
+    
+    // Update bowler stats
+    let bowlers = currentInnings.bowlers || [];
+    const currentBowlerUid = currentInnings.currentBowlerUid;
+    let newCurrentBowlerUid = currentBowlerUid;
+    let newLastBowlerUid = currentInnings.lastBowlerUid;
+    
+    if (currentBowlerUid) {
+      const bowlerIndex = bowlers.findIndex((b: any) => b.uid === currentBowlerUid);
+      if (bowlerIndex !== -1) {
+        bowlers[bowlerIndex].runs += runs;
+        bowlers[bowlerIndex].balls += 1;
+      }
     }
     
     // Advance ball count
@@ -216,6 +237,20 @@ export const addRuns = async (
     if (newBalls >= 6) {
       newBalls = 0;
       newOvers += 1;
+      
+      // Update bowler: complete the over
+      if (currentBowlerUid && bowlers.length > 0) {
+        const bowlerIndex = bowlers.findIndex((b: any) => b.uid === currentBowlerUid);
+        if (bowlerIndex !== -1) {
+          bowlers[bowlerIndex].overs += 1;
+          bowlers[bowlerIndex].balls = 0;
+        }
+      }
+      
+      // Move current bowler to last bowler, clear current
+      newLastBowlerUid = currentBowlerUid;
+      newCurrentBowlerUid = undefined;
+      
       // Rotate strike at end of over
       currentBatsmen.forEach((b: any) => b.isOnStrike = !b.isOnStrike);
     } else if (runs % 2 === 1) {
@@ -223,7 +258,7 @@ export const addRuns = async (
       currentBatsmen.forEach((b: any) => b.isOnStrike = !b.isOnStrike);
     }
     
-    const newInnings = {
+    const newInnings: any = {
       runs: currentInnings.runs + runs,
       wickets: currentInnings.wickets,
       overs: newOvers,
@@ -236,8 +271,17 @@ export const addRuns = async (
           isDot: runs === 0,
           timestamp: Date.now()
         }
-      ]
+      ],
+      bowlers
     };
+    
+    // Only add these fields if they have values (Firestore doesn't accept undefined)
+    if (newCurrentBowlerUid !== undefined) {
+      newInnings.currentBowlerUid = newCurrentBowlerUid;
+    }
+    if (newLastBowlerUid !== undefined) {
+      newInnings.lastBowlerUid = newLastBowlerUid;
+    }
     
     const updates: any = {
       currentBatsmen,
@@ -279,7 +323,18 @@ export const addWide = async (
     
     const totalRuns = 1 + extraRuns;
     
-    const newInnings = {
+    // Update bowler runs (wide counts as runs conceded)
+    let bowlers = currentInnings.bowlers || [];
+    const currentBowlerUid = currentInnings.currentBowlerUid;
+    
+    if (currentBowlerUid) {
+      const bowlerIndex = bowlers.findIndex((b: any) => b.uid === currentBowlerUid);
+      if (bowlerIndex !== -1) {
+        bowlers[bowlerIndex].runs += totalRuns;
+      }
+    }
+    
+    const newInnings: any = {
       runs: currentInnings.runs + totalRuns,
       wickets: currentInnings.wickets,
       overs: currentInnings.overs,
@@ -291,8 +346,17 @@ export const addWide = async (
           isWide: true,
           timestamp: Date.now()
         }
-      ]
+      ],
+      bowlers
     };
+    
+    // Preserve bowler fields
+    if (currentInnings.currentBowlerUid !== undefined) {
+      newInnings.currentBowlerUid = currentInnings.currentBowlerUid;
+    }
+    if (currentInnings.lastBowlerUid !== undefined) {
+      newInnings.lastBowlerUid = currentInnings.lastBowlerUid;
+    }
     
     const updates: any = {
       updatedAt: serverTimestamp()
@@ -326,7 +390,18 @@ export const addNoBall = async (
     
     const totalRuns = 1 + extraRuns;
     
-    const newInnings = {
+    // Update bowler runs (no ball counts as runs conceded)
+    let bowlers = currentInnings.bowlers || [];
+    const currentBowlerUid = currentInnings.currentBowlerUid;
+    
+    if (currentBowlerUid) {
+      const bowlerIndex = bowlers.findIndex((b: any) => b.uid === currentBowlerUid);
+      if (bowlerIndex !== -1) {
+        bowlers[bowlerIndex].runs += totalRuns;
+      }
+    }
+    
+    const newInnings: any = {
       runs: currentInnings.runs + totalRuns,
       wickets: currentInnings.wickets,
       overs: currentInnings.overs,
@@ -338,8 +413,17 @@ export const addNoBall = async (
           isNoBall: true,
           timestamp: Date.now()
         }
-      ]
+      ],
+      bowlers
     };
+    
+    // Preserve bowler fields
+    if (currentInnings.currentBowlerUid !== undefined) {
+      newInnings.currentBowlerUid = currentInnings.currentBowlerUid;
+    }
+    if (currentInnings.lastBowlerUid !== undefined) {
+      newInnings.lastBowlerUid = currentInnings.lastBowlerUid;
+    }
     
     const updates: any = {
       updatedAt: serverTimestamp()
@@ -382,6 +466,20 @@ export const addWicket = async (
       currentBatsmen[dismissedIndex].balls += 1;
     }
     
+    // Update bowler stats - increment wicket count and balls bowled
+    let bowlers = currentInnings.bowlers || [];
+    const currentBowlerUid = currentInnings.currentBowlerUid;
+    let newCurrentBowlerUid = currentBowlerUid;
+    let newLastBowlerUid = currentInnings.lastBowlerUid;
+    
+    if (currentBowlerUid) {
+      const bowlerIndex = bowlers.findIndex((b: any) => b.uid === currentBowlerUid);
+      if (bowlerIndex !== -1) {
+        bowlers[bowlerIndex].wickets += 1;
+        bowlers[bowlerIndex].balls += 1;
+      }
+    }
+    
     // Advance ball count
     let newBalls = currentInnings.balls + 1;
     let newOvers = currentInnings.overs;
@@ -389,6 +487,19 @@ export const addWicket = async (
     if (newBalls >= 6) {
       newBalls = 0;
       newOvers += 1;
+      
+      // Update bowler: complete the over
+      if (currentBowlerUid && bowlers.length > 0) {
+        const bowlerIndex = bowlers.findIndex((b: any) => b.uid === currentBowlerUid);
+        if (bowlerIndex !== -1) {
+          bowlers[bowlerIndex].overs += 1;
+          bowlers[bowlerIndex].balls = 0;
+        }
+      }
+      
+      // Move current bowler to last bowler, clear current
+      newLastBowlerUid = currentBowlerUid;
+      newCurrentBowlerUid = undefined;
     }
     
     // Replace dismissed batsman with new batsman (preserve strike)
@@ -401,7 +512,7 @@ export const addWicket = async (
       };
     }
     
-    const newInnings = {
+    const newInnings: any = {
       runs: currentInnings.runs,
       wickets: currentInnings.wickets + 1,
       overs: newOvers,
@@ -414,8 +525,17 @@ export const addWicket = async (
           batsmanUid: dismissedBatsmanUid,
           timestamp: Date.now()
         }
-      ]
+      ],
+      bowlers
     };
+    
+    // Only add these fields if they have values (Firestore doesn't accept undefined)
+    if (newCurrentBowlerUid !== undefined) {
+      newInnings.currentBowlerUid = newCurrentBowlerUid;
+    }
+    if (newLastBowlerUid !== undefined) {
+      newInnings.lastBowlerUid = newLastBowlerUid;
+    }
     
     const updates: any = {
       currentBatsmen,
@@ -458,10 +578,101 @@ export const switchInnings = async (matchId: string): Promise<void> => {
       transaction.update(matchRef, {
         currentInnings: 2,
         battingTeam: newBattingTeam,
-        currentBatsmen: [], // Will be set by toss/setup for 2nd innings
+        currentBatsmen: [], // Will be set by setupSecondInnings
         updatedAt: serverTimestamp()
       });
     }
+  });
+};
+
+export const setupSecondInnings = async (
+  matchId: string,
+  openingBatsmen: { uid: string; isOnStrike: boolean }[]
+): Promise<void> => {
+  const matchRef = matchDoc(matchId);
+  
+  const currentBatsmen = openingBatsmen.map(b => ({
+    uid: b.uid,
+    runs: 0,
+    balls: 0,
+    isOnStrike: b.isOnStrike
+  }));
+  
+  await runTransaction(db, async (transaction) => {
+    const matchSnap = await transaction.get(matchRef);
+    
+    if (!matchSnap.exists()) {
+      throw new Error('Match not found');
+    }
+    
+    transaction.update(matchRef, {
+      currentBatsmen,
+      updatedAt: serverTimestamp()
+    });
+  });
+};
+
+export const selectBowler = async (
+  matchId: string,
+  bowlerUid: string
+): Promise<void> => {
+  const matchRef = matchDoc(matchId);
+  
+  await runTransaction(db, async (transaction) => {
+    const matchSnap = await transaction.get(matchRef);
+    if (!matchSnap.exists()) throw new Error('Match not found');
+    
+    const match = matchSnap.data() as any;
+    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+    const bowlingTeam = match.battingTeam === 'teamA' ? match.teamB : match.teamA;
+    
+    // Validate bowler is from bowling team
+    if (!bowlingTeam.playerUids.includes(bowlerUid)) {
+      throw new Error('Bowler must be from the bowling team');
+    }
+    
+    // Check rotation rule: can't bowl if they bowled last over
+    if (currentInnings.lastBowlerUid === bowlerUid) {
+      throw new Error('Bowler cannot bowl consecutive overs - must take a 1-over break');
+    }
+    
+    // Initialize or update bowler stats
+    let bowlers = currentInnings.bowlers || [];
+    let bowlerIndex = bowlers.findIndex((b: any) => b.uid === bowlerUid);
+    
+    if (bowlerIndex === -1) {
+      // New bowler
+      bowlers.push({
+        uid: bowlerUid,
+        overs: 0,
+        balls: 0,
+        runs: 0,
+        wickets: 0,
+        maidens: 0
+      });
+      bowlerIndex = bowlers.length - 1;
+    }
+    
+    // Update current bowler
+    const updates: any = {
+      updatedAt: serverTimestamp()
+    };
+    
+    if (match.battingTeam === 'teamA') {
+      updates.teamAInnings = {
+        ...currentInnings,
+        currentBowlerUid: bowlerUid,
+        bowlers
+      };
+    } else {
+      updates.teamBInnings = {
+        ...currentInnings,
+        currentBowlerUid: bowlerUid,
+        bowlers
+      };
+    }
+    
+    transaction.update(matchRef, updates);
   });
 };
 

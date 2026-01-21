@@ -33,6 +33,11 @@ export default function TossScreen() {
   const [onStrikeBatsman, setOnStrikeBatsman] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
+  // Coin flip state
+  const [coinFlipping, setCoinFlipping] = useState(false);
+  const [coinResult, setCoinResult] = useState<'heads' | 'tails' | null>(null);
+  const [showCoinResult, setShowCoinResult] = useState(false);
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -127,6 +132,20 @@ export default function TossScreen() {
     }
   };
 
+  const flipCoin = () => {
+    setCoinFlipping(true);
+    setCoinResult(null);
+    setShowCoinResult(false);
+    
+    // Simulate coin flip animation
+    setTimeout(() => {
+      const result = Math.random() < 0.5 ? 'heads' : 'tails';
+      setCoinResult(result);
+      setCoinFlipping(false);
+      setShowCoinResult(true);
+    }, 1500);
+  };
+
   const handleStartMatch = async () => {
     if (!tossWonBy || !tossDecision) {
       Alert.alert('Error', 'Please complete the toss selection');
@@ -184,6 +203,38 @@ export default function TossScreen() {
       <View style={styles.matchInfo}>
         <Text style={styles.matchTeams}>{match.teamA.name} vs {match.teamB.name}</Text>
         <Text style={styles.matchFormat}>{match.totalOvers} Overs Match</Text>
+      </View>
+
+      {/* Coin Flip */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Flip Coin</Text>
+        <TouchableOpacity
+          style={styles.coinButton}
+          onPress={flipCoin}
+          disabled={coinFlipping}
+        >
+          {coinFlipping ? (
+            <ActivityIndicator size="large" color="#FFD700" />
+          ) : (
+            <Ionicons name="disc" size={64} color="#FFD700" />
+          )}
+          <Text style={styles.coinButtonText}>
+            {coinFlipping ? 'Flipping...' : 'Tap to Flip Coin'}
+          </Text>
+        </TouchableOpacity>
+        
+        {showCoinResult && coinResult && (
+          <View style={styles.coinResultCard}>
+            <Ionicons 
+              name={coinResult === 'heads' ? 'arrow-up-circle' : 'arrow-down-circle'} 
+              size={48} 
+              color="#34C759" 
+            />
+            <Text style={styles.coinResultText}>
+              Result: {coinResult.toUpperCase()}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Step 1: Toss Winner */}
@@ -509,5 +560,35 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600'
+  },
+  coinButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFD700'
+  },
+  coinButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 12
+  },
+  coinResultCard: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#f0fdf4',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#34C759',
+    alignItems: 'center',
+    gap: 8
+  },
+  coinResultText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#34C759'
   }
 });

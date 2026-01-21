@@ -31,12 +31,24 @@ export interface Batsman {
   isOnStrike: boolean;
 }
 
+export interface Bowler {
+  uid: string;
+  overs: number;        // Full overs bowled (integer part)
+  balls: number;        // Balls in current over (0-5)
+  runs: number;         // Total runs conceded
+  wickets: number;      // Wickets taken
+  maidens: number;      // Maiden overs (optional)
+}
+
 export interface InningsScore {
   runs: number;
   wickets: number;
   overs: number;
   balls: number;
   ballEvents: BallEvent[];
+  currentBowlerUid?: string;      // Who is currently bowling
+  lastBowlerUid?: string;         // Who bowled the last over
+  bowlers?: Bowler[];             // List of all bowlers who have bowled
 }
 
 export interface Match {

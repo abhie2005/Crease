@@ -20,7 +20,9 @@ import {
   addWide as addWideService,
   addNoBall as addNoBallService,
   addWicket as addWicketService,
-  switchInnings
+  switchInnings,
+  setupSecondInnings,
+  selectBowler
 } from '@/services/matches';
 import { getUsersByUids } from '@/services/users';
 import { Match } from '@/models/Match';
@@ -36,6 +38,11 @@ export default function UmpireScoringScreen() {
   const [scoring, setScoring] = useState(false);
   const [batsmenModalVisible, setBatsmenModalVisible] = useState(false);
   const [dismissedBatsmanUid, setDismissedBatsmanUid] = useState<string | null>(null);
+  const [secondInningsSetupOpen, setSecondInningsSetupOpen] = useState(false);
+  const [secondInningsBatsmen, setSecondInningsBatsmen] = useState<string[]>([]);
+  const [secondInningsOnStrike, setSecondInningsOnStrike] = useState<string | null>(null);
+  const [bowlerSelectionModalVisible, setBowlerSelectionModalVisible] = useState(false);
+  const [selectingBowler, setSelectingBowler] = useState(false);
   const [teamAPlayers, setTeamAPlayers] = useState<User[]>([]);
   const [teamBPlayers, setTeamBPlayers] = useState<User[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
@@ -79,6 +86,44 @@ export default function UmpireScoringScreen() {
     fetchPlayers();
   }, [match?.teamA.playerUids, match?.teamB.playerUids]);
 
+  // Check if bowler selection is needed
+  useEffect(() => {
+    if (!match || match.status !== 'live' || !match.battingTeam) return;
+    
+    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+    
+    // Check if innings is already complete
+    const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
+    const maxBalls = match.totalOvers * 6;
+    const isComplete = totalBallsBowled >= maxBalls || currentInnings.wickets >= 10;
+    
+    // Only show bowler selection if:
+    // 1. No current bowler
+    // 2. Balls === 0 (new over starting)
+    // 3. Innings is NOT complete
+    if (!currentInnings?.currentBowlerUid && currentInnings?.balls === 0 && !isComplete) {
+      setBowlerSelectionModalVisible(true);
+    }
+  }, [match?.teamAInnings?.currentBowlerUid, match?.teamBInnings?.currentBowlerUid, match?.teamAInnings?.balls, match?.teamBInnings?.balls, match?.teamAInnings?.overs, match?.teamBInnings?.overs, match?.teamAInnings?.wickets, match?.teamBInnings?.wickets, match?.status, match?.battingTeam, match?.totalOvers]);
+
+  // Auto-detect innings completion
+  useEffect(() => {
+    if (!match || !match.battingTeam || match.status !== 'live') return;
+    
+    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+    const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
+    const maxBalls = match.totalOvers * 6;
+    
+    if (totalBallsBowled >= maxBalls || currentInnings.wickets >= 10) {
+      // Small delay to ensure state is updated
+      const timer = setTimeout(() => {
+        checkInningsComplete();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [match?.teamAInnings?.overs, match?.teamBInnings?.overs, match?.teamAInnings?.balls, match?.teamBInnings?.balls, match?.teamAInnings?.wickets, match?.teamBInnings?.wickets, match?.status, match?.battingTeam, match?.totalOvers]);
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -110,8 +155,27 @@ export default function UmpireScoringScreen() {
     );
   }
 
+  // Helper function to check if innings is complete
+  const isInningsComplete = (): boolean => {
+    if (!match || !match.battingTeam) return false;
+    
+    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+    const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
+    const maxBalls = match.totalOvers * 6;
+    
+    return totalBallsBowled >= maxBalls || currentInnings.wickets >= 10;
+  };
+
   const addRuns = async (runs: number) => {
     if (!id || scoring || !match) return;
+    
+    // Check if innings is complete BEFORE attempting to score
+    if (isInningsComplete()) {
+      // Automatically trigger innings completion check
+      await checkInningsComplete();
+      return;
+    }
+    
     const onStrikeBatsman = (match.currentBatsmen || []).find(b => b.isOnStrike);
     if (!onStrikeBatsman) {
       Alert.alert('Error', 'No batsman on strike');
@@ -121,7 +185,10 @@ export default function UmpireScoringScreen() {
     try {
       setScoring(true);
       await addRunsService(id, runs, onStrikeBatsman.uid);
-      await checkInningsComplete();
+      const targetReached = await checkTargetReached();
+      if (!targetReached) {
+        await checkInningsComplete();
+      }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to update score');
     } finally {
@@ -131,6 +198,14 @@ export default function UmpireScoringScreen() {
 
   const addDotBall = async () => {
     if (!id || scoring || !match) return;
+    
+    // Check if innings is complete BEFORE attempting to score
+    if (isInningsComplete()) {
+      // Automatically trigger innings completion check
+      await checkInningsComplete();
+      return;
+    }
+    
     const onStrikeBatsman = (match.currentBatsmen || []).find(b => b.isOnStrike);
     if (!onStrikeBatsman) {
       Alert.alert('Error', 'No batsman on strike');
@@ -140,7 +215,10 @@ export default function UmpireScoringScreen() {
     try {
       setScoring(true);
       await addDotBallService(id, onStrikeBatsman.uid);
-      await checkInningsComplete();
+      const targetReached = await checkTargetReached();
+      if (!targetReached) {
+        await checkInningsComplete();
+      }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to add dot ball');
     } finally {
@@ -150,9 +228,21 @@ export default function UmpireScoringScreen() {
 
   const addWide = async (extraRuns: number) => {
     if (!id || scoring) return;
+    
+    // Check if innings is complete BEFORE attempting to score
+    if (isInningsComplete()) {
+      // Automatically trigger innings completion check
+      await checkInningsComplete();
+      return;
+    }
+    
     try {
       setScoring(true);
       await addWideService(id, extraRuns);
+      const targetReached = await checkTargetReached();
+      if (!targetReached) {
+        await checkInningsComplete();
+      }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to add wide');
     } finally {
@@ -162,9 +252,21 @@ export default function UmpireScoringScreen() {
 
   const addNoBall = async (extraRuns: number) => {
     if (!id || scoring) return;
+    
+    // Check if innings is complete BEFORE attempting to score
+    if (isInningsComplete()) {
+      // Automatically trigger innings completion check
+      await checkInningsComplete();
+      return;
+    }
+    
     try {
       setScoring(true);
       await addNoBallService(id, extraRuns);
+      const targetReached = await checkTargetReached();
+      if (!targetReached) {
+        await checkInningsComplete();
+      }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to add no ball');
     } finally {
@@ -172,8 +274,16 @@ export default function UmpireScoringScreen() {
     }
   };
 
-  const handleWicket = () => {
+  const handleWicket = async () => {
     if (!match) return;
+    
+    // Check if innings is complete BEFORE attempting to score
+    if (isInningsComplete()) {
+      // Automatically trigger innings completion check
+      await checkInningsComplete();
+      return;
+    }
+    
     const onStrikeBatsman = (match.currentBatsmen || []).find(b => b.isOnStrike);
     if (!onStrikeBatsman) {
       Alert.alert('Error', 'No batsman on strike');
@@ -199,13 +309,103 @@ export default function UmpireScoringScreen() {
     }
   };
 
+  const handleSecondInningsBatsmanSelect = (uid: string) => {
+    if (secondInningsBatsmen.includes(uid)) {
+      setSecondInningsBatsmen(secondInningsBatsmen.filter(b => b !== uid));
+      if (secondInningsOnStrike === uid) {
+        setSecondInningsOnStrike(null);
+      }
+    } else if (secondInningsBatsmen.length < 2) {
+      setSecondInningsBatsmen([...secondInningsBatsmen, uid]);
+      if (secondInningsBatsmen.length === 0) {
+        setSecondInningsOnStrike(uid);
+      }
+    } else {
+      Alert.alert('Maximum Batsmen', 'Only 2 batsmen can be on the crease at a time');
+    }
+  };
+
+  const handleStartSecondInnings = async () => {
+    if (!id) return;
+    
+    if (secondInningsBatsmen.length !== 2) {
+      Alert.alert('Error', 'Please select exactly 2 opening batsmen');
+      return;
+    }
+
+    if (!secondInningsOnStrike) {
+      Alert.alert('Error', 'Please select which batsman is on strike');
+      return;
+    }
+
+    try {
+      setScoring(true);
+      
+      const openingBatsmen = secondInningsBatsmen.map(uid => ({
+        uid,
+        isOnStrike: uid === secondInningsOnStrike
+      }));
+
+      await setupSecondInnings(id, openingBatsmen);
+      
+      setSecondInningsSetupOpen(false);
+      setSecondInningsBatsmen([]);
+      setSecondInningsOnStrike(null);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to setup 2nd innings');
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  const handleSelectBowler = async (bowlerUid: string) => {
+    if (!id) return;
+    
+    try {
+      setSelectingBowler(true);
+      await selectBowler(id, bowlerUid);
+      setBowlerSelectionModalVisible(false);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to select bowler');
+    } finally {
+      setSelectingBowler(false);
+    }
+  };
+
+  const checkTargetReached = async () => {
+    if (!match || !id || match.currentInnings !== 2) return false;
+    
+    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+    const targetRuns = match.battingTeam === 'teamA' 
+      ? match.teamBInnings.runs + 1 
+      : match.teamAInnings.runs + 1;
+    
+    if (currentInnings.runs >= targetRuns) {
+      // Target reached - match complete
+      await updateMatchStatus(id, 'completed');
+      const winner = match.battingTeam === 'teamA' ? match.teamA.name : match.teamB.name;
+      const wicketsRemaining = 10 - currentInnings.wickets;
+      
+      Alert.alert(
+        'Match Complete',
+        `${winner} won by ${wicketsRemaining} wicket${wicketsRemaining !== 1 ? 's' : ''}!`,
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+      return true;
+    }
+    return false;
+  };
+
   const checkInningsComplete = async () => {
     if (!match || !id) return;
     
     const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
     
     // Check if innings is complete (all overs bowled or 10 wickets)
-    if (currentInnings.overs >= match.totalOvers || currentInnings.wickets >= 10) {
+    const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
+    const maxBalls = match.totalOvers * 6;
+    
+    if (totalBallsBowled >= maxBalls || currentInnings.wickets >= 10) {
       if (match.currentInnings === 1) {
         // Switch to 2nd innings
         Alert.alert(
@@ -216,8 +416,10 @@ export default function UmpireScoringScreen() {
               text: 'Start 2nd Innings',
               onPress: async () => {
                 await switchInnings(id);
-                // Navigate to toss screen for 2nd innings setup
-                router.replace(`/umpire/toss/${id}`);
+                // Open 2nd innings setup modal (no toss needed)
+                setSecondInningsBatsmen([]);
+                setSecondInningsOnStrike(null);
+                setSecondInningsSetupOpen(true);
               }
             }
           ]
@@ -288,15 +490,71 @@ export default function UmpireScoringScreen() {
             {match.teamA.name} vs {match.teamB.name}
           </Text>
 
-          <View style={styles.scoreDisplay}>
-            <Text style={styles.scoreLabel}>Current Score</Text>
-            <Text style={styles.scoreValue}>
-              {match.score.runs}/{match.score.wickets}
-            </Text>
-            <Text style={styles.oversValue}>
-              ({match.score.overs}.{match.score.balls} overs)
-            </Text>
-          </View>
+          {match.battingTeam ? (
+            <>
+              <View style={styles.scoreDisplay}>
+                <Text style={styles.scoreLabel}>Current Score</Text>
+                <Text style={styles.scoreValue}>
+                  {match.battingTeam === 'teamA' 
+                    ? `${match.teamAInnings.runs}/${match.teamAInnings.wickets}`
+                    : `${match.teamBInnings.runs}/${match.teamBInnings.wickets}`
+                  }
+                </Text>
+                <Text style={styles.oversValue}>
+                  ({match.battingTeam === 'teamA'
+                    ? `${match.teamAInnings.overs}.${match.teamAInnings.balls}`
+                    : `${match.teamBInnings.overs}.${match.teamBInnings.balls}`
+                  } / {match.totalOvers} overs)
+                </Text>
+              </View>
+
+              {isInningsComplete() && match.currentInnings === 1 && (
+                <View style={styles.inningsCompleteCard}>
+                  <Text style={styles.inningsCompleteText}>
+                    First Innings Complete!
+                  </Text>
+                  <TouchableOpacity 
+                    style={styles.startSecondInningsButton}
+                    onPress={() => checkInningsComplete()}
+                  >
+                    <Text style={styles.startSecondInningsButtonText}>Start 2nd Innings</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <View style={styles.bowlerInfo}>
+                <Text style={styles.bowlerLabel}>Current Bowler</Text>
+                {(() => {
+                  const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+                  const bowlingPlayers = match.battingTeam === 'teamA' ? teamBPlayers : teamAPlayers;
+                  
+                  if (currentInnings?.currentBowlerUid) {
+                    const bowler = bowlingPlayers.find(p => p.uid === currentInnings.currentBowlerUid);
+                    const bowlerStats = currentInnings.bowlers?.find(b => b.uid === currentInnings.currentBowlerUid);
+                    
+                    return (
+                      <Text style={styles.bowlerName}>
+                        {bowler?.name || 'Unknown'} 
+                        {bowlerStats && ` (${bowlerStats.overs}.${bowlerStats.balls} - ${bowlerStats.runs}/${bowlerStats.wickets})`}
+                      </Text>
+                    );
+                  } else {
+                    return (
+                      <TouchableOpacity onPress={() => setBowlerSelectionModalVisible(true)}>
+                        <Text style={styles.selectBowlerText}>Tap to Select Bowler</Text>
+                      </TouchableOpacity>
+                    );
+                  }
+                })()}
+              </View>
+            </>
+          ) : (
+            <View style={styles.scoreDisplay}>
+              <Text style={styles.scoreLabel}>Waiting for Toss</Text>
+              <Text style={styles.scoreValue}>0/0</Text>
+              <Text style={styles.oversValue}>(0.0 overs)</Text>
+            </View>
+          )}
 
           {match.status === 'upcoming' && (
             <View style={styles.section}>
@@ -354,48 +612,48 @@ export default function UmpireScoringScreen() {
               )}
 
               {/* Runs */}
-              <View style={styles.section}>
+              <View style={styles.runsSection}>
                 <Text style={styles.sectionTitle}>Runs</Text>
                 <View style={styles.buttonGrid}>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.dotButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.dotButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={addDotBall}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>Dot</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(1)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>1</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(2)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>2</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(3)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>3</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(4)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>4</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(6)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>6</Text>
                   </TouchableOpacity>
@@ -403,46 +661,46 @@ export default function UmpireScoringScreen() {
               </View>
 
               {/* Wicket */}
-              <View style={styles.section}>
+              <View style={styles.wicketSection}>
                 <Text style={styles.sectionTitle}>Wicket</Text>
                 <TouchableOpacity
-                  style={[styles.scoreButton, styles.wicketButton, scoring && styles.disabledButton]}
+                  style={[styles.scoreButton, styles.wicketButton, styles.fullWidthButton, (scoring || isInningsComplete()) && styles.disabledButton]}
                   onPress={handleWicket}
-                  disabled={scoring}
+                  disabled={scoring || isInningsComplete()}
                 >
                   <Text style={styles.scoreButtonText}>Wicket</Text>
                 </TouchableOpacity>
               </View>
 
               {/* Extras - Wide */}
-              <View style={styles.section}>
+              <View style={styles.extrasSection}>
                 <Text style={styles.sectionTitle}>Wide (1 + extra runs)</Text>
                 <View style={styles.buttonGrid}>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addWide(0)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>Wd +0</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addWide(1)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>Wd +1</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addWide(2)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>Wd +2</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addWide(4)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>Wd +4</Text>
                   </TouchableOpacity>
@@ -450,34 +708,34 @@ export default function UmpireScoringScreen() {
               </View>
 
               {/* Extras - No Ball */}
-              <View style={styles.section}>
+              <View style={styles.extrasSection}>
                 <Text style={styles.sectionTitle}>No Ball (1 + extra runs)</Text>
                 <View style={styles.buttonGrid}>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addNoBall(0)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>NB +0</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addNoBall(1)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>NB +1</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addNoBall(2)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>NB +2</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, scoring && styles.disabledButton]} 
+                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addNoBall(4)}
-                    disabled={scoring}
+                    disabled={scoring || isInningsComplete()}
                   >
                     <Text style={styles.scoreButtonText}>NB +4</Text>
                   </TouchableOpacity>
@@ -541,6 +799,190 @@ export default function UmpireScoringScreen() {
                         <Ionicons name="checkmark-circle-outline" size={24} color="#007AFF" />
                       </TouchableOpacity>
                     ))}
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 2nd Innings Setup Modal */}
+      <Modal
+        visible={secondInningsSetupOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSecondInningsSetupOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>2nd Innings Setup</Text>
+                <Text style={styles.modalSubtitle}>
+                  {match?.battingTeam === 'teamA' ? match?.teamA.name : match?.teamB.name} to Bat
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setSecondInningsSetupOpen(false)}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.setupInstructions}>
+                Select 2 opening batsmen ({secondInningsBatsmen.length}/2 selected)
+              </Text>
+
+              {loadingPlayers ? (
+                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
+              ) : (
+                <>
+                  {(match?.battingTeam === 'teamA' ? teamAPlayers : teamBPlayers).map((player) => {
+                    const isSelected = secondInningsBatsmen.includes(player.uid);
+                    const isOnStrike = secondInningsOnStrike === player.uid;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={player.uid}
+                        style={[
+                          styles.playerSelectItem,
+                          isSelected && styles.playerSelectItemSelected,
+                          isOnStrike && styles.playerSelectItemOnStrike
+                        ]}
+                        onPress={() => handleSecondInningsBatsmanSelect(player.uid)}
+                      >
+                        <View style={styles.playerSelectAvatar}>
+                          <Text style={styles.playerSelectAvatarText}>
+                            {player.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={styles.playerSelectInfo}>
+                          <Text style={styles.playerSelectName}>{player.name}</Text>
+                          {player.username && (
+                            <Text style={styles.playerSelectUsername}>@{player.username}</Text>
+                          )}
+                        </View>
+                        {isSelected && (
+                          <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  {secondInningsBatsmen.length === 2 && (
+                    <>
+                      <Text style={styles.onStrikeInstructions}>
+                        Tap a selected batsman to mark them on strike:
+                      </Text>
+                      
+                      {secondInningsBatsmen.map((uid) => {
+                        const player = (match?.battingTeam === 'teamA' ? teamAPlayers : teamBPlayers).find(p => p.uid === uid);
+                        if (!player) return null;
+                        
+                        return (
+                          <TouchableOpacity
+                            key={uid}
+                            style={[
+                              styles.strikeSelectItem,
+                              secondInningsOnStrike === uid && styles.strikeSelectItemActive
+                            ]}
+                            onPress={() => setSecondInningsOnStrike(uid)}
+                          >
+                            <Text style={styles.strikeSelectName}>{player.name}</Text>
+                            {secondInningsOnStrike === uid && (
+                              <Ionicons name="radio-button-on" size={24} color="#FF9500" />
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+
+                      <View style={styles.startInningsButtonContainer}>
+                        <Button
+                          title="Start 2nd Innings"
+                          onPress={handleStartSecondInnings}
+                          loading={scoring}
+                        />
+                      </View>
+                    </>
+                  )}
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Bowler Selection Modal */}
+      <Modal
+        visible={bowlerSelectionModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setBowlerSelectionModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Select Bowler</Text>
+                <Text style={styles.modalSubtitle}>Choose who will bowl this over</Text>
+              </View>
+              <TouchableOpacity onPress={() => setBowlerSelectionModalVisible(false)}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              {loadingPlayers ? (
+                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
+              ) : (
+                <>
+                  {(match?.battingTeam === 'teamA' ? teamBPlayers : teamAPlayers).map((player) => {
+                    const currentInnings = match?.battingTeam === 'teamA' ? match?.teamAInnings : match?.teamBInnings;
+                    const isLastBowler = currentInnings?.lastBowlerUid === player.uid;
+                    const bowlerStats = currentInnings?.bowlers?.find(b => b.uid === player.uid);
+                    const isCurrentBowler = currentInnings?.currentBowlerUid === player.uid;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={player.uid}
+                        style={[
+                          styles.bowlerSelectItem,
+                          isLastBowler && styles.bowlerSelectItemDisabled,
+                          isCurrentBowler && styles.bowlerSelectItemCurrent
+                        ]}
+                        onPress={() => handleSelectBowler(player.uid)}
+                        disabled={isLastBowler || selectingBowler}
+                      >
+                        <View style={styles.playerSelectAvatar}>
+                          <Text style={styles.playerSelectAvatarText}>
+                            {player.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={styles.playerSelectInfo}>
+                          <Text style={[styles.playerSelectName, isLastBowler && styles.disabledText]}>
+                            {player.name}
+                          </Text>
+                          {player.username && (
+                            <Text style={[styles.playerSelectUsername, isLastBowler && styles.disabledText]}>
+                              @{player.username}
+                            </Text>
+                          )}
+                          {bowlerStats && (
+                            <Text style={styles.bowlerStatsText}>
+                              {bowlerStats.overs}.{bowlerStats.balls} overs - {bowlerStats.runs}/{bowlerStats.wickets}
+                            </Text>
+                          )}
+                          {isLastBowler && (
+                            <Text style={styles.rotationRuleText}>
+                              Cannot bowl consecutive overs
+                            </Text>
+                          )}
+                        </View>
+                        {isCurrentBowler && (
+                          <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
                 </>
               )}
             </ScrollView>
@@ -625,8 +1067,110 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#666'
   },
+  bowlerInfo: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2
+  },
+  bowlerLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8
+  },
+  bowlerName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#007AFF'
+  },
+  selectBowlerText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF9500',
+    textDecorationLine: 'underline'
+  },
+  inningsCompleteCard: {
+    backgroundColor: '#f0fdf4',
+    padding: 20,
+    borderRadius: 12,
+    marginTop: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#34C759',
+    alignItems: 'center'
+  },
+  inningsCompleteText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#34C759',
+    marginBottom: 16,
+    textAlign: 'center'
+  },
+  startSecondInningsButton: {
+    backgroundColor: '#34C759',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8
+  },
+  startSecondInningsButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600'
+  },
   section: {
-    marginBottom: 24
+    marginBottom: 28,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2
+  },
+  runsSection: {
+    marginBottom: 32,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4
+  },
+  wicketSection: {
+    marginBottom: 32,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4
+  },
+  extrasSection: {
+    marginBottom: 32,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4
+  },
+  fullWidthButton: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: '100%'
   },
   sectionTitle: {
     fontSize: 18,
@@ -746,7 +1290,8 @@ const styles = StyleSheet.create({
   buttonGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8
+    gap: 8,
+    justifyContent: 'space-between'
   },
   dotButton: {
     backgroundColor: '#666'
@@ -817,5 +1362,88 @@ const styles = StyleSheet.create({
   playerSelectUsername: {
     fontSize: 14,
     color: '#666'
+  },
+  playerSelectItemSelected: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#34C759'
+  },
+  playerSelectItemOnStrike: {
+    backgroundColor: '#fff9f0',
+    borderColor: '#FF9500'
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4
+  },
+  setupInstructions: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    fontWeight: '600'
+  },
+  onStrikeInstructions: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 16,
+    marginBottom: 12,
+    fontWeight: '600'
+  },
+  strikeSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    marginBottom: 8,
+    backgroundColor: '#fff'
+  },
+  strikeSelectItemActive: {
+    backgroundColor: '#fff9f0',
+    borderColor: '#FF9500'
+  },
+  strikeSelectName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  startInningsButtonContainer: {
+    marginTop: 20
+  },
+  bowlerSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginBottom: 8,
+    backgroundColor: '#fff'
+  },
+  bowlerSelectItemDisabled: {
+    backgroundColor: '#f5f5f5',
+    opacity: 0.6
+  },
+  bowlerSelectItemCurrent: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#34C759'
+  },
+  bowlerStatsText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '600',
+    marginTop: 4
+  },
+  rotationRuleText: {
+    fontSize: 11,
+    color: '#FF3B30',
+    fontStyle: 'italic',
+    marginTop: 2
+  },
+  disabledText: {
+    color: '#999'
   }
 });
