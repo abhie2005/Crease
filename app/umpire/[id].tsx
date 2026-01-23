@@ -102,7 +102,8 @@ export default function UmpireScoringScreen() {
     // 1. No current bowler
     // 2. Balls === 0 (new over starting)
     // 3. Innings is NOT complete
-    if (!currentInnings?.currentBowlerUid && currentInnings?.balls === 0 && !isComplete) {
+    // 4. 2nd innings setup is NOT open
+    if (!currentInnings?.currentBowlerUid && currentInnings?.balls === 0 && !isComplete && !secondInningsSetupOpen) {
       setBowlerSelectionModalVisible(true);
     }
   }, [match?.teamAInnings?.currentBowlerUid, match?.teamBInnings?.currentBowlerUid, match?.teamAInnings?.balls, match?.teamBInnings?.balls, match?.teamAInnings?.overs, match?.teamBInnings?.overs, match?.teamAInnings?.wickets, match?.teamBInnings?.wickets, match?.status, match?.battingTeam, match?.totalOvers]);
@@ -193,6 +194,20 @@ export default function UmpireScoringScreen() {
     const currentInnings = match.battingTeam === "teamA" ? match.teamAInnings : match.teamBInnings;
     if (!currentInnings) return;
 
+    // Check for target reached in 2nd innings
+    if (match.currentInnings === 2) {
+      const bowlingTeamInnings = match.battingTeam === "teamA" ? match.teamBInnings : match.teamAInnings;
+      if (bowlingTeamInnings) {
+        const targetRuns = bowlingTeamInnings.runs + 1;
+        if (currentInnings.runs >= targetRuns) {
+          const timer = setTimeout(() => {
+            checkTargetReached();
+          }, 500);
+          return () => clearTimeout(timer);
+        }
+      }
+    }
+
     const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
     const maxBalls = (match.totalOvers || 0) * 6;
     
@@ -204,7 +219,22 @@ export default function UmpireScoringScreen() {
         return () => clearTimeout(timer);
       }
     }
-  }, [match?.teamAInnings?.overs, match?.teamBInnings?.overs, match?.teamAInnings?.balls, match?.teamBInnings?.balls, match?.teamAInnings?.wickets, match?.teamBInnings?.wickets, match?.status, match?.battingTeam, match?.totalOvers, checkInningsComplete]);
+  }, [
+    match?.teamAInnings?.runs, 
+    match?.teamBInnings?.runs,
+    match?.teamAInnings?.overs, 
+    match?.teamBInnings?.overs, 
+    match?.teamAInnings?.balls, 
+    match?.teamBInnings?.balls, 
+    match?.teamAInnings?.wickets, 
+    match?.teamBInnings?.wickets, 
+    match?.status, 
+    match?.battingTeam, 
+    match?.totalOvers, 
+    match?.currentInnings,
+    checkInningsComplete,
+    checkTargetReached
+  ]);
 
   // Early returns must come AFTER all hooks
   if (loading) {
@@ -384,7 +414,10 @@ export default function UmpireScoringScreen() {
       setBatsmenModalVisible(false);
       await addWicketService(id, dismissedBatsmanUid, newBatsmanUid);
       setDismissedBatsmanUid(null);
-      await checkInningsComplete();
+      const targetReached = await checkTargetReached();
+      if (!targetReached) {
+        await checkInningsComplete();
+      }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to record wicket');
     } finally {
@@ -434,6 +467,7 @@ export default function UmpireScoringScreen() {
       setSecondInningsSetupOpen(false);
       setSecondInningsBatsmen([]);
       setSecondInningsOnStrike(null);
+      setProcessingInningsTransition(false);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to setup 2nd innings');
     } finally {
