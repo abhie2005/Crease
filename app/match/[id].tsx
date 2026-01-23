@@ -83,9 +83,6 @@ export default function MatchDetailsScreen() {
         console.log('[MatchDetails] Filtered Team A UIDs:', teamAUids);
         console.log('[MatchDetails] Filtered Team B UIDs:', teamBUids);
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers',message:'Starting player fetch',data:{teamAUids:teamAUids,teamBUids:teamBUids,teamACount:teamAUids.length,teamBCount:teamBUids.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         
         setLoadingPlayers(true);
         
@@ -97,17 +94,11 @@ export default function MatchDetailsScreen() {
         console.log('[MatchDetails] Players fetched - Team A:', playersA.length, playersA.map(p => ({ uid: p.uid, name: p.name })));
         console.log('[MatchDetails] Players fetched - Team B:', playersB.length, playersB.map(p => ({ uid: p.uid, name: p.name })));
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers',message:'Players fetched successfully',data:{playersACount:playersA.length,playersBCount:playersB.length,playersA:playersA.map(p=>({uid:p.uid,name:p.name,username:p.username})),playersB:playersB.map(p=>({uid:p.uid,name:p.name,username:p.username}))},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         
         setTeamAPlayers(playersA);
         setTeamBPlayers(playersB);
       } catch (error) {
         console.log('[MatchDetails] Error fetching players:', error);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:fetchPlayers:catch',message:'Error fetching players',data:{errorMessage:error instanceof Error ? error.message : String(error),errorStack:error instanceof Error ? error.stack : undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         console.error('Error fetching players:', error);
         setTeamAPlayers([]);
         setTeamBPlayers([]);
@@ -140,9 +131,6 @@ export default function MatchDetailsScreen() {
   const handleDelete = async () => {
     if (!id) return;
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete',message:'Delete match initiated',data:{matchId:id,userId:userProfile?.uid,userRole:userProfile?.role,canManage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
 
     Alert.alert(
       'Delete Match',
@@ -155,19 +143,10 @@ export default function MatchDetailsScreen() {
           onPress: async () => {
             try {
               setLoading(true);
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete:onPress',message:'Before deleteMatch call',data:{matchId:id,userId:userProfile?.uid,userRole:userProfile?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-              // #endregion
               await deleteMatch(id);
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete:onPress',message:'Delete match succeeded',data:{matchId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-              // #endregion
               router.replace('/');
             } catch (error: any) {
               setLoading(false);
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/match/[id].tsx:handleDelete:onPress:catch',message:'Delete match failed',data:{matchId:id,errorMessage:error?.message,errorCode:error?.code,errorName:error?.name,userId:userProfile?.uid,userRole:userProfile?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-              // #endregion
               Alert.alert('Error', error.message || 'Failed to delete match');
             }
           }

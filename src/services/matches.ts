@@ -677,23 +677,10 @@ export const selectBowler = async (
 };
 
 export const deleteMatch = async (matchId: string): Promise<void> => {
-  // #region agent log
-  const currentUser = auth.currentUser;
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/matches.ts:deleteMatch',message:'deleteMatch called',data:{matchId,hasCurrentUser:!!currentUser,currentUserId:currentUser?.uid,currentUserEmail:currentUser?.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
   const matchRef = matchDoc(matchId);
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/matches.ts:deleteMatch',message:'Before deleteDoc call',data:{matchId,matchRefPath:matchRef.path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-  // #endregion
   try {
     await deleteDoc(matchRef);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/matches.ts:deleteMatch',message:'deleteDoc succeeded',data:{matchId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
   } catch (error: any) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/matches.ts:deleteMatch:catch',message:'deleteDoc failed',data:{matchId,errorMessage:error?.message,errorCode:error?.code,errorName:error?.name,errorStack:error?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-    // #endregion
     throw error;
   }
 };

@@ -45,29 +45,17 @@ export const createOrUpdateUser = async (
   }
 
   await setDoc(userRef, userData, { merge: true });
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:createOrUpdateUser',message:'User saved to Firestore',data:{uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
 };
 
 export const getUser = async (uid: string): Promise<User | null> => {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUser',message:'Fetching user from Firestore',data:{uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   const userRef = userDoc(uid);
   const userSnap = await getDoc(userRef);
   
   if (!userSnap.exists()) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUser',message:'User document does not exist',data:{uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     return null;
   }
   
   const userData = userSnap.data();
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUser',message:'User document found',data:{uid,hasName:!!userData?.name,name:userData?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   return userData;
 };
 
@@ -180,9 +168,6 @@ export const getUserByUsername = async (username: string): Promise<User | null> 
  */
 export const getUsersByUids = async (uids: string[]): Promise<User[]> => {
   console.log('[getUsersByUids] Called with:', uids);
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUsersByUids',message:'Function called',data:{uidsInput:uids,uidsLength:uids?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   if (!uids || uids.length === 0) {
     console.log('[getUsersByUids] Empty uids, returning []');
     return [];
@@ -203,9 +188,6 @@ export const getUsersByUids = async (uids: string[]): Promise<User[]> => {
   const uniqueUids = Array.from(new Set(validUids));
   console.log('[getUsersByUids] Valid unique UIDs:', uniqueUids);
   
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUsersByUids',message:'Fetching users by document ID',data:{uniqueUids:uniqueUids,count:uniqueUids.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   
   try {
     // Fetch all users in parallel using their document IDs
@@ -227,9 +209,6 @@ export const getUsersByUids = async (uids: string[]): Promise<User[]> => {
         if (userData) {
           const userWithUid = { ...userData, uid };
           console.log('[getUsersByUids] Found user:', uid, userWithUid.name);
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUsersByUids',message:'Found user',data:{uid:uid,name:userWithUid?.name,username:userWithUid?.username},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           allUsers.push(userWithUid);
         }
       } else {
@@ -245,16 +224,10 @@ export const getUsersByUids = async (uids: string[]): Promise<User[]> => {
         };
         allUsers.push(placeholderUser);
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUsersByUids',message:'User not found, using placeholder',data:{uid:uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
       }
     });
     
     console.log('[getUsersByUids] Returning', allUsers.length, 'users out of', uniqueUids.length, 'requested');
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUsersByUids',message:'Returning users',data:{allUsersCount:allUsers.length,requestedCount:uniqueUids.length,allUsers:allUsers.map(u=>({uid:u.uid,name:u.name,username:u.username}))},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     
     return allUsers;
   } catch (error) {

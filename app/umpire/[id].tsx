@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -43,6 +43,7 @@ export default function UmpireScoringScreen() {
   const [secondInningsOnStrike, setSecondInningsOnStrike] = useState<string | null>(null);
   const [bowlerSelectionModalVisible, setBowlerSelectionModalVisible] = useState(false);
   const [selectingBowler, setSelectingBowler] = useState(false);
+  const [processingInningsTransition, setProcessingInningsTransition] = useState(false);
   const [teamAPlayers, setTeamAPlayers] = useState<User[]>([]);
   const [teamBPlayers, setTeamBPlayers] = useState<User[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
@@ -106,24 +107,106 @@ export default function UmpireScoringScreen() {
     }
   }, [match?.teamAInnings?.currentBowlerUid, match?.teamBInnings?.currentBowlerUid, match?.teamAInnings?.balls, match?.teamBInnings?.balls, match?.teamAInnings?.overs, match?.teamBInnings?.overs, match?.teamAInnings?.wickets, match?.teamBInnings?.wickets, match?.status, match?.battingTeam, match?.totalOvers]);
 
-  // Auto-detect innings completion
-  useEffect(() => {
-    if (!match || !match.battingTeam || match.status !== 'live') return;
+  // Define checkInningsComplete BEFORE early returns to avoid hook order violation
+  const checkTargetReached = useCallback(async () => {
+    if (!match || !id || processingInningsTransition || match.currentInnings !== 2) return false;
     
-    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
+    const currentInnings = match.battingTeam === "teamA" ? match.teamAInnings : match.teamBInnings;
+    const bowlingTeamInnings = match.battingTeam === "teamA" ? match.teamBInnings : match.teamAInnings;
+    
+    if (!currentInnings || !bowlingTeamInnings) return false;
+
+    const targetRuns = bowlingTeamInnings.runs + 1;
+    
+    if (currentInnings.runs >= targetRuns) {
+      setProcessingInningsTransition(true);
+      try {
+        await updateMatchStatus(id, "completed");
+        const winner = match.battingTeam === "teamA" ? match.teamA.name : match.teamB.name;
+        const wicketsLost = currentInnings.wickets;
+        const wicketsWonBy = 10 - wicketsLost;
+        
+        Alert.alert(
+          "Match Complete",
+          winner + " won by " + wicketsWonBy + " wicket" + (wicketsWonBy !== 1 ? "s" : "") + "!",
+          [
+            { text: "OK", onPress: () => router.back() }
+          ]
+        );
+        return true;
+      } catch (error) {
+        console.error("Error completing match:", error);
+      } finally {
+        setProcessingInningsTransition(false);
+      }
+    }
+    return false;
+  }, [match, id, router, processingInningsTransition]);
+
+  const checkInningsComplete = useCallback(async () => {
+    if (!match || !id || processingInningsTransition) return;
+    
+    const currentInnings = match?.battingTeam === "teamA" ? match?.teamAInnings : match?.teamBInnings;
+    if (!currentInnings) return;
+    
     const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
-    const maxBalls = match.totalOvers * 6;
+    const maxBalls = (match?.totalOvers || 0) * 6;
     
     if (totalBallsBowled >= maxBalls || currentInnings.wickets >= 10) {
-      // Small delay to ensure state is updated
-      const timer = setTimeout(() => {
-        checkInningsComplete();
-      }, 500);
+      setProcessingInningsTransition(true);
       
-      return () => clearTimeout(timer);
+      if (match.currentInnings === 1) {
+        if (!id) return;
+        try {
+          await switchInnings(id);
+          setSecondInningsBatsmen([]);
+          setSecondInningsOnStrike(null);
+          setSecondInningsSetupOpen(true);
+        } catch (error) {
+          console.error("Error switching innings:", error);
+          Alert.alert("Error", "Failed to start 2nd innings");
+        } finally {
+          setProcessingInningsTransition(false);
+        }
+      } else {
+        if (!id) return;
+        await updateMatchStatus(id, "completed");
+        const teamAScore = match.teamAInnings?.runs || 0;
+        const teamBScore = match.teamBInnings?.runs || 0;
+        const winner = teamAScore > teamBScore ? match.teamA.name : teamBScore > teamAScore ? match.teamB.name : "Tie";
+        
+        Alert.alert(
+          "Match Complete",
+          winner === "Tie" ? "Match ended in a tie!" : winner + " won the match!",
+          [
+            { text: "OK", onPress: () => router.back() }
+          ]
+        );
+        setProcessingInningsTransition(false);
+      }
     }
-  }, [match?.teamAInnings?.overs, match?.teamBInnings?.overs, match?.teamAInnings?.balls, match?.teamBInnings?.balls, match?.teamAInnings?.wickets, match?.teamBInnings?.wickets, match?.status, match?.battingTeam, match?.totalOvers]);
+  }, [match, id, router, processingInningsTransition]);
 
+  useEffect(() => {
+    if (!match || !match.battingTeam || match.status !== "live") return;
+    
+    const currentInnings = match.battingTeam === "teamA" ? match.teamAInnings : match.teamBInnings;
+    if (!currentInnings) return;
+
+    const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
+    const maxBalls = (match.totalOvers || 0) * 6;
+    
+    if (totalBallsBowled >= maxBalls || currentInnings.wickets >= 10) {
+      if (match.currentInnings === 2) {
+        const timer = setTimeout(() => {
+          checkInningsComplete();
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [match?.teamAInnings?.overs, match?.teamBInnings?.overs, match?.teamAInnings?.balls, match?.teamBInnings?.balls, match?.teamAInnings?.wickets, match?.teamBInnings?.wickets, match?.status, match?.battingTeam, match?.totalOvers, checkInningsComplete]);
+
+  // Early returns must come AFTER all hooks
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -372,75 +455,7 @@ export default function UmpireScoringScreen() {
     }
   };
 
-  const checkTargetReached = async () => {
-    if (!match || !id || match.currentInnings !== 2) return false;
-    
-    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
-    const targetRuns = match.battingTeam === 'teamA' 
-      ? match.teamBInnings.runs + 1 
-      : match.teamAInnings.runs + 1;
-    
-    if (currentInnings.runs >= targetRuns) {
-      // Target reached - match complete
-      await updateMatchStatus(id, 'completed');
-      const winner = match.battingTeam === 'teamA' ? match.teamA.name : match.teamB.name;
-      const wicketsRemaining = 10 - currentInnings.wickets;
-      
-      Alert.alert(
-        'Match Complete',
-        `${winner} won by ${wicketsRemaining} wicket${wicketsRemaining !== 1 ? 's' : ''}!`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-      return true;
-    }
-    return false;
-  };
 
-  const checkInningsComplete = async () => {
-    if (!match || !id) return;
-    
-    const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
-    
-    // Check if innings is complete (all overs bowled or 10 wickets)
-    const totalBallsBowled = currentInnings.overs * 6 + currentInnings.balls;
-    const maxBalls = match.totalOvers * 6;
-    
-    if (totalBallsBowled >= maxBalls || currentInnings.wickets >= 10) {
-      if (match.currentInnings === 1) {
-        // Switch to 2nd innings
-        Alert.alert(
-          'First Innings Complete',
-          `${match.battingTeam === 'teamA' ? match.teamA.name : match.teamB.name} scored ${currentInnings.runs}/${currentInnings.wickets}. Ready to start 2nd innings?`,
-          [
-            {
-              text: 'Start 2nd Innings',
-              onPress: async () => {
-                await switchInnings(id);
-                // Open 2nd innings setup modal (no toss needed)
-                setSecondInningsBatsmen([]);
-                setSecondInningsOnStrike(null);
-                setSecondInningsSetupOpen(true);
-              }
-            }
-          ]
-        );
-      } else {
-        // Match complete
-        await updateMatchStatus(id, 'completed');
-        const teamAScore = match.teamAInnings.runs;
-        const teamBScore = match.teamBInnings.runs;
-        const winner = teamAScore > teamBScore ? match.teamA.name : teamBScore > teamAScore ? match.teamB.name : 'Tie';
-        
-        Alert.alert(
-          'Match Complete',
-          winner === 'Tie' ? 'Match ended in a tie!' : `${winner} won the match!`,
-          [
-            { text: 'OK', onPress: () => router.back() }
-          ]
-        );
-      }
-    }
-  };
 
   const startMatch = () => {
     if (!id) return;
