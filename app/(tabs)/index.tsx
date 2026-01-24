@@ -89,9 +89,44 @@ export default function HomeScreen() {
         )}
         {item.status === 'live' && (
           <View style={styles.scoreContainer}>
-            <Text style={styles.scoreText}>
-              {item.score.runs}/{item.score.wickets} ({item.score.overs}.
-              {item.score.balls})
+            {(() => {
+              const currentInnings = item.battingTeam === 'teamA' ? item.teamAInnings : item.teamBInnings;
+              const battingTeamName = item.battingTeam === 'teamA' ? item.teamA.name : item.teamB.name;
+              
+              if (!currentInnings) return null;
+
+              return (
+                <>
+                  <Text style={styles.scoreText}>
+                    <Text style={{ fontWeight: 'bold', color: '#333' }}>{battingTeamName}: </Text>
+                    {currentInnings.runs}/{currentInnings.wickets} ({currentInnings.overs}.{currentInnings.balls}/{item.totalOvers})
+                  </Text>
+                  {item.currentInnings === 2 && (
+                    <Text style={[styles.scoreText, { fontSize: 13, color: '#FFA500', marginTop: 4, fontWeight: '600' }]}>
+                      Target: {(item.battingTeam === 'teamA' ? item.teamBInnings.runs : item.teamAInnings.runs) + 1} runs
+                    </Text>
+                  )}
+                </>
+              );
+            })()}
+          </View>
+        )}
+        {item.status === 'completed' && (
+          <View style={styles.scoreContainer}>
+            <Text style={[styles.scoreText, { color: '#00AA00', fontWeight: 'bold' }]}>
+              {(() => {
+                const teamAScore = item.teamAInnings?.runs || 0;
+                const teamBScore = item.teamBInnings?.runs || 0;
+                if (teamAScore === teamBScore) return 'Match Tied';
+                const winner = teamAScore > teamBScore ? item.teamA.name : item.teamB.name;
+                return `${winner} won`;
+              })()}
+            </Text>
+            <Text style={[styles.scoreText, { fontSize: 12, marginTop: 2 }]}>
+              {item.teamA.name}: {item.teamAInnings?.runs || 0}/{item.teamAInnings?.wickets || 0} ({item.teamAInnings?.overs || 0}.{item.teamAInnings?.balls || 0})
+            </Text>
+            <Text style={[styles.scoreText, { fontSize: 12 }]}>
+              {item.teamB.name}: {item.teamBInnings?.runs || 0}/{item.teamBInnings?.wickets || 0} ({item.teamBInnings?.overs || 0}.{item.teamBInnings?.balls || 0})
             </Text>
           </View>
         )}
