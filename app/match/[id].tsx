@@ -161,6 +161,115 @@ export default function MatchDetailsScreen() {
     completed: '#00AA00'
   };
 
+  // Helper function to group ball events into overs
+  const groupBallsIntoOvers = (ballEvents: any[]) => {
+    const overs: any[][] = [];
+    let currentOver: any[] = [];
+    let legalBalls = 0;
+
+    ballEvents.forEach((ball) => {
+      currentOver.push(ball);
+      
+      // Wide and no-ball don't count as legal deliveries
+      if (!ball.isWide && !ball.isNoBall) {
+        legalBalls++;
+        
+        // Complete over after 6 legal deliveries
+        if (legalBalls === 6) {
+          overs.push([...currentOver]);
+          currentOver = [];
+          legalBalls = 0;
+        }
+      }
+    });
+    
+    // Add incomplete over if exists
+    if (currentOver.length > 0) {
+      overs.push(currentOver);
+    }
+    
+    return overs;
+  };
+
+  // Helper function to get ball color based on ball type
+  const getBallColor = (ball: any) => {
+    if (ball.isWicket) return '#8B0000';  // Dark red for wicket
+    if (ball.isNoBall || ball.isWide) return '#FF0000';  // Red for extras
+    if (ball.runs === 6) return '#00AA00';  // Green for six
+    if (ball.runs === 4) return '#0066CC';  // Blue for four
+    if (ball.runs === 0 || ball.isDot) return '#CCCCCC';  // Gray for dot
+    return '#FFB800';  // Yellow/orange for 1-3 runs
+  };
+
+  // Helper function to get ball display text
+  const getBallText = (ball: any) => {
+    if (ball.isWicket) return 'W';
+    if (ball.isNoBall) return 'NB';
+    if (ball.isWide) return 'WD';
+    return ball.runs.toString();
+  };
+
+  // Render function for over breakdown
+  const renderOverBreakdown = (innings: any, teamName: string) => {
+    if (!innings || !innings.ballEvents || innings.ballEvents.length === 0) return null;
+    
+    const overs = groupBallsIntoOvers(innings.ballEvents);
+    
+    return (
+      <View style={styles.overBreakdownCard}>
+        <Text style={styles.overBreakdownTitle}>{teamName} - Ball by Ball</Text>
+        <View style={styles.oversListContainer}>
+          {overs.map((over, overIndex) => (
+            <View key={overIndex} style={styles.overRow}>
+              <Text style={styles.overLabel}>Over {overIndex + 1}</Text>
+              <View style={styles.ballsRow}>
+                {over.map((ball, ballIndex) => (
+                  <View 
+                    key={ballIndex}
+                    style={[
+                      styles.ballCircle,
+                      { backgroundColor: getBallColor(ball) }
+                    ]}
+                  >
+                    <Text style={styles.ballText}>{getBallText(ball)}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
+        
+        {/* Legend */}
+        <View style={styles.legendContainer}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendCircle, { backgroundColor: '#8B0000' }]} />
+            <Text style={styles.legendText}>Wicket</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendCircle, { backgroundColor: '#00AA00' }]} />
+            <Text style={styles.legendText}>Six</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendCircle, { backgroundColor: '#0066CC' }]} />
+            <Text style={styles.legendText}>Four</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendCircle, { backgroundColor: '#FFB800' }]} />
+            <Text style={styles.legendText}>1-3</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendCircle, { backgroundColor: '#CCCCCC' }]} />
+            <Text style={styles.legendText}>Dot</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendCircle, { backgroundColor: '#FF0000' }]} />
+            <Text style={styles.legendText}>Wide/NB</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderTeamCard = (
     teamName: string,
     team: { name: string; playerUids: string[] },
@@ -286,6 +395,22 @@ export default function MatchDetailsScreen() {
                 {match.currentInnings && ` • ${match.currentInnings === 1 ? '1st' : '2nd'} Innings`}
               </Text>
             )}
+
+            {/* Target Card for 2nd Innings */}
+            {match.currentInnings === 2 && match.status === 'live' && (
+              <View style={styles.targetCard}>
+                <Text style={styles.targetLabel}>TARGET</Text>
+                <Text style={styles.targetValue}>
+                  {(match.battingTeam === 'teamA' ? match.teamBInnings.runs : match.teamAInnings.runs) + 1} runs
+                </Text>
+                <Text style={styles.targetSubtext}>
+                  {match.battingTeam === 'teamA' ? match.teamA.name : match.teamB.name} needs {
+                    ((match.battingTeam === 'teamA' ? match.teamBInnings.runs : match.teamAInnings.runs) + 1) - 
+                    (match.battingTeam === 'teamA' ? match.teamAInnings.runs : match.teamBInnings.runs)
+                  } runs to win
+                </Text>
+              </View>
+            )}
             
             {/* Team A Innings Score */}
             {match.teamAInnings && match.teamAInnings.runs > 0 && (
@@ -319,15 +444,79 @@ export default function MatchDetailsScreen() {
               </View>
             )}
 
+            {/* Current Batsmen */}
+            {match.status === 'live' && match.currentBatsmen && match.currentBatsmen.length > 0 && (
+              <View style={styles.batsmenCard}>
+                <Text style={styles.batsmenTitle}>Current Batsmen</Text>
+                <View style={styles.batsmenList}>
+                  {match.currentBatsmen.map((batsman: any) => {
+                    const player = [...teamAPlayers, ...teamBPlayers].find(p => p.uid === batsman.uid);
+                    return (
+                      <View key={batsman.uid} style={styles.batsmanItem}>
+                        <View style={styles.batsmanInfo}>
+                          <Text style={styles.batsmanName}>
+                            {player?.name || 'Unknown'} {batsman.isOnStrike && '*'}
+                          </Text>
+                          {batsman.isOnStrike && (
+                            <View style={styles.onStrikeBadge}>
+                              <Text style={styles.onStrikeText}>On Strike</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={styles.batsmanScore}>
+                          {batsman.runs} ({batsman.balls})
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Over Breakdown for Team A */}
+            {(match.status === 'live' || match.status === 'completed') && match.teamAInnings && (
+              renderOverBreakdown(match.teamAInnings, match.teamA.name)
+            )}
+
+            {/* Over Breakdown for Team B */}
+            {(match.status === 'live' || match.status === 'completed') && match.teamBInnings && match.teamBInnings.runs > 0 && (
+              renderOverBreakdown(match.teamBInnings, match.teamB.name)
+            )}
+
             {/* Match Result */}
             {match.status === 'completed' && match.teamAInnings && match.teamBInnings && (
               <View style={styles.resultCard}>
                 <Text style={styles.resultText}>
-                  {match.teamAInnings.runs > match.teamBInnings.runs
-                    ? `${match.teamA.name} won by ${match.teamAInnings.runs - match.teamBInnings.runs} runs`
-                    : match.teamBInnings.runs > match.teamAInnings.runs
-                    ? `${match.teamB.name} won by ${10 - match.teamBInnings.wickets} wickets`
-                    : 'Match Tied'}
+                  {(() => {
+                    const teamAScore = match.teamAInnings.runs;
+                    const teamBScore = match.teamBInnings.runs;
+                    
+                    if (teamAScore === teamBScore) return 'Match Tied';
+                    
+                    // Determine which team batted second to calculate wicket margin
+                    const teamBattedSecond = match.currentInnings === 2 ? match.battingTeam : 
+                      (match.battingTeam === 'teamA' ? 'teamB' : 'teamA');
+                    
+                    if (teamAScore > teamBScore) {
+                      // Team A won
+                      if (teamBattedSecond === 'teamB') {
+                        // Team B batted second, show runs margin
+                        return `${match.teamA.name} won by ${teamAScore - teamBScore} runs`;
+                      } else {
+                        // Team A batted second, show wickets margin
+                        return `${match.teamA.name} won by ${10 - match.teamAInnings.wickets} wickets`;
+                      }
+                    } else {
+                      // Team B won
+                      if (teamBattedSecond === 'teamA') {
+                        // Team A batted second, show runs margin
+                        return `${match.teamB.name} won by ${teamBScore - teamAScore} runs`;
+                      } else {
+                        // Team B batted second, show wickets margin
+                        return `${match.teamB.name} won by ${10 - match.teamBInnings.wickets} wickets`;
+                      }
+                    }
+                  })()}
                 </Text>
               </View>
             )}
@@ -628,5 +817,176 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center'
+  },
+  targetCard: {
+    backgroundColor: '#FFA500',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4
+  },
+  targetLabel: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 8
+  },
+  targetValue: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4
+  },
+  targetSubtext: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.9,
+    textAlign: 'center'
+  },
+  batsmenCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  batsmenTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 12,
+    textTransform: 'uppercase'
+  },
+  batsmenList: {
+    gap: 8
+  },
+  batsmanItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8
+  },
+  batsmanInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  batsmanName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  onStrikeBadge: {
+    backgroundColor: '#FF6B00',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4
+  },
+  onStrikeText: {
+    fontSize: 10,
+    color: '#fff',
+    fontWeight: '700'
+  },
+  batsmanScore: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666'
+  },
+  overBreakdownCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  overBreakdownTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 12,
+    textTransform: 'uppercase'
+  },
+  oversListContainer: {
+    gap: 12
+  },
+  overRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8
+  },
+  overLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+    marginRight: 12,
+    minWidth: 60
+  },
+  ballsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    flexWrap: 'wrap'
+  },
+  ballCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2
+  },
+  ballText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff'
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    gap: 12
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
+  },
+  legendCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8
+  },
+  legendText: {
+    fontSize: 11,
+    color: '#666'
   }
 });
