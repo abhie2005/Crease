@@ -94,6 +94,7 @@ export default function ProfileSetupScreen() {
     try {
       await createOrUpdateUser(user.uid, {
         name: name.trim(),
+        email: user.email || '',
         studentId: studentId.trim(),
         username: username.trim()
       });

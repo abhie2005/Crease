@@ -5,6 +5,7 @@ export type UserRole = 'player' | 'admin' | 'president';
 export interface User {
   uid: string;
   name: string;
+  email: string; // Store email for username-based login lookup
   studentId: string;
   username?: string; // Optional for backward compatibility
   role: UserRole;

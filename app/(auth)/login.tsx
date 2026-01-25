@@ -10,25 +10,25 @@ import {
   Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { logIn } from '@/firebase/auth';
+import { logInWithEmailOrUsername } from '@/firebase/auth';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
+    if (!emailOrUsername.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
-      await logIn(email.trim(), password);
+      await logInWithEmailOrUsername(emailOrUsername.trim(), password);
       // Navigation will be handled by AuthProvider
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'An error occurred');
@@ -56,11 +56,10 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
+              label="Email or Username"
+              value={emailOrUsername}
+              onChangeText={setEmailOrUsername}
+              placeholder="Enter your email or username"
               autoCapitalize="none"
             />
 
