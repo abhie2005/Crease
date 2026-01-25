@@ -42,6 +42,11 @@ export const logInWithEmailOrUsername = async (
 ): Promise<UserCredential> => {
   const credential = emailOrUsername.trim();
   
+  // Validate that input is not empty after trimming
+  if (!credential) {
+    throw new Error('Email or username cannot be empty');
+  }
+  
   // Check if input contains @ symbol to determine if it's an email
   if (credential.includes('@')) {
     // Direct email login with lazy migration
