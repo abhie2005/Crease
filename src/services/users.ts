@@ -25,7 +25,7 @@ const normalizeUsernameLocal = (username?: string): string | undefined => {
 
 export const createOrUpdateUser = async (
   uid: string,
-  data: { name: string; studentId: string; username?: string; role?: User['role'] }
+  data: { name: string; email: string; studentId: string; username?: string; role?: User['role'] }
 ): Promise<void> => {
   const userRef = userDoc(uid);
   const existingUser = await getDoc(userRef);
@@ -33,6 +33,7 @@ export const createOrUpdateUser = async (
   const userData: User = {
     uid,
     name: data.name,
+    email: data.email,
     studentId: data.studentId,
     role: data.role || DEFAULT_USER_ROLE,
     createdAt: existingUser.exists() ? existingUser.data().createdAt : serverTimestamp() as any,
@@ -238,6 +239,7 @@ export const getUsersByUids = async (uids: string[]): Promise<User[]> => {
         const placeholderUser: User = {
           uid: uid,
           name: uid, // Use the string itself as the name
+          email: 'N/A',
           studentId: 'N/A',
           role: 'player',
           createdAt: Timestamp.now(),
