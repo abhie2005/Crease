@@ -70,7 +70,7 @@ export const FallOfWickets: React.FC<FallOfWicketsProps> = ({
   );
 };
 
-const styles = StyleSheet.Create({
+const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
     borderRadius: 16,
