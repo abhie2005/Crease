@@ -17,7 +17,11 @@ import { getUsersByUids } from '@/services/users';
 import { Match } from '@/models/Match';
 import { User } from '@/models/User';
 import { CountdownTimer } from '@/components/CountdownTimer';
-import { Button } from '@/components/Button'; // to start match
+import { Button } from '@/components/Button';
+import { MatchStatsView } from '@/components/match-stats/MatchStatsView';
+import { UpcomingMatchStatsView } from '@/components/match-stats/UpcomingMatchStatsView';
+
+type TabType = 'details' | 'stats';
 
 export default function MatchDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,6 +33,7 @@ export default function MatchDetailsScreen() {
   const [loadingPlayers, setLoadingPlayers] = useState(false);
   const [teamAExpanded, setTeamAExpanded] = useState(false);
   const [teamBExpanded, setTeamBExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('details');
   const router = useRouter();
   const blinkAnim = useRef(new Animated.Value(1)).current;
 
@@ -350,14 +355,37 @@ export default function MatchDetailsScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
+      {/* Tab Navigation */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'details' && styles.activeTab]}
+          onPress={() => setActiveTab('details')}
+        >
+          <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>
+            Details
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'stats' && styles.activeTab]}
+          onPress={() => setActiveTab('stats')}
+        >
+          <Text style={[styles.tabText, activeTab === 'stats' && styles.activeTabText]}>
+            Stats
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tab Content */}
+      {activeTab === 'details' ? (
+        <ScrollView style={styles.tabContent}>
+          <View style={styles.content}>
         {match.scheduledDate && match.status === 'upcoming' && (
           <CountdownTimer scheduledDate={match.scheduledDate} />
         )}
@@ -587,7 +615,25 @@ export default function MatchDetailsScreen() {
           </TouchableOpacity>
         )}
       </View>
-    </ScrollView>
+        </ScrollView>
+      ) : (
+        // Stats Tab
+        match?.status === 'upcoming' ? (
+          <UpcomingMatchStatsView
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            teamAName={match.teamA.name}
+            teamBName={match.teamB.name}
+          />
+        ) : (
+          <MatchStatsView
+            match={match!}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+          />
+        )
+      )}
+    </View>
   );
 }
 
@@ -608,6 +654,41 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0'
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 2,
+    borderBottomColor: '#dee2e6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 18,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent'
+  },
+  activeTab: {
+    borderBottomColor: '#007AFF',
+    backgroundColor: '#f8f9fa'
+  },
+  tabText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#6c757d',
+    letterSpacing: 0.3
+  },
+  activeTabText: {
+    color: '#007AFF',
+    fontWeight: '800'
+  },
+  tabContent: {
+    flex: 1
   },
   backButton: {
     paddingVertical: 8
