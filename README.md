@@ -373,6 +373,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 🙏 Acknowledgments
 
+- Made with love by **abhie2005** & **Krushang1818**
 - Built with ❤️ using [Expo](https://expo.dev/)
 - Powered by [Firebase](https://firebase.google.com/)
 - Icons from [Ionicons](https://ionic.io/ionicons)
