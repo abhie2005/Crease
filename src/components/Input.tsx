@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, StyleSheet, Text, View } from 'react-native';
+import { TextInput, StyleSheet, Text, View, ViewStyle, TextStyle } from 'react-native';
 
 interface InputProps {
   label?: string;
@@ -11,6 +11,8 @@ interface InputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   multiline?: boolean;
   numberOfLines?: number;
+  containerStyle?: ViewStyle;
+  inputStyle?: TextStyle;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -22,15 +24,18 @@ export const Input: React.FC<InputProps> = ({
   keyboardType = 'default',
   autoCapitalize = 'none',
   multiline = false,
-  numberOfLines = 1
+  numberOfLines = 1,
+  containerStyle,
+  inputStyle
 }) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
         style={[
           styles.input,
-          multiline && styles.multilineInput
+          multiline && styles.multilineInput,
+          inputStyle
         ]}
         value={value}
         onChangeText={onChangeText}

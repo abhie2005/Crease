@@ -7,6 +7,7 @@ import {
   where,
   getDocs,
   limit,
+  orderBy,
   Timestamp 
 } from 'firebase/firestore';
 import { userDoc, usersCollection } from '@/firebase/firestore';
@@ -171,6 +172,26 @@ export const getUserByUsername = async (username: string): Promise<User | null> 
   }
   
   return querySnapshot.docs[0].data();
+};
+
+/**
+ * Get latest users for 'New Talents' section
+ */
+export const getLatestUsers = async (limitCount: number = 5): Promise<User[]> => {
+  const q = query(
+    usersCollection,
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  );
+
+  const querySnapshot = await getDocs(q);
+  const users: User[] = [];
+
+  querySnapshot.forEach((doc) => {
+    users.push(doc.data());
+  });
+
+  return users;
 };
 
 /**

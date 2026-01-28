@@ -6,6 +6,7 @@ import {
   onSnapshot,
   addDoc,
   deleteDoc,
+  getDocs,
   doc,
   getDoc,
   runTransaction,
@@ -674,6 +675,94 @@ export const selectBowler = async (
     
     transaction.update(matchRef, updates);
   });
+};
+
+/**
+ * Search matches by team names
+ * Note: Performs in-memory filtering on recent matches for substring matching
+ */
+export const searchMatches = async (searchQuery: string): Promise<Match[]> => {
+  const q = query(
+    matchesCollection,
+    orderBy('updatedAt', 'desc'),
+    limit(100)
+  );
+
+  const snapshot = await getDocs(q);
+  const matches: Match[] = [];
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+
+  snapshot.forEach((doc) => {
+    const data = doc.data() as Match;
+    const teamA = data.teamA.name.toLowerCase();
+    const teamB = data.teamB.name.toLowerCase();
+
+    if (teamA.includes(normalizedQuery) || teamB.includes(normalizedQuery)) {
+      matches.push({ ...data, id: doc.id } as any);
+    }
+  });
+
+  return matches;
+};
+
+/**
+ * Get unique team names from matches
+ */
+export const getUniqueTeams = async (searchQuery: string): Promise<{ name: string; lastMatchId: string }[]> => {
+  const q = query(
+    matchesCollection,
+    orderBy('updatedAt', 'desc'),
+    limit(200)
+  );
+
+  const snapshot = await getDocs(q);
+  const teamMap = new Map<string, string>();
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+
+  snapshot.forEach((doc) => {
+    const data = doc.data() as Match;
+    const teamA = data.teamA.name;
+    const teamB = data.teamB.name;
+
+    if (teamA.toLowerCase().includes(normalizedQuery) && !teamMap.has(teamA)) {
+      teamMap.set(teamA, doc.id);
+    }
+    if (teamB.toLowerCase().includes(normalizedQuery) && !teamMap.has(teamB)) {
+      teamMap.set(teamB, doc.id);
+    }
+  });
+
+  return Array.from(teamMap.entries()).map(([name, lastMatchId]) => ({
+    name,
+    lastMatchId
+  }));
+};
+
+/**
+ * Get matches for a specific team
+ */
+export const getMatchesForTeam = async (teamName: string, limitCount: number = 1): Promise<Match[]> => {
+  const matchesRef = collection(db, 'matches');
+  const q = query(
+    matchesRef,
+    orderBy('updatedAt', 'desc'),
+    limit(100) // Search in recent 100 matches
+  );
+
+  const snapshot = await getDocs(q);
+  const teamMatches: Match[] = [];
+  const normalizedTeamName = teamName.toLowerCase();
+
+  snapshot.forEach((doc) => {
+    if (teamMatches.length >= limitCount) return;
+    const data = doc.data() as Match;
+    if (data.teamA.name.toLowerCase() === normalizedTeamName || 
+        data.teamB.name.toLowerCase() === normalizedTeamName) {
+      teamMatches.push({ ...data, id: doc.id } as any);
+    }
+  });
+
+  return teamMatches;
 };
 
 export const deleteMatch = async (matchId: string): Promise<void> => {
