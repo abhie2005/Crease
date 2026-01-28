@@ -1,0 +1,2 @@
+{"location":"src/services/users.ts:getUser","message":"Fetching user from Firestore","data":{"uid":"b9jHlj8PpzL2Vw3pjQOBGrjJweu2"},"timestamp":1769565809462,"sessionId":"debug-session","runId":"post-fix","hypothesisId":"B"}
+{"location":"src/services/users.ts:getUser","message":"User document found","data":{"uid":"b9jHlj8PpzL2Vw3pjQOBGrjJweu2","hasName":true,"name":"Umpire"},"timestamp":1769565809663,"sessionId":"debug-session","runId":"post-fix","hypothesisId":"B"}
