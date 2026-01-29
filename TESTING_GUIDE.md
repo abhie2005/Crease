@@ -68,7 +68,7 @@ After changing role to admin:
 3. **Fill in the form**:
    - Team A Name: "Mumbai Indians"
    - Team A Player UIDs: (leave empty or add fake UIDs)
-   - Team B Name: "Chennai Super Kings"  
+   - Team B Name: "Royal Challangers Banglore"  
    - Team B Player UIDs: (leave empty or add fake UIDs)
    - Umpire UID: YOUR_USER_UID (get it from Firebase Console)
 4. **Click "Create Match"**
