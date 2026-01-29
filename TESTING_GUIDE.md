@@ -41,7 +41,7 @@ Fields:
   - name: "Mumbai Indians" (string)
   - playerUids: [] (array)
 - teamB: (map)
-  - name: "Chennai Super Kings" (string)
+  - name: "Royal Challangers Banglore" (string)
   - playerUids: [] (array)
 - score: (map)
   - runs: 0 (number)
