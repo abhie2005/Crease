@@ -1,13 +1,20 @@
+/**
+ * Search result card for a match (teams, scores, status, date).
+ * Used in the search tab matches list.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Match } from '@/models/Match';
 
+/** Props: match (with id), onPress(matchId). */
 interface MatchResultCardProps {
   match: Match;
   onPress: (id: string) => void;
 }
 
+/** Card showing match summary; onPress navigates to match detail. */
 export const MatchResultCard: React.FC<MatchResultCardProps> = ({ match, onPress }) => {
   const matchId = (match as any).id;
   

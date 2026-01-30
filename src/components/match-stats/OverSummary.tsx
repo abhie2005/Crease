@@ -1,15 +1,22 @@
+/**
+ * Over-by-over runs summary with bar/line chart toggle and collapsible section.
+ * Used in match stats view.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { OverSummary as OverData } from '@/services/matchStats';
 
+/** Props: overSummary (runs per over). */
 interface OverSummaryProps {
   overSummary: OverData[];
 }
 
 type ChartType = 'bar' | 'line';
 
+/** Renders runs per over with bar or line chart. */
 export const OverSummary: React.FC<OverSummaryProps> = ({ overSummary }) => {
   const [expanded, setExpanded] = useState(false);
   const [chartType, setChartType] = useState<ChartType>('bar');

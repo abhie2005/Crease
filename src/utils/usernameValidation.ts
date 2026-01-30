@@ -1,18 +1,22 @@
 /**
- * Username validation utilities
+ * Username validation and normalization for profile and signup.
+ * Used by profile setup and username availability checks.
  */
 
+/** Result of username validation (valid flag and optional error message). */
 export interface UsernameValidationResult {
   valid: boolean;
   error?: string;
 }
 
 /**
- * Validates username format
+ * Validates username format.
  * Rules:
  * - 3-20 characters
  * - Alphanumeric, underscore, and hyphen only
  * - No spaces
+ * @param username - Raw username input
+ * @returns Validation result with optional error message
  */
 export const validateUsernameFormat = (
   username: string
@@ -44,9 +48,9 @@ export const validateUsernameFormat = (
 };
 
 /**
- * Normalizes username for storage and comparison
- * - Converts to lowercase
- * - Trims whitespace
+ * Normalizes username for storage and comparison (lowercase, trim).
+ * @param username - Raw username input
+ * @returns Normalized username
  */
 export const normalizeUsername = (username: string): string => {
   return username.trim().toLowerCase();

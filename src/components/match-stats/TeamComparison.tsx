@@ -1,9 +1,15 @@
+/**
+ * Side-by-side team comparison (runs, wickets, run rate, boundaries, extras) with bar chart.
+ * Used in match stats view.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 import { InningsScore } from '@/models/Match';
 import { BattingStats } from '@/services/matchStats';
 
+/** Props: team names, innings, batting stats for both teams. */
 interface TeamComparisonProps {
   teamAName: string;
   teamBName: string;
@@ -13,6 +19,7 @@ interface TeamComparisonProps {
   teamBBattingStats: BattingStats[];
 }
 
+/** Renders team comparison stats and chart. */
 export const TeamComparison: React.FC<TeamComparisonProps> = ({
   teamAName,
   teamBName,

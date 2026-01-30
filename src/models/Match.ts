@@ -1,12 +1,20 @@
+/**
+ * Match and related cricket types (teams, innings, ball events).
+ * Used by match services, scoring, and stats.
+ */
+
 import { Timestamp } from 'firebase/firestore';
 
+/** Match lifecycle status. */
 export type MatchStatus = 'upcoming' | 'live' | 'completed';
 
+/** Team definition with name and player UIDs. */
 export interface Team {
   name: string;
   playerUids: string[];
 }
 
+/** Legacy score summary (runs, wickets, overs, balls). */
 export interface Score {
   runs: number;
   wickets: number;
@@ -14,6 +22,7 @@ export interface Score {
   balls: number;
 }
 
+/** Single ball outcome for an over. */
 export interface BallEvent {
   runs: number;
   isWide?: boolean;
@@ -24,6 +33,7 @@ export interface BallEvent {
   timestamp: number;
 }
 
+/** Batsman state in the current partnership. */
 export interface Batsman {
   uid: string;
   runs: number;
@@ -31,6 +41,7 @@ export interface Batsman {
   isOnStrike: boolean;
 }
 
+/** Bowler stats for an innings. */
 export interface Bowler {
   uid: string;
   overs: number;        // Full overs bowled (integer part)
@@ -40,6 +51,7 @@ export interface Bowler {
   maidens: number;      // Maiden overs (optional)
 }
 
+/** Full innings score and ball-by-ball data. */
 export interface InningsScore {
   runs: number;
   wickets: number;
@@ -51,6 +63,7 @@ export interface InningsScore {
   bowlers?: Bowler[];             // List of all bowlers who have bowled
 }
 
+/** Match document with teams, innings, and live state. */
 export interface Match {
   status: MatchStatus;
   createdBy: string; // uid

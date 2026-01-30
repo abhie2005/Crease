@@ -1,8 +1,14 @@
+/**
+ * Upcoming match view: rosters with career stats (all-time / recent).
+ * Used on match detail Stats tab when match is upcoming.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { User } from '@/models/User';
 import { PlayerCareerStats, StatsScope, getMultiplePlayersCareerStats } from '@/services/playerStats';
 
+/** Props: teamAPlayers, teamBPlayers, teamAName, teamBName. */
 interface UpcomingMatchStatsViewProps {
   teamAPlayers: User[];
   teamBPlayers: User[];
@@ -10,6 +16,7 @@ interface UpcomingMatchStatsViewProps {
   teamBName: string;
 }
 
+/** Renders both teams' rosters with batting/bowling career stats. */
 export const UpcomingMatchStatsView: React.FC<UpcomingMatchStatsViewProps> = ({
   teamAPlayers,
   teamBPlayers,

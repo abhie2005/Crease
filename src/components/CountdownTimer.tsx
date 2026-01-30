@@ -1,7 +1,13 @@
+/**
+ * Countdown display until a scheduled date (e.g. match start).
+ * Supports compact mode for list items.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Timestamp } from 'firebase/firestore';
 
+/** Props: scheduledDate (Date or Firestore Timestamp), optional compact. */
 interface CountdownTimerProps {
   scheduledDate: Date | Timestamp;
   compact?: boolean;
@@ -10,6 +16,7 @@ interface CountdownTimerProps {
 const getDate = (value: Date | Timestamp): Date =>
   value instanceof Date ? value : value.toDate();
 
+/** Renders countdown (days/hours/minutes/seconds) or "Match started" when past. */
 export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   scheduledDate,
   compact = false

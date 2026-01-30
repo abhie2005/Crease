@@ -1,8 +1,14 @@
+/**
+ * Bowling stats table with sort (order / wickets) and "did not bowl" rows.
+ * Used in match stats view.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { BowlingStats } from '@/services/matchStats';
 import { User } from '@/models/User';
 
+/** Props: stats, players, allPlayerUids, optional bestBowlerUid. */
 interface BowlingStatsTableProps {
   stats: BowlingStats[];
   players: User[];
@@ -12,6 +18,7 @@ interface BowlingStatsTableProps {
 
 type SortOption = 'order' | 'wickets';
 
+/** Table of bowling stats (overs, runs, wickets, economy) with sort toggle. */
 export const BowlingStatsTable: React.FC<BowlingStatsTableProps> = ({
   stats,
   players,

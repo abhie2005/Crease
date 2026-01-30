@@ -1,3 +1,7 @@
+/**
+ * Login screen: email/username + password, navigates to tabs on success.
+ */
+
 import React, { useState } from 'react';
 import {
   View,
@@ -14,6 +18,7 @@ import { logInWithEmailOrUsername } from '@/firebase/auth';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 
+/** Login form (email or username + password). */
 export default function LoginScreen() {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');

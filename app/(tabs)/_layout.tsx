@@ -1,8 +1,13 @@
+/**
+ * Tab layout: Home, Search, Profile with bottom tab bar.
+ */
+
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+/** Bottom tabs: Home, Search, Profile. */
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   return (

@@ -1,3 +1,7 @@
+/**
+ * Umpire scoring panel for a live match.
+ * Lets the assigned umpire record runs, wickets, extras, switch innings, and complete the match.
+ */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
@@ -30,6 +34,11 @@ import { User } from '@/models/User';
 import { CountdownTimer } from '@/components/CountdownTimer';
 import { Button } from '@/components/Button';
 
+/**
+ * Umpire-only screen for scoring a match (route param: match id).
+ * Subscribes to match, enforces umpire identity. Supports runs, dot, wide, no-ball, wicket,
+ * bowler selection, innings switch, and second-innings setup. Shows countdown for upcoming matches.
+ */
 export default function UmpireScoringScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userProfile } = useAuth();

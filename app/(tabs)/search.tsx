@@ -1,3 +1,7 @@
+/**
+ * Search tab: players, teams, matches with tabs; recent searches and New Talents when empty.
+ */
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -23,6 +27,7 @@ import { saveRecentSearch, getRecentSearches, removeRecentSearch, clearRecentSea
 
 type TabType = 'player' | 'team' | 'match';
 
+/** Search screen with Players/Teams/Matches tabs and recent searches. */
 export default function SearchScreen() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('player');

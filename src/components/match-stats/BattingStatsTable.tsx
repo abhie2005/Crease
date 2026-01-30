@@ -1,8 +1,14 @@
+/**
+ * Batting stats table with sort (order / runs) and "did not bat" rows.
+ * Used in match stats view.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { BattingStats } from '@/services/matchStats';
 import { User } from '@/models/User';
 
+/** Props: stats, players, allPlayerUids, optional topScorerUid. */
 interface BattingStatsTableProps {
   stats: BattingStats[];
   players: User[];
@@ -12,6 +18,7 @@ interface BattingStatsTableProps {
 
 type SortOption = 'order' | 'runs';
 
+/** Table of batting stats (runs, balls, SR, 4s, 6s) with sort toggle. */
 export const BattingStatsTable: React.FC<BattingStatsTableProps> = ({
   stats,
   players,

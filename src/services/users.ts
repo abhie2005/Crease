@@ -1,3 +1,8 @@
+/**
+ * User CRUD and queries: create/update profile, get by UID/username, search, latest users.
+ * Used by AuthProvider, profile screens, and search.
+ */
+
 import {
   doc,
   setDoc,
@@ -24,6 +29,11 @@ const normalizeUsernameLocal = (username?: string): string | undefined => {
   return username.trim().toLowerCase();
 };
 
+/**
+ * Creates or updates a user profile in Firestore (merge).
+ * @param uid - Firebase Auth UID
+ * @param data - Profile fields (name, email, studentId, optional username, role)
+ */
 export const createOrUpdateUser = async (
   uid: string,
   data: { name: string; email: string; studentId: string; username?: string; role?: User['role'] }
@@ -52,6 +62,11 @@ export const createOrUpdateUser = async (
   // #endregion
 };
 
+/**
+ * Fetches a user profile by UID.
+ * @param uid - Firebase Auth UID
+ * @returns User document or null if not found
+ */
 export const getUser = async (uid: string): Promise<User | null> => {
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/9a7e5339-61cc-4cc7-b07b-4ed757a68704',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/services/users.ts:getUser',message:'Fetching user from Firestore',data:{uid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
@@ -175,7 +190,9 @@ export const getUserByUsername = async (username: string): Promise<User | null> 
 };
 
 /**
- * Get latest users for 'New Talents' section
+ * Get latest users for 'New Talents' section, ordered by createdAt desc.
+ * @param limitCount - Max number of users to return (default 5)
+ * @returns Array of user documents
  */
 export const getLatestUsers = async (limitCount: number = 5): Promise<User[]> => {
   const q = query(

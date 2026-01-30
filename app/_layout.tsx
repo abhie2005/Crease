@@ -1,3 +1,8 @@
+/**
+ * Root layout: AuthProvider and route guards (auth, profile, tabs).
+ * Wraps app with auth context and Stack navigation.
+ */
+
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
@@ -51,6 +56,7 @@ function RootLayoutNav() {
   );
 }
 
+/** Root layout: wraps app with AuthProvider and Stack with route guards. */
 export default function RootLayout() {
   return (
     <AuthProvider>

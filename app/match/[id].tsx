@@ -1,3 +1,7 @@
+/**
+ * Match detail screen: Details and Stats tabs; live score, teams, actions (Start/Delete for admins).
+ */
+
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
@@ -23,6 +27,7 @@ import { UpcomingMatchStatsView } from '@/components/match-stats/UpcomingMatchSt
 
 type TabType = 'details' | 'stats';
 
+/** Match detail with Details/Stats tabs and admin actions. */
 export default function MatchDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userProfile } = useAuth();

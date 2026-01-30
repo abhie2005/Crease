@@ -1,3 +1,8 @@
+/**
+ * Match subscription, CRUD, live scoring, and search.
+ * Used by home screen, match detail, umpire panel, and search.
+ */
+
 import {
   collection,
   query,
@@ -17,6 +22,12 @@ import { matchesCollection, matchDoc } from '@/firebase/firestore';
 import { db, auth } from '@/firebase/config';
 import { Match, MatchStatus, Team, Score } from '@/models/Match';
 
+/**
+ * Subscribes to the matches list (ordered by updatedAt desc).
+ * @param callback - Called with matches array on each update
+ * @param maxResults - Max number of matches (default 50)
+ * @returns Unsubscribe function
+ */
 export const subscribeToMatches = (
   callback: (matches: Match[]) => void,
   maxResults: number = 50
@@ -36,6 +47,12 @@ export const subscribeToMatches = (
   });
 };
 
+/**
+ * Subscribes to a single match document by ID.
+ * @param matchId - Match document ID
+ * @param callback - Called with match or null on each update
+ * @returns Unsubscribe function
+ */
 export const subscribeToMatch = (
   matchId: string,
   callback: (match: Match | null) => void
@@ -51,6 +68,16 @@ export const subscribeToMatch = (
   });
 };
 
+/**
+ * Creates a new match document (status: upcoming).
+ * @param createdBy - UID of creator
+ * @param umpireUid - UID of assigned umpire
+ * @param teamA - Team A definition
+ * @param teamB - Team B definition
+ * @param totalOvers - Max overs per innings
+ * @param scheduledDate - Optional scheduled start time
+ * @returns New match document ID
+ */
 export const createMatch = async (
   createdBy: string,
   umpireUid: string,
@@ -101,6 +128,11 @@ export const createMatch = async (
   return docRef.id;
 };
 
+/**
+ * Updates legacy score field (runs, wickets, overs, balls) in a transaction.
+ * @param matchId - Match document ID
+ * @param scoreUpdate - Partial score to merge
+ */
 export const updateMatchScore = async (
   matchId: string,
   scoreUpdate: Partial<Score>
@@ -131,6 +163,11 @@ export const updateMatchScore = async (
   });
 };
 
+/**
+ * Updates match status (upcoming | live | completed).
+ * @param matchId - Match document ID
+ * @param status - New status
+ */
 export const updateMatchStatus = async (
   matchId: string,
   status: MatchStatus
@@ -151,6 +188,14 @@ export const updateMatchStatus = async (
   });
 };
 
+/**
+ * Records toss result and sets batting team and opening batsmen; sets status to live.
+ * @param matchId - Match document ID
+ * @param tossWonBy - Which team won toss
+ * @param tossDecision - Bat or bowl
+ * @param battingTeam - Which team is batting first
+ * @param openingBatsmen - Opening pair with strike flag
+ */
 export const updateToss = async (
   matchId: string,
   tossWonBy: 'teamA' | 'teamB',
@@ -185,6 +230,12 @@ export const updateToss = async (
   });
 };
 
+/**
+ * Records runs off a ball and updates innings, batsmen, and bowler stats in a transaction.
+ * @param matchId - Match document ID
+ * @param runs - Runs scored (0-6)
+ * @param batsmanUid - UID of batsman who scored
+ */
 export const addRuns = async (
   matchId: string,
   runs: number,
@@ -299,6 +350,11 @@ export const addRuns = async (
   });
 };
 
+/**
+ * Records a dot ball (0 runs) via addRuns.
+ * @param matchId - Match document ID
+ * @param batsmanUid - UID of batsman on strike
+ */
 export const addDotBall = async (
   matchId: string,
   batsmanUid: string
@@ -306,6 +362,11 @@ export const addDotBall = async (
   await addRuns(matchId, 0, batsmanUid);
 };
 
+/**
+ * Records a wide (1 + extra runs); does not advance ball count.
+ * @param matchId - Match document ID
+ * @param extraRuns - Extra runs (e.g. 0 for just wide)
+ */
 export const addWide = async (
   matchId: string,
   extraRuns: number
@@ -373,6 +434,11 @@ export const addWide = async (
   });
 };
 
+/**
+ * Records a no-ball (1 + extra runs); does not advance ball count.
+ * @param matchId - Match document ID
+ * @param extraRuns - Extra runs (e.g. 0 for just no-ball)
+ */
 export const addNoBall = async (
   matchId: string,
   extraRuns: number
@@ -440,6 +506,12 @@ export const addNoBall = async (
   });
 };
 
+/**
+ * Records a wicket: dismisses one batsman, brings in new one, updates bowler stats.
+ * @param matchId - Match document ID
+ * @param dismissedBatsmanUid - UID of dismissed batsman
+ * @param newBatsmanUid - UID of incoming batsman
+ */
 export const addWicket = async (
   matchId: string,
   dismissedBatsmanUid: string,
@@ -553,6 +625,10 @@ export const addWicket = async (
   });
 };
 
+/**
+ * Switches to second innings or marks match completed if already in second innings.
+ * @param matchId - Match document ID
+ */
 export const switchInnings = async (matchId: string): Promise<void> => {
   const matchRef = matchDoc(matchId);
   
@@ -586,6 +662,11 @@ export const switchInnings = async (matchId: string): Promise<void> => {
   });
 };
 
+/**
+ * Sets opening batsmen for the second innings (after switchInnings).
+ * @param matchId - Match document ID
+ * @param openingBatsmen - Opening pair with strike flag
+ */
 export const setupSecondInnings = async (
   matchId: string,
   openingBatsmen: { uid: string; isOnStrike: boolean }[]
@@ -613,6 +694,11 @@ export const setupSecondInnings = async (
   });
 };
 
+/**
+ * Sets the current bowler for the ongoing over (enforces no consecutive overs).
+ * @param matchId - Match document ID
+ * @param bowlerUid - UID of bowler from bowling team
+ */
 export const selectBowler = async (
   matchId: string,
   bowlerUid: string
@@ -678,8 +764,10 @@ export const selectBowler = async (
 };
 
 /**
- * Search matches by team names
- * Note: Performs in-memory filtering on recent matches for substring matching
+ * Search matches by team names (substring match on teamA/teamB names).
+ * Uses in-memory filtering on recent 100 matches.
+ * @param searchQuery - Search string
+ * @returns Matching matches with id attached
  */
 export const searchMatches = async (searchQuery: string): Promise<Match[]> => {
   const q = query(
@@ -706,7 +794,10 @@ export const searchMatches = async (searchQuery: string): Promise<Match[]> => {
 };
 
 /**
- * Get unique team names from matches
+ * Returns unique team names matching the query, with last match ID for each.
+ * In-memory filter on recent 200 matches.
+ * @param searchQuery - Search string
+ * @returns Array of { name, lastMatchId }
  */
 export const getUniqueTeams = async (searchQuery: string): Promise<{ name: string; lastMatchId: string }[]> => {
   const q = query(
@@ -739,7 +830,10 @@ export const getUniqueTeams = async (searchQuery: string): Promise<{ name: strin
 };
 
 /**
- * Get matches for a specific team
+ * Fetches recent matches for a team (exact name match), up to limitCount.
+ * @param teamName - Exact team name
+ * @param limitCount - Max matches to return (default 1)
+ * @returns Matches with id attached
  */
 export const getMatchesForTeam = async (teamName: string, limitCount: number = 1): Promise<Match[]> => {
   const matchesRef = collection(db, 'matches');
@@ -765,6 +859,10 @@ export const getMatchesForTeam = async (teamName: string, limitCount: number = 1
   return teamMatches;
 };
 
+/**
+ * Deletes a match document by ID.
+ * @param matchId - Match document ID
+ */
 export const deleteMatch = async (matchId: string): Promise<void> => {
   const matchRef = matchDoc(matchId);
   try {

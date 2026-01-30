@@ -1,14 +1,21 @@
+/**
+ * Fall of wickets timeline (wicket number, score, overs, batsman) with collapsible section.
+ * Used in match stats view.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FallOfWicket } from '@/services/matchStats';
 import { User } from '@/models/User';
 
+/** Props: fallOfWickets, players. */
 interface FallOfWicketsProps {
   fallOfWickets: FallOfWicket[];
   players: User[];
 }
 
+/** Renders fall of wickets with expand/collapse. */
 export const FallOfWickets: React.FC<FallOfWicketsProps> = ({
   fallOfWickets,
   players

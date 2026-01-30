@@ -1,8 +1,14 @@
+/**
+ * Match highlights: top scorer, best bowler, highest partnership, best strike rate.
+ * Used in match stats view.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BattingStats, BowlingStats, Partnership } from '@/services/matchStats';
 import { User } from '@/models/User';
 
+/** Props: battingStats, bowlingStats, partnerships, players. */
 interface MatchHighlightsProps {
   battingStats: BattingStats[];
   bowlingStats: BowlingStats[];
@@ -10,6 +16,7 @@ interface MatchHighlightsProps {
   players: User[];
 }
 
+/** Renders top performers and highlights for a match. */
 export const MatchHighlights: React.FC<MatchHighlightsProps> = ({
   battingStats,
   bowlingStats,

@@ -1,3 +1,8 @@
+/**
+ * Firebase Authentication helpers: sign up, login (email or username), logout.
+ * Used by auth screens and AuthProvider.
+ */
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -8,10 +13,22 @@ import {
 import { auth } from './config';
 import { getUserByUsername, getUser, createOrUpdateUser } from '@/services/users';
 
+/**
+ * Creates a new user account with email and password.
+ * @param email - User email
+ * @param password - User password
+ * @returns Firebase UserCredential
+ */
 export const signUp = async (email: string, password: string): Promise<UserCredential> => {
   return createUserWithEmailAndPassword(auth, email, password);
 };
 
+/**
+ * Signs in with email and password. Performs lazy migration to set email on Firestore profile if missing.
+ * @param email - User email
+ * @param password - User password
+ * @returns Firebase UserCredential
+ */
 export const logIn = async (email: string, password: string): Promise<UserCredential> => {
   const credential = await signInWithEmailAndPassword(auth, email, password);
   
@@ -36,6 +53,12 @@ export const logIn = async (email: string, password: string): Promise<UserCreden
   return credential;
 };
 
+/**
+ * Signs in with either email or username and password.
+ * @param emailOrUsername - Email address or username
+ * @param password - User password
+ * @returns Firebase UserCredential
+ */
 export const logInWithEmailOrUsername = async (
   emailOrUsername: string,
   password: string
@@ -65,10 +88,12 @@ export const logInWithEmailOrUsername = async (
   }
 };
 
+/** Signs out the current user. */
 export const logOut = async (): Promise<void> => {
   return signOut(auth);
 };
 
+/** Returns the currently signed-in Firebase user, or null. */
 export const getCurrentUser = (): User | null => {
   return auth.currentUser;
 };

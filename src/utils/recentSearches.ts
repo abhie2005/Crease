@@ -1,10 +1,17 @@
+/**
+ * Recent search persistence using AsyncStorage.
+ * Used by the search tab to show and manage recent searches.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RECENT_SEARCHES_KEY = '@recent_searches';
 const MAX_RECENT_SEARCHES = 10;
 
+/** Type of search: player, team, or match. */
 export type SearchType = 'player' | 'team' | 'match';
 
+/** Single recent search entry. */
 export interface RecentSearch {
   id: string;
   query: string;
@@ -12,6 +19,11 @@ export interface RecentSearch {
   timestamp: number;
 }
 
+/**
+ * Saves a search to recent list (moves to top if exists; caps at MAX_RECENT_SEARCHES).
+ * @param query - Search query text
+ * @param type - Search type
+ */
 export const saveRecentSearch = async (query: string, type: SearchType): Promise<void> => {
   if (!query.trim()) return;
 
@@ -36,6 +48,7 @@ export const saveRecentSearch = async (query: string, type: SearchType): Promise
   }
 };
 
+/** Returns the list of recent searches from AsyncStorage. */
 export const getRecentSearches = async (): Promise<RecentSearch[]> => {
   try {
     const searchesJson = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
@@ -46,6 +59,10 @@ export const getRecentSearches = async (): Promise<RecentSearch[]> => {
   }
 };
 
+/**
+ * Removes a recent search by id.
+ * @param id - RecentSearch id
+ */
 export const removeRecentSearch = async (id: string): Promise<void> => {
   try {
     const searchesJson = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
@@ -59,6 +76,7 @@ export const removeRecentSearch = async (id: string): Promise<void> => {
   }
 };
 
+/** Clears all recent searches from AsyncStorage. */
 export const clearRecentSearches = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(RECENT_SEARCHES_KEY);

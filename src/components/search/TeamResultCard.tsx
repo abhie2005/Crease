@@ -1,14 +1,21 @@
+/**
+ * Search result card for a team (name, recent match); fetches recent match and navigates on press.
+ * Used in the search tab teams list.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Match } from '@/models/Match';
 import { getMatchesForTeam } from '@/services/matches';
 
+/** Props: teamName, onPress(matchId) for navigation to match. */
 interface TeamResultCardProps {
   teamName: string;
   onPress: (matchId: string) => void;
 }
 
+/** Card showing team name and recent match; onPress opens that match. */
 export const TeamResultCard: React.FC<TeamResultCardProps> = ({ teamName, onPress }) => {
   const [recentMatch, setRecentMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);

@@ -1,9 +1,16 @@
+/**
+ * Player career stats aggregation from completed matches (all-time, season, recent).
+ * Used by upcoming match stats and player profile.
+ */
+
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { Match, BallEvent } from '@/models/Match';
 
+/** Scope for career stats: all-time, season, or recent (last 10 matches). */
 export type StatsScope = 'all-time' | 'season' | 'recent';
 
+/** Aggregated batting and bowling career stats for a player. */
 export interface PlayerCareerStats {
   batting: {
     matches: number;
@@ -128,7 +135,10 @@ const calculatePlayerBowlingInMatch = (match: Match, playerUid: string) => {
 };
 
 /**
- * Get career statistics for a player
+ * Fetches career batting and bowling stats for a player from completed matches.
+ * @param playerUid - Player UID
+ * @param scope - all-time, season, or recent (default all-time)
+ * @returns Aggregated career stats
  */
 export const getPlayerCareerStats = async (
   playerUid: string,
@@ -243,7 +253,10 @@ export const getPlayerCareerStats = async (
 };
 
 /**
- * Get career stats for multiple players in parallel
+ * Fetches career stats for multiple players in parallel.
+ * @param playerUids - Array of player UIDs
+ * @param scope - all-time, season, or recent (default all-time)
+ * @returns Map of uid to PlayerCareerStats (skips failed fetches)
  */
 export const getMultiplePlayersCareerStats = async (
   playerUids: string[],

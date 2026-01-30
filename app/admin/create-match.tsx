@@ -1,3 +1,7 @@
+/**
+ * Admin create-match screen.
+ * Allows admins/presidents to create a match with teams, players, umpire, overs, and optional scheduling.
+ */
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -22,6 +26,11 @@ import { Input } from '@/components/Input';
 import { DateTimePicker } from '@/components/DateTimePicker';
 import { User } from '@/models/User';
 
+/**
+ * Screen for creating a new match. Restricted to admin/president.
+ * Handles team names, player selection (Team A/B), umpire selection, total overs,
+ * optional scheduling, and optional start-immediately. Uses createMatch and updateMatchStatus.
+ */
 export default function CreateMatchScreen() {
   const { userProfile } = useAuth();
   const [teamAName, setTeamAName] = useState('');

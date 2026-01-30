@@ -1,3 +1,7 @@
+/**
+ * User profile screen by username.
+ * Displays public profile (name, username, student ID, role) for a given username route param.
+ */
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -12,6 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getUserByUsername } from '@/services/users';
 import { User } from '@/models/User';
 
+/**
+ * Screen that shows a user's public profile when navigating by username (e.g. /user/johndoe).
+ * Fetches user via getUserByUsername and renders name, username, student ID, and role.
+ */
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const [user, setUser] = useState<User | null>(null);

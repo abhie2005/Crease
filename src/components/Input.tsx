@@ -1,6 +1,12 @@
+/**
+ * Reusable text input with optional label and style overrides.
+ * Used in auth, profile, search, and admin forms.
+ */
+
 import React from 'react';
 import { TextInput, StyleSheet, Text, View, ViewStyle, TextStyle } from 'react-native';
 
+/** See InputProps. */
 interface InputProps {
   label?: string;
   value: string;
@@ -15,6 +21,7 @@ interface InputProps {
   inputStyle?: TextStyle;
 }
 
+/** Labeled text input with optional secure entry and multiline. */
 export const Input: React.FC<InputProps> = ({
   label,
   value,

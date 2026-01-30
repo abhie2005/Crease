@@ -1,15 +1,22 @@
+/**
+ * Date and time picker wrapper (native iOS/Android).
+ * Used for match scheduling in admin create-match.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import DateTimePickerRN, {
   DateTimePickerEvent
 } from '@react-native-community/datetimepicker';
 
+/** Props: optional label, value (Date | null), onChange. */
 interface DateTimePickerProps {
   label?: string;
   value: Date | null;
   onChange: (date: Date) => void;
 }
 
+/** Touchable that opens native date/time picker. */
 export const DateTimePicker: React.FC<DateTimePickerProps> = ({
   label,
   value,

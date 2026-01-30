@@ -1,3 +1,7 @@
+/**
+ * Home tab: real-time matches list with pull-to-refresh and Create button for admins.
+ */
+
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
@@ -14,6 +18,7 @@ import { subscribeToMatches } from '@/services/matches';
 import { Match } from '@/models/Match';
 import { CountdownTimer } from '@/components/CountdownTimer';
 
+/** Matches list with countdown for upcoming and scores for live/completed. */
 export default function HomeScreen() {
   const { userProfile } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);

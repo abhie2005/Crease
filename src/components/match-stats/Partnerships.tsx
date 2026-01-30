@@ -1,14 +1,21 @@
+/**
+ * Partnerships list (runs, batsmen) with collapsible section.
+ * Used in match stats view.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Partnership } from '@/services/matchStats';
 import { User } from '@/models/User';
 
+/** Props: partnerships, players. */
 interface PartnershipsProps {
   partnerships: Partnership[];
   players: User[];
 }
 
+/** Renders partnerships with expand/collapse. */
 export const Partnerships: React.FC<PartnershipsProps> = ({
   partnerships,
   players

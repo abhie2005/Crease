@@ -1,6 +1,12 @@
+/**
+ * Reusable primary/secondary button with optional loading state.
+ * Used across auth, profile, and admin screens.
+ */
+
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 
+/** See ButtonProps. */
 interface ButtonProps {
   title: string;
   onPress: () => void;
@@ -9,6 +15,7 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary';
 }
 
+/** Primary or secondary button; supports disabled and loading. */
 export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,

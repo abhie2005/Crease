@@ -1,11 +1,18 @@
+/**
+ * Extras breakdown (wides, no-balls, total).
+ * Used in match stats view.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ExtrasBreakdown as ExtrasData } from '@/services/matchStats';
 
+/** Props: extras (wides, noBalls, total). */
 interface ExtrasBreakdownProps {
   extras: ExtrasData;
 }
 
+/** Renders extras summary. */
 export const ExtrasBreakdown: React.FC<ExtrasBreakdownProps> = ({ extras }) => {
   if (extras.total === 0) {
     return null;

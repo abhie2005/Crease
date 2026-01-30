@@ -1,3 +1,8 @@
+/**
+ * Firebase app, Auth, and Firestore initialization.
+ * Reads config from Expo env (app.config.ts). Auth uses AsyncStorage persistence on React Native.
+ */
+
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { initializeAuth, getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
@@ -39,5 +44,6 @@ if (getApps().length === 0) {
   db = getFirestore(app);
 }
 
+/** Exported Firebase app, auth, and Firestore instances. */
 export { app, auth, db };
 

@@ -1,5 +1,11 @@
+/**
+ * Derived match statistics: batting, bowling, partnerships, fall of wickets, extras, over summary.
+ * Used by match stats UI components.
+ */
+
 import { InningsScore, BallEvent, Batsman, Bowler } from '@/models/Match';
 
+/** Batting stats for one player in an innings. */
 export interface BattingStats {
   uid: string;
   runs: number;
@@ -11,6 +17,7 @@ export interface BattingStats {
   isOut: boolean;
 }
 
+/** Bowling stats for one bowler in an innings. */
 export interface BowlingStats {
   uid: string;
   overs: number;
@@ -24,6 +31,7 @@ export interface BowlingStats {
   maidens: number;
 }
 
+/** Partnership between two batsmen. */
 export interface Partnership {
   runs: number;
   wicketNumber: number;
@@ -34,6 +42,7 @@ export interface Partnership {
   balls: number;
 }
 
+/** Fall of wicket entry (score, overs, batsman). */
 export interface FallOfWicket {
   wicketNumber: number;
   score: number;
@@ -42,12 +51,14 @@ export interface FallOfWicket {
   batsmanUid: string;
 }
 
+/** Extras breakdown (wides, no-balls, total). */
 export interface ExtrasBreakdown {
   wides: number;
   noBalls: number;
   total: number;
 }
 
+/** Runs and wickets per over. */
 export interface OverSummary {
   overNumber: number;
   runs: number;
@@ -55,7 +66,11 @@ export interface OverSummary {
 }
 
 /**
- * Calculate batting statistics for a specific player from innings data
+ * Calculates batting statistics for a player from innings data.
+ * @param innings - Innings score and ball events
+ * @param playerUid - Player UID
+ * @param currentBatsmen - Current batsmen (for live innings)
+ * @returns Batting stats
  */
 export const calculateBattingStats = (
   innings: InningsScore,
@@ -132,7 +147,10 @@ export const calculateBattingStats = (
 };
 
 /**
- * Calculate bowling statistics for a specific bowler from innings data
+ * Calculates bowling statistics for a bowler from innings data.
+ * @param innings - Innings score and bowlers
+ * @param bowlerUid - Bowler UID
+ * @returns Bowling stats
  */
 export const calculateBowlingStats = (
   innings: InningsScore,
@@ -186,7 +204,10 @@ export const calculateBowlingStats = (
 };
 
 /**
- * Calculate partnerships from innings data
+ * Calculates partnerships from innings ball events.
+ * @param innings - Innings score and ball events
+ * @param currentBatsmen - Current batsmen (for live)
+ * @returns Array of partnerships
  */
 export const calculatePartnerships = (
   innings: InningsScore,
@@ -277,7 +298,9 @@ export const calculatePartnerships = (
 };
 
 /**
- * Calculate fall of wickets from innings data
+ * Calculates fall of wickets from innings ball events.
+ * @param innings - Innings score and ball events
+ * @returns Array of fall-of-wicket entries
  */
 export const calculateFallOfWickets = (
   innings: InningsScore
@@ -321,7 +344,9 @@ export const calculateFallOfWickets = (
 };
 
 /**
- * Calculate extras breakdown from innings data
+ * Calculates extras (wides, no-balls) from innings ball events.
+ * @param innings - Innings score and ball events
+ * @returns Extras breakdown
  */
 export const calculateExtras = (
   innings: InningsScore
@@ -344,7 +369,9 @@ export const calculateExtras = (
 };
 
 /**
- * Calculate runs per over for visualization
+ * Calculates runs and wickets per over for charts.
+ * @param innings - Innings score and ball events
+ * @returns Over summary array
  */
 export const calculateOverSummary = (
   innings: InningsScore
@@ -397,7 +424,10 @@ export const calculateOverSummary = (
 };
 
 /**
- * Get all batsmen who batted in an innings (including current)
+ * Returns all batsman UIDs who batted in the innings (including current).
+ * @param innings - Innings score and ball events
+ * @param currentBatsmen - Current batsmen
+ * @returns Array of UIDs
  */
 export const getAllBatsmenInInnings = (
   innings: InningsScore,
@@ -421,7 +451,9 @@ export const getAllBatsmenInInnings = (
 };
 
 /**
- * Get all bowlers who bowled in an innings
+ * Returns all bowler UIDs who bowled in the innings.
+ * @param innings - Innings score and bowlers
+ * @returns Array of UIDs
  */
 export const getAllBowlersInInnings = (
   innings: InningsScore

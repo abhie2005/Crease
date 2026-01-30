@@ -1,3 +1,7 @@
+/**
+ * Profile setup: name, student ID, username; creates/updates Firestore profile.
+ */
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -15,6 +19,7 @@ import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { validateUsernameFormat } from '@/utils/usernameValidation';
 
+/** Profile setup form (name, studentId, username). */
 export default function ProfileSetupScreen() {
   const { user, userProfile, refreshUserProfile } = useAuth();
   const [name, setName] = useState('');

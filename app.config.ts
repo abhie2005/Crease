@@ -1,5 +1,10 @@
+/**
+ * Expo app configuration and Firebase environment.
+ * Exposes app name, slug, version, assets, and extra.firebase from EXPO_PUBLIC_* env vars.
+ */
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
+/** Builds the Expo config (name, slug, version, plugins, extra.firebase) from ConfigContext. */
 export default ({ config }: ConfigContext): ExpoConfig => {
   return {
     ...config,

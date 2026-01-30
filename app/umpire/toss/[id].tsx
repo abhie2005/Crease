@@ -1,3 +1,7 @@
+/**
+ * Toss and match setup screen for the umpire.
+ * Coin flip, toss winner/decision, opening batsmen selection, and on-strike choice before starting the match.
+ */
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -17,6 +21,10 @@ import { Match } from '@/models/Match';
 import { User } from '@/models/User';
 import { Button } from '@/components/Button';
 
+/**
+ * Toss screen for the match umpire (route param: match id). Conduct toss (winner + bat/bowl),
+ * select two opening batsmen and who is on strike, then call updateToss to start the match.
+ */
 export default function TossScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userProfile } = useAuth();

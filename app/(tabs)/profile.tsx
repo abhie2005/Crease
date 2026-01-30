@@ -1,3 +1,7 @@
+/**
+ * Profile tab: user info and logout.
+ */
+
 import React from 'react';
 import {
   View,
@@ -13,6 +17,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { logOut } from '@/firebase/auth';
 import { Button } from '@/components/Button';
 
+/** Profile screen with user details and logout. */
 export default function ProfileScreen() {
   const { userProfile, user } = useAuth();
   const router = useRouter();

@@ -1,13 +1,20 @@
+/**
+ * Search result card for a player (avatar, name, username, role).
+ * Used in the search tab players list.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { User } from '@/models/User';
 import { Ionicons } from '@expo/vector-icons';
 
+/** Props: player (User), onPress callback. */
 interface PlayerResultCardProps {
   player: User;
   onPress: (username?: string) => void;
 }
 
+/** Card showing player info; onPress navigates to user profile. */
 export const PlayerResultCard: React.FC<PlayerResultCardProps> = ({ player, onPress }) => {
   return (
     <TouchableOpacity

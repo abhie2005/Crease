@@ -1,7 +1,12 @@
+/**
+ * Profile index: redirects to profile setup.
+ */
+
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 
+/** Redirects to /profile/setup. */
 export default function ProfileIndexRedirect() {
   const router = useRouter();
 

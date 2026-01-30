@@ -1,3 +1,8 @@
+/**
+ * Full match statistics view: highlights, batting/bowling tables, partnerships,
+ * fall of wickets, extras, over summary, team comparison. Used on match detail Stats tab.
+ */
+
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Match } from '@/models/Match';
@@ -21,12 +26,14 @@ import { ExtrasBreakdown } from './ExtrasBreakdown';
 import { OverSummary } from './OverSummary';
 import { TeamComparison } from './TeamComparison';
 
+/** Props: match, teamAPlayers, teamBPlayers. */
 interface MatchStatsViewProps {
   match: Match;
   teamAPlayers: User[];
   teamBPlayers: User[];
 }
 
+/** Container for all match stats sections (live/completed). */
 export const MatchStatsView: React.FC<MatchStatsViewProps> = ({
   match,
   teamAPlayers,

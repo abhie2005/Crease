@@ -1,8 +1,13 @@
+/**
+ * Entry redirect: sends authenticated users with profile to tabs, others to login or profile setup.
+ */
+
 import { useEffect, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 
+/** Redirects based on auth and profile; renders loading while resolving. */
 export default function IndexRedirect() {
   const router = useRouter();
   const segments = useSegments();
