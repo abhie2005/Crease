@@ -21,7 +21,10 @@ interface InputProps {
   inputStyle?: TextStyle;
 }
 
-/** Labeled text input with optional secure entry and multiline. */
+/** Labeled text input with optional secure entry and 
+ * 
+ * 
+ * multiline. */
 export const Input: React.FC<InputProps> = ({
   label,
   value,
