@@ -1,7 +1,8 @@
 /**
  * User profile screen by username.
- * Displays public profile (name, username, student ID, role) for a given username route param.
+ * Displays public profile (name, username, student ID, role), recently played, pinned performance, match history (respecting privacy).
  */
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -9,22 +10,33 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getUserByUsername } from '@/services/users';
+import { useAuth } from '@/providers/AuthProvider';
 import { User } from '@/models/User';
+import { ProfileContent } from '@/components/profile/ProfileContent';
+import { setPinnedPerformance, clearPinnedPerformance } from '@/services/users';
 
 /**
  * Screen that shows a user's public profile when navigating by username (e.g. /user/johndoe).
- * Fetches user via getUserByUsername and renders name, username, student ID, and role.
+ * Respects privacy toggles for recently played, match history, and pinned performance.
  */
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
+  const { userProfile: currentUser, refreshUserProfile } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const isOwnProfile = !!(
+    currentUser?.username &&
+    username &&
+    currentUser.username.toLowerCase() === String(username).toLowerCase()
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,6 +59,28 @@ export default function UserProfileScreen() {
 
     fetchUser();
   }, [username]);
+
+  const handlePin = async (matchId: string, type: 'batting' | 'bowling') => {
+    if (!currentUser?.uid || !isOwnProfile) return;
+    try {
+      await setPinnedPerformance(currentUser.uid, matchId, type);
+      await refreshUserProfile?.();
+      setUser((prev) => prev ? { ...prev, pinnedPerformance: { matchId, type } } : null);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to pin performance');
+    }
+  };
+
+  const handleUnpin = async () => {
+    if (!currentUser?.uid || !isOwnProfile) return;
+    try {
+      await clearPinnedPerformance(currentUser.uid);
+      await refreshUserProfile?.();
+      setUser((prev) => prev ? { ...prev, pinnedPerformance: undefined } : null);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to unpin');
+    }
+  };
 
   if (loading) {
     return (
@@ -79,33 +113,36 @@ export default function UserProfileScreen() {
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
+            {isOwnProfile && (
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  style={styles.headerBtn}
+                  onPress={() => router.push('/profile/setup')}
+                >
+                  <Text style={styles.headerBtnText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.headerBtn}
+                  onPress={() => router.push('/profile/settings')}
+                >
+                  <Text style={styles.headerBtnText}>Settings</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <Text style={styles.title}>User Profile</Text>
 
-          <View style={styles.profileInfo}>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Name:</Text>
-              <Text style={styles.value}>{user.name}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Username:</Text>
-              <Text style={[styles.value, !user.username && styles.notSet]}>
-                {user.username || 'Not set'}
-              </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Student ID:</Text>
-              <Text style={styles.value}>{user.studentId}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Role:</Text>
-              <Text style={styles.value}>{user.role}</Text>
-            </View>
-          </View>
+          <ProfileContent
+            user={user}
+            isOwnProfile={isOwnProfile}
+            showRecentlyPlayed={user.showRecentlyPlayed !== false}
+            showMatchHistory={user.showMatchHistory !== false}
+            showPinnedPerformance={user.showPinnedPerformance !== false}
+            onPin={isOwnProfile ? handlePin : undefined}
+            onUnpin={isOwnProfile ? handleUnpin : undefined}
+            onRefreshUser={isOwnProfile ? () => getUserByUsername(String(username)).then(setUser) : undefined}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -125,6 +162,9 @@ const styles = StyleSheet.create({
     padding: 24
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16
   },
   backButton: {
@@ -136,6 +176,25 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '600'
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12
+  },
+  headerBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6
+  },
+  headerBtnText: {
+    fontSize: 15,
+    color: '#007AFF',
+    fontWeight: '600'
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 24
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -146,40 +205,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#999',
     marginBottom: 24
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 24
-  },
-  profileInfo: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 24
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    minHeight: 44
-  },
-  label: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500'
-  },
-  value: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600'
-  },
-  notSet: {
-    color: '#999',
-    fontStyle: 'italic'
   }
 });

@@ -69,6 +69,18 @@ export const subscribeToMatch = (
 };
 
 /**
+ * Fetches a single match by ID (one-shot, for pinned performance etc.).
+ * @param matchId - Match document ID
+ * @returns Match with id or null if not found
+ */
+export const getMatch = async (matchId: string): Promise<(Match & { id: string }) | null> => {
+  const matchRef = matchDoc(matchId);
+  const snapshot = await getDoc(matchRef);
+  if (!snapshot.exists()) return null;
+  return { ...snapshot.data(), id: snapshot.id } as any;
+};
+
+/**
  * Creates a new match document (status: upcoming).
  * @param createdBy - UID of creator
  * @param umpireUid - UID of assigned umpire

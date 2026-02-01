@@ -3,7 +3,7 @@
  * Used by upcoming match stats and player profile.
  */
 
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, startAfter, DocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { Match, BallEvent } from '@/models/Match';
 
@@ -132,6 +132,95 @@ const calculatePlayerBowlingInMatch = (match: Match, playerUid: string) => {
   });
   
   return { overs, balls, runs, wickets, bowled };
+};
+
+/** Result of getMatchesForPlayer: matches and optional cursor for next page. */
+export interface GetMatchesForPlayerResult {
+  matches: (Match & { id: string })[];
+  lastDoc: DocumentSnapshot | null;
+}
+
+/**
+ * Fetches completed matches in which the player participated (for recently played / match history).
+ * @param playerUid - Player UID
+ * @param options - limit (default 20), optional calendar year, optional cursor for pagination
+ * @returns Matches (with id) and lastDoc for load-more
+ */
+export const getMatchesForPlayer = async (
+  playerUid: string,
+  options?: { limit?: number; year?: number; startAfter?: DocumentSnapshot }
+): Promise<GetMatchesForPlayerResult> => {
+  const { limit: limitCount = 20, year, startAfter: startAfterDoc } = options ?? {};
+  const matchesRef = collection(db, 'matches');
+
+  let q = query(
+    matchesRef,
+    where('status', '==', 'completed'),
+    orderBy('updatedAt', 'desc'),
+    limit(100)
+  );
+  if (startAfterDoc) {
+    q = query(q, startAfter(startAfterDoc));
+  }
+
+  const snapshot = await getDocs(q);
+  const all: (Match & { id: string })[] = [];
+
+  snapshot.forEach((docSnap) => {
+    const matchData = docSnap.data() as Match;
+    const isInTeamA = matchData.teamA?.playerUids?.includes(playerUid);
+    const isInTeamB = matchData.teamB?.playerUids?.includes(playerUid);
+    if (isInTeamA || isInTeamB) {
+      const matchWithId = { ...matchData, id: docSnap.id } as Match & { id: string };
+      if (year !== undefined) {
+        const updatedAt = matchData.updatedAt;
+        const matchYear = updatedAt?.toDate?.()?.getFullYear?.() ?? new Date().getFullYear();
+        if (matchYear === year) {
+          all.push(matchWithId);
+        }
+      } else {
+        all.push(matchWithId);
+      }
+    }
+  });
+
+  const hasMore = snapshot.docs.length >= 100;
+  const lastDoc = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+  const matches = all.slice(0, limitCount);
+  return { matches, lastDoc };
+};
+
+/** Display line for a single batting or bowling performance in a match. */
+export interface PlayerPerformanceInMatch {
+  batting?: { runs: number; balls: number };
+  bowling?: { overs: number; balls: number; runs: number; wickets: number };
+}
+
+/**
+ * Returns one player's batting and/or bowling performance in a match (for pinned display).
+ * @param match - Match document (with teamAInnings, teamBInnings)
+ * @param playerUid - Player UID
+ * @returns Batting (runs, balls) and/or bowling (overs, balls, runs, wickets) if they played
+ */
+export const getPlayerPerformanceInMatch = (
+  match: Match,
+  playerUid: string
+): PlayerPerformanceInMatch => {
+  const battingData = calculatePlayerBattingInMatch(match, playerUid);
+  const bowlingData = calculatePlayerBowlingInMatch(match, playerUid);
+  const result: PlayerPerformanceInMatch = {};
+  if (battingData.batted) {
+    result.batting = { runs: battingData.runs, balls: battingData.balls };
+  }
+  if (bowlingData.bowled) {
+    result.bowling = {
+      overs: bowlingData.overs,
+      balls: bowlingData.balls,
+      runs: bowlingData.runs,
+      wickets: bowlingData.wickets
+    };
+  }
+  return result;
 };
 
 /**

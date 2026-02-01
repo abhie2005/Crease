@@ -7,13 +7,15 @@ import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
   serverTimestamp,
   query,
   where,
   getDocs,
   limit,
   orderBy,
-  Timestamp 
+  Timestamp,
+  deleteField
 } from 'firebase/firestore';
 import { userDoc, usersCollection } from '@/firebase/firestore';
 import { User, DEFAULT_USER_ROLE } from '@/models/User';
@@ -301,4 +303,63 @@ export const getUsersByUids = async (uids: string[]): Promise<User[]> => {
     console.error('[getUsersByUids] Error fetching users:', error);
     return [];
   }
+};
+
+/**
+ * Sets the pinned performance for the current user (batting or bowling from a match).
+ * Caller must ensure auth.uid === uid.
+ * @param uid - User UID (must be current user)
+ * @param matchId - Match document ID
+ * @param type - 'batting' or 'bowling'
+ */
+export const setPinnedPerformance = async (
+  uid: string,
+  matchId: string,
+  type: 'batting' | 'bowling'
+): Promise<void> => {
+  const userRef = userDoc(uid);
+  await setDoc(
+    userRef,
+    {
+      pinnedPerformance: { matchId, type },
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
+};
+
+/**
+ * Clears the pinned performance for the current user.
+ * @param uid - User UID (must be current user)
+ */
+export const clearPinnedPerformance = async (uid: string): Promise<void> => {
+  const userRef = userDoc(uid);
+  await updateDoc(userRef, {
+    pinnedPerformance: deleteField(),
+    updatedAt: serverTimestamp()
+  });
+};
+
+/**
+ * Updates privacy toggles for the current user.
+ * @param uid - User UID (must be current user)
+ * @param privacy - showRecentlyPlayed, showMatchHistory, showPinnedPerformance
+ */
+export const updatePrivacy = async (
+  uid: string,
+  privacy: {
+    showRecentlyPlayed?: boolean;
+    showMatchHistory?: boolean;
+    showPinnedPerformance?: boolean;
+  }
+): Promise<void> => {
+  const userRef = userDoc(uid);
+  await setDoc(
+    userRef,
+    {
+      ...privacy,
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 };

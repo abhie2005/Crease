@@ -1,5 +1,5 @@
 /**
- * Profile tab: user info and logout.
+ * Profile tab: user info, recently played, pinned performance, match history, Edit, Settings, logout.
  */
 
 import React from 'react';
@@ -15,11 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { logOut } from '@/firebase/auth';
+import { setPinnedPerformance, clearPinnedPerformance } from '@/services/users';
 import { Button } from '@/components/Button';
+import { ProfileContent } from '@/components/profile/ProfileContent';
 
-/** Profile screen with user details and logout. */
+/** Profile screen with user details, stats sections, Edit, Settings, and logout. */
 export default function ProfileScreen() {
-  const { userProfile, user } = useAuth();
+  const { userProfile, user, refreshUserProfile } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -43,16 +45,23 @@ export default function ProfileScreen() {
     );
   };
 
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrator';
-      case 'president':
-        return 'President';
-      case 'player':
-        return 'Player';
-      default:
-        return role;
+  const handlePin = async (matchId: string, type: 'batting' | 'bowling') => {
+    if (!userProfile?.uid) return;
+    try {
+      await setPinnedPerformance(userProfile.uid, matchId, type);
+      await refreshUserProfile?.();
+    } catch (e) {
+      Alert.alert('Error', 'Failed to pin performance');
+    }
+  };
+
+  const handleUnpin = async () => {
+    if (!userProfile?.uid) return;
+    try {
+      await clearPinnedPerformance(userProfile.uid);
+      await refreshUserProfile?.();
+    } catch (e) {
+      Alert.alert('Error', 'Failed to unpin');
     }
   };
 
@@ -62,60 +71,45 @@ export default function ProfileScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Profile</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.headerBtn}
+                onPress={() => router.push('/profile/setup')}
+              >
+                <Text style={styles.headerBtnText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerBtn}
+                onPress={() => router.push('/profile/settings')}
+              >
+                <Text style={styles.headerBtnText}>Settings</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {userProfile ? (
-            <View style={styles.profileCard}>
+            <>
               <View style={styles.avatarContainer}>
                 <Text style={styles.avatarText}>
                   {userProfile.name.charAt(0).toUpperCase()}
                 </Text>
               </View>
-
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Name</Text>
-                  <Text style={styles.infoValue}>{userProfile.name}</Text>
+              {user?.email && (
+                <View style={styles.emailRow}>
+                  <Text style={styles.emailLabel}>Email</Text>
+                  <Text style={styles.emailValue}>{user.email}</Text>
                 </View>
-
-                <View style={styles.divider} />
-
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Student ID</Text>
-                  <Text style={styles.infoValue}>{userProfile.studentId}</Text>
-                </View>
-
-                <View style={styles.divider} />
-
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Username</Text>
-                  <Text style={[styles.infoValue, !userProfile.username && styles.notSet]}>
-                    {userProfile.username || 'Not set'}
-                  </Text>
-                </View>
-
-                <View style={styles.divider} />
-
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Role</Text>
-                  <View style={styles.roleBadge}>
-                    <Text style={styles.roleText}>
-                      {getRoleDisplayName(userProfile.role)}
-                    </Text>
-                  </View>
-                </View>
-
-                {user?.email && (
-                  <>
-                    <View style={styles.divider} />
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Email</Text>
-                      <Text style={styles.infoValue}>{user.email}</Text>
-                    </View>
-                  </>
-                )}
-              </View>
-
+              )}
+              <ProfileContent
+                user={userProfile}
+                isOwnProfile
+                showRecentlyPlayed={userProfile.showRecentlyPlayed !== false}
+                showMatchHistory={userProfile.showMatchHistory !== false}
+                showPinnedPerformance={userProfile.showPinnedPerformance !== false}
+                onPin={handlePin}
+                onUnpin={handleUnpin}
+                onRefreshUser={refreshUserProfile}
+              />
               <View style={styles.buttonContainer}>
                 <Button
                   title="Logout"
@@ -123,7 +117,7 @@ export default function ProfileScreen() {
                   variant="secondary"
                 />
               </View>
-            </View>
+            </>
           ) : (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No profile data available</Text>
@@ -147,22 +141,28 @@ const styles = StyleSheet.create({
     padding: 16
   },
   header: {
-    marginBottom: 24
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333'
   },
-  profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12
+  },
+  headerBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6
+  },
+  headerBtnText: {
+    fontSize: 15,
+    color: '#007AFF',
+    fontWeight: '600'
   },
   avatarContainer: {
     width: 80,
@@ -172,56 +172,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginBottom: 24
+    marginBottom: 16
   },
   avatarText: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#fff'
   },
-  infoSection: {
-    marginBottom: 24
-  },
-  infoRow: {
+  emailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e8e8e8'
   },
-  infoLabel: {
+  emailLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#666'
+  },
+  emailValue: {
+    fontSize: 14,
+    color: '#333',
     fontWeight: '500'
   },
-  infoValue: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'right'
-  },
-  notSet: {
-    color: '#999',
-    fontStyle: 'italic'
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 4
-  },
-  roleBadge: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12
-  },
-  roleText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600'
-  },
   buttonContainer: {
-    marginTop: 8
+    marginTop: 8,
+    marginBottom: 24
   },
   emptyContainer: {
     padding: 32,
