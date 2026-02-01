@@ -24,7 +24,7 @@ export const matchesCollection = collection(db, 'matches') as CollectionReferenc
  * @returns DocumentReference for users/{uid}
  */
 export const userDoc = (uid: string): DocumentReference<User> => {
-  return doc(db, 'users', uid);
+  return doc(db, 'users', uid) as DocumentReference<User>;
 };
 
 /**
@@ -33,6 +33,6 @@ export const userDoc = (uid: string): DocumentReference<User> => {
  * @returns DocumentReference for matches/{matchId}
  */
 export const matchDoc = (matchId: string): DocumentReference<Match> => {
-  return doc(db, 'matches', matchId);
+  return doc(db, 'matches', matchId) as DocumentReference<Match>;
 };
 

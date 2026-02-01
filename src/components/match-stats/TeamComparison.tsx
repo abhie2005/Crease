@@ -74,7 +74,7 @@ export const TeamComparison: React.FC<TeamComparisonProps> = ({
     backgroundGradientFrom: '#fff',
     backgroundGradientTo: '#fff',
     decimalPlaces: 0,
-    color: (opacity = 1, index) => {
+    color: (opacity = 1, index?: number) => {
       return index === 0 ? `rgba(0, 122, 255, ${opacity})` : `rgba(255, 59, 48, ${opacity})`;
     },
     labelColor: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
