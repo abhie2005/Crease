@@ -31,9 +31,9 @@ function RootLayoutNav() {
       }
     } else if (user && userProfile) {
       // User is signed in and has profile
-      const inTabsGroup = segments[0] === '(tabs)';
       const onIndex = segments.length === 0 || (segments.length === 1 && segments[0] === 'index');
-      if (inAuthGroup || inProfileGroup || onIndex) {
+      // Redirect auth (login/signup) and index to tabs; allow profile group (setup, settings) for editing
+      if (inAuthGroup || onIndex) {
         router.replace('/(tabs)');
       }
     }
