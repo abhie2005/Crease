@@ -68,7 +68,6 @@ export default function LoginScreen() {
                 style={styles.logo}
                 resizeMode="contain"
               />
-              <Text style={styles.appName}>CREASE</Text>
               <View style={styles.taglineBorder} />
               <Text style={styles.heroSubtitle}>Professional Cricket Scoring</Text>
             </View>
