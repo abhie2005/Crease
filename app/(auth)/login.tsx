@@ -63,11 +63,13 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.heroSection}>
-              <Image
-                source={require('../../assets/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
+              <View style={styles.logoWrapper}>
+                <Image
+                  source={require('../../assets/logo.png')}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
               <View style={styles.taglineBorder} />
               <Text style={styles.heroSubtitle}>Professional Cricket Scoring</Text>
             </View>
@@ -170,11 +172,18 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 32
+    marginBottom: 16
+  },
+  logoWrapper: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   logo: {
-    width: 300,
-    height: 300,
+    width: 320,
+    height: 320,
     marginBottom: 0
   },
   appName: {
