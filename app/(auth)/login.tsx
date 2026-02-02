@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 60,
+    paddingTop: 40,
     paddingHorizontal: 24,
     paddingBottom: 40,
     alignItems: 'center'
@@ -174,9 +174,9 @@ const styles = StyleSheet.create({
     marginBottom: 32
   },
   logo: {
-    width: 180,
-    height: 180,
-    marginBottom: 12
+    width: 300,
+    height: 300,
+    marginBottom: 0
   },
   appName: {
     fontSize: 36,

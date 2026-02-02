@@ -12,7 +12,8 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
-  StatusBar
+  StatusBar,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { signUp } from '@/firebase/auth';
@@ -72,6 +73,11 @@ export default function SignUpScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.heroSection}>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
               <Text style={styles.appName}>CREASE</Text>
               <View style={styles.taglineBorder} />
               <Text style={styles.heroSubtitle}>Join the community</Text>
@@ -172,14 +178,19 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 80,
+    paddingTop: 40,
     paddingHorizontal: 24,
     paddingBottom: 40,
     alignItems: 'center'
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 40
+    marginBottom: 32
+  },
+  logo: {
+    width: 300,
+    height: 300,
+    marginBottom: 0
   },
   appName: {
     fontSize: 36,
