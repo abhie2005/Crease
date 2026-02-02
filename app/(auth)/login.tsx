@@ -65,7 +65,7 @@ export default function LoginScreen() {
             <View style={styles.heroSection}>
               <View style={styles.logoWrapper}>
                 <Image
-                  source={require('../../assets/logo.png')}
+                  source={require('../../assets/STREACHED.png')}
                   style={styles.logo}
                   resizeMode="contain"
                 />
@@ -176,14 +176,14 @@ const styles = StyleSheet.create({
   },
   logoWrapper: {
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 16,
+    padding: 10,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center'
   },
   logo: {
-    width: 320,
-    height: 320,
+    width: 200,
+    height: 200,
     marginBottom: 0
   },
   appName: {
