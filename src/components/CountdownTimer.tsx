@@ -7,10 +7,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Timestamp } from 'firebase/firestore';
 
-/** Props: scheduledDate (Date or Firestore Timestamp), optional compact. */
+/** Props: scheduledDate (Date or Firestore Timestamp), optional compact, optional text colors for dark backgrounds. */
 interface CountdownTimerProps {
   scheduledDate: Date | Timestamp;
   compact?: boolean;
+  labelColor?: string;
+  valueColor?: string;
 }
 
 const getDate = (value: Date | Timestamp): Date =>
@@ -19,7 +21,9 @@ const getDate = (value: Date | Timestamp): Date =>
 /** Renders countdown (days/hours/minutes/seconds) or "Match started" when past. */
 export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   scheduledDate,
-  compact = false
+  compact = false,
+  labelColor,
+  valueColor
 }) => {
   const targetDate = getDate(scheduledDate);
   const [remaining, setRemaining] = useState<number>(
@@ -41,7 +45,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   if (remaining <= 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.startedText}>Match started</Text>
+        <Text style={[styles.startedText, valueColor ? { color: valueColor } : null]}>Match started</Text>
       </View>
     );
   }
@@ -65,8 +69,8 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Starts in</Text>
-      <Text style={compact ? styles.valueCompact : styles.value}>
+      <Text style={[styles.label, labelColor ? { color: labelColor } : null]}>Starts in</Text>
+      <Text style={[compact ? styles.valueCompact : styles.value, valueColor ? { color: valueColor } : null]}>
         {parts.join(' ')}
       </Text>
     </View>
