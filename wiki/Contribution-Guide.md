@@ -154,7 +154,7 @@ We use TypeScript for all code. Follow these guidelines:
 #### 1. Type Everything
 
 ```typescript
-// ✅ Good
+// Good
 interface Props {
   matchId: string;
   onUpdate: (score: Score) => void;
@@ -164,7 +164,7 @@ export function ScoreCard({ matchId, onUpdate }: Props) {
   // ...
 }
 
-// ❌ Bad
+// Bad
 export function ScoreCard({ matchId, onUpdate }: any) {
   // ...
 }
@@ -173,14 +173,14 @@ export function ScoreCard({ matchId, onUpdate }: any) {
 #### 2. Use Interfaces for Objects
 
 ```typescript
-// ✅ Good
+// Good
 interface User {
   uid: string;
   name: string;
   role: UserRole;
 }
 
-// ❌ Avoid (use interfaces instead)
+// Avoid (use interfaces instead)
 type User = {
   uid: string;
   name: string;
@@ -191,12 +191,12 @@ type User = {
 #### 3. Avoid `any`
 
 ```typescript
-// ✅ Good
+// Good
 const handleError = (error: Error) => {
   Alert.alert('Error', error.message);
 };
 
-// ❌ Bad
+// Bad
 const handleError = (error: any) => {
   Alert.alert('Error', error.message);
 };
@@ -207,12 +207,12 @@ const handleError = (error: any) => {
 #### 1. Functional Components
 
 ```typescript
-// ✅ Good
+// Good
 export default function MatchCard({ match }: Props) {
   return <View>...</View>;
 }
 
-// ❌ Avoid class components
+// Avoid class components
 export class MatchCard extends React.Component {
   // ...
 }
@@ -221,7 +221,7 @@ export class MatchCard extends React.Component {
 #### 2. Hooks
 
 ```typescript
-// ✅ Good - hooks at top level
+// Good - hooks at top level
 export default function Screen() {
   const [data, setData] = useState([]);
   const { user } = useAuth();
@@ -233,10 +233,10 @@ export default function Screen() {
   return <View>...</View>;
 }
 
-// ❌ Bad - conditional hooks
+// Bad - conditional hooks
 export default function Screen() {
   if (someCondition) {
-    useState([]); // ❌ Never conditional!
+    useState([]); // Never conditional
   }
 }
 ```
@@ -244,13 +244,13 @@ export default function Screen() {
 #### 3. Cleanup
 
 ```typescript
-// ✅ Good - always cleanup
+// Good - always cleanup
 useEffect(() => {
   const unsubscribe = subscribeToMatches(setMatches);
   return unsubscribe; // ← Cleanup
 }, []);
 
-// ❌ Bad - memory leak
+// Bad - memory leak
 useEffect(() => {
   subscribeToMatches(setMatches);
   // No cleanup!
@@ -462,7 +462,7 @@ feat(scoring): add ball-by-ball history
 
 When reviewing others' PRs:
 
-✅ **Check for:**
+**Check for:**
 - Code follows style guidelines
 - TypeScript types are correct
 - No `any` types without justification
@@ -481,14 +481,14 @@ When reviewing others' PRs:
 
 When receiving feedback:
 
-✅ **Do:**
+**Do:**
 - Respond to all comments
 - Ask questions if unclear
 - Make requested changes
 - Mark conversations as resolved
 - Thank reviewers
 
-❌ **Don't:**
+**Don't:**
 - Take feedback personally
 - Argue without technical basis
 - Ignore comments
@@ -594,13 +594,13 @@ Contributors will be recognized in:
 
 ### Our Standards
 
-✅ **Expected behavior:**
+**Expected behavior:**
 - Be respectful and inclusive
 - Accept constructive criticism
 - Focus on what's best for the project
 - Show empathy towards others
 
-❌ **Unacceptable behavior:**
+**Unacceptable behavior:**
 - Harassment or discrimination
 - Trolling or inflammatory comments
 - Personal attacks
@@ -621,7 +621,7 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 ## Thank You!
 
-Your contributions make Crease better for everyone. We appreciate your time and effort! 🙏
+Your contributions make Crease better for everyone. We appreciate your time and effort.
 
 ---
 

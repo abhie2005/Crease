@@ -4,7 +4,7 @@ This document outlines planned features, improvements, and the future direction 
 
 ## Current Status
 
-✅ **MVP Complete** (v1.0.0)
+**MVP Complete** (v1.0.0)
 
 Core features implemented:
 - Authentication and profile management

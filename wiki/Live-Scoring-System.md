@@ -550,7 +550,7 @@ try {
 
 ## Best Practices
 
-### ✅ Do
+### Do
 
 - Use transactions for score updates
 - Unsubscribe from listeners on unmount
@@ -559,7 +559,7 @@ try {
 - Validate data before writing
 - Use serverTimestamp() for consistency
 
-### ❌ Don't
+### Don't
 
 - Poll Firestore repeatedly (use listeners)
 - Write without transactions for critical data

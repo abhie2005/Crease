@@ -94,7 +94,7 @@ service cloud.firestore {
 }
 ```
 
-**⚠️ Important:** Test mode allows all reads and writes for 30 days. We'll set up proper security rules next.
+**Important:** Test mode allows all reads and writes for 30 days. We'll set up proper security rules next.
 
 ### 3. Choose Location
 
@@ -203,16 +203,16 @@ Click **Publish** button.
 ### Rule Explanation
 
 **Users Collection:**
-- ✅ Any authenticated user can read any profile
-- ✅ Users can create/update only their own profile
-- ✅ Admins can change user roles
-- ❌ No one can delete users
+- Any authenticated user can read any profile
+- Users can create/update only their own profile
+- Admins can change user roles
+- No one can delete users
 
 **Matches Collection:**
-- ✅ Any authenticated user can read matches
-- ✅ Only admins/presidents can create matches
-- ✅ Admins and assigned umpires can update matches
-- ✅ Only admins can delete matches
+- Any authenticated user can read matches
+- Only admins/presidents can create matches
+- Admins and assigned umpires can update matches
+- Only admins can delete matches
 
 ## Configure App Environment
 
@@ -447,13 +447,13 @@ For development, free tier is sufficient.
 
 ### Security
 
-✅ **Do:**
+**Do:**
 - Use environment variables for config
 - Implement proper security rules
 - Validate data on client and server
 - Use transactions for critical updates
 
-❌ **Don't:**
+**Don't:**
 - Commit Firebase config to public repos
 - Use admin SDK in client app
 - Allow unauthenticated writes
@@ -461,13 +461,13 @@ For development, free tier is sufficient.
 
 ### Performance
 
-✅ **Do:**
+**Do:**
 - Use real-time listeners for live data
 - Unsubscribe from listeners on unmount
 - Index frequently queried fields
 - Use transactions for atomic updates
 
-❌ **Don't:**
+**Don't:**
 - Poll Firestore repeatedly
 - Fetch all documents at once
 - Read more data than needed
@@ -475,13 +475,13 @@ For development, free tier is sufficient.
 
 ### Cost Optimization
 
-✅ **Do:**
+**Do:**
 - Cache data when possible
 - Use limit() on queries
 - Batch related operations
 - Monitor usage dashboard
 
-❌ **Don't:**
+**Don't:**
 - Fetch unnecessary fields
 - Create infinite listeners
 - Ignore read quotas
@@ -503,4 +503,4 @@ Now that Firebase is configured:
 
 ---
 
-**Firebase setup complete!** Your backend is ready for development. 🚀
+**Firebase setup complete.** Your backend is ready for development.

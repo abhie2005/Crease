@@ -438,11 +438,11 @@ allow write: if request.auth.uid == resource.data.umpireUid;
 
 | Feature | Player | Admin | President | Umpire |
 |---------|--------|-------|-----------|--------|
-| View matches | ✅ | ✅ | ✅ | ✅ |
-| View details | ✅ | ✅ | ✅ | ✅ |
-| Create match | ❌ | ✅ | ✅ | ❌ |
-| Score match | ❌ | ✅* | ✅* | ✅* |
-| Edit match | ❌ | ✅ | ✅ | ❌ |
+| View matches | Yes | Yes | Yes | Yes |
+| View details | Yes | Yes | Yes | Yes |
+| Create match | No | Yes | Yes | No |
+| Score match | No | Yes* | Yes* | Yes* |
+| Edit match | No | Yes | Yes | No |
 
 *Only if assigned as umpire
 

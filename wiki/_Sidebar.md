@@ -1,6 +1,6 @@
 # Crease Wiki
 
-## 📚 Documentation
+## Documentation
 
 **[Home](Home.md)**
 Overview and introduction
@@ -25,10 +25,10 @@ Future plans
 
 ---
 
-## 🚀 Quick Links
+## Quick Links
 
-- [Tech Stack](Home.md#-tech-stack)
-- [Quick Start](Home.md#-quick-start)
+- [Tech Stack](Home.md#tech-stack)
+- [Quick Start](Home.md#quick-start)
 - [Installation Steps](Getting-Started.md#installation)
 - [Running the App](Getting-Started.md#running-the-app)
 - [Data Models](Project-Architecture.md#type-models-srcmodels)
@@ -37,7 +37,7 @@ Future plans
 
 ---
 
-## 🛠️ For Developers
+## For Developers
 
 - [Folder Structure](Project-Architecture.md#folder-structure)
 - [Data Flow](Project-Architecture.md#data-flow)
@@ -47,7 +47,7 @@ Future plans
 
 ---
 
-## 🎯 Features
+## Features
 
 - [Authentication Flow](Project-Architecture.md#authentication-flow)
 - [Real-time Updates](Live-Scoring-System.md#real-time-updates)
@@ -57,7 +57,7 @@ Future plans
 
 ---
 
-## 📖 Resources
+## Resources
 
 - [Firebase Docs](https://firebase.google.com/docs)
 - [Expo Docs](https://docs.expo.dev/)

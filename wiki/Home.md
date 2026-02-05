@@ -1,8 +1,8 @@
-# Welcome to Crease 🏏
+# Welcome to Crease
 
 **Crease** is a production-ready mobile application for cricket club management, live scoring, and match administration. Built with modern technologies and best practices, Crease demonstrates enterprise-level React Native development with real-time capabilities.
 
-## 🎯 Purpose
+## Purpose
 
 Crease solves the problem of managing cricket matches for clubs and organizations by providing:
 
@@ -12,7 +12,7 @@ Crease solves the problem of managing cricket matches for clubs and organization
 - **Role-based access** - Different capabilities for players, admins, and umpires
 - **Profile management** - Track member information and roles
 
-## ✨ Key Features
+## Key Features
 
 ### Authentication & Authorization
 - Firebase Authentication with email/password
@@ -39,7 +39,7 @@ Crease solves the problem of managing cricket matches for clubs and organization
 - Keyboard-aware forms
 - SafeArea handling for all devices
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React Native** - Cross-platform mobile framework
@@ -63,21 +63,21 @@ Crease solves the problem of managing cricket matches for clubs and organization
 - **Babel** - JavaScript transpilation
 - **ESLint & Prettier** - Code quality and formatting
 
-## 📊 Project Status
+## Project Status
 
-✅ **Production-Ready MVP**
+**Production-Ready MVP**
 
 All core features are implemented and tested:
-- ✅ Complete authentication flow
-- ✅ Profile setup and management
-- ✅ Match creation (admin)
-- ✅ Live scoring (umpire)
-- ✅ Real-time match list
-- ✅ Match details with live updates
-- ✅ Role-based access control
-- ✅ Transaction-safe score updates
+- Complete authentication flow
+- Profile setup and management
+- Match creation (admin)
+- Live scoring (umpire)
+- Real-time match list
+- Match details with live updates
+- Role-based access control
+- Transaction-safe score updates
 
-## 📚 Documentation
+## Documentation
 
 - **[Getting Started](Getting-Started.md)** - Set up the project locally
 - **[Project Architecture](Project-Architecture.md)** - Understand the codebase structure
@@ -86,7 +86,7 @@ All core features are implemented and tested:
 - **[Contribution Guide](Contribution-Guide.md)** - How to contribute to the project
 - **[Roadmap](Roadmap.md)** - Planned features and improvements
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -109,23 +109,23 @@ npm run android
 
 See [Getting Started](Getting-Started.md) for detailed setup instructions.
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please read our [Contribution Guide](Contribution-Guide.md) before submitting pull requests.
 
-## 📱 Screenshots
+## Screenshots
 
 *Coming soon: Screenshots of authentication, home screen, match details, and scoring interface*
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 👥 Team
+## Team
 
 Developed as a demonstration of modern React Native development practices with Firebase integration.
 
-## 📞 Support
+## Support
 
 For questions or issues:
 - Open an issue in the repository
