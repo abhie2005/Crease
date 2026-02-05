@@ -373,10 +373,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## Acknowledgments
 
-- **abhie2005** and **Krushang1818**
-- [Expo](https://expo.dev/)
-- [Firebase](https://firebase.google.com/)
-- [Ionicons](https://ionic.io/ionicons)
+- Made by **abhie2005** and **Krushang1818**
 
 ---
 
