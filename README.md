@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="Crease Logo" width="200"/>
   
-  # 🏏 Crease
+  # Crease
   
   ### *Where Every Ball Counts*
   
@@ -17,11 +17,11 @@
   </p>
   
   <p align="center">
-    <a href="#-features">Features</a> •
-    <a href="#-quick-start">Quick Start</a> •
-    <a href="#-documentation">Documentation</a> •
-    <a href="#-tech-stack">Tech Stack</a> •
-    <a href="#-contributing">Contributing</a>
+    <a href="#features">Features</a> •
+    <a href="#quick-start">Quick Start</a> •
+    <a href="#documentation">Documentation</a> •
+    <a href="#tech-stack">Tech Stack</a> •
+    <a href="#contributing">Contributing</a>
   </p>
   
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="divider"/>
@@ -29,49 +29,49 @@
 
 ---
 
-## 📱 What is Crease?
+## What is Crease?
 
 Crease is a **production-ready** React Native application designed for cricket enthusiasts, clubs, and tournament organizers. Built with modern technologies and best practices, it provides real-time match scoring, comprehensive player statistics, and seamless match management—all in the palm of your hand.
 
-> 🎯 **Mission:** To revolutionize cricket club management by providing an intuitive, real-time, and feature-rich mobile experience.
+> **Mission:** To revolutionize cricket club management by providing an intuitive, real-time, and feature-rich mobile experience.
 
 ---
 
-## ✨ Features
+## Features
 
 <table>
   <tr>
     <td width="50%">
       
-### 🔐 Authentication & Security
-- ✅ Secure email/password authentication
-- ✅ Role-based access control (Admin/President/Umpire/Player)
-- ✅ Automated route guarding
-- ✅ Profile management with student ID verification
+### Authentication and Security
+- Secure email/password authentication
+- Role-based access control (Admin/President/Umpire/Player)
+- Automated route guarding
+- Profile management with student ID verification
 
-### 📊 Live Match Scoring
-- ✅ Real-time score updates via Firestore
-- ✅ Ball-by-ball commentary
-- ✅ Wicket tracking with dismissal types
-- ✅ Over-by-over statistics
-- ✅ Live leaderboards
+### Live Match Scoring
+- Real-time score updates via Firestore
+- Ball-by-ball commentary
+- Wicket tracking with dismissal types
+- Over-by-over statistics
+- Live leaderboards
 
     </td>
     <td width="50%">
       
-### 🏆 Match Management
-- ✅ Create and schedule matches
-- ✅ Team and umpire assignment
-- ✅ Match status tracking (Upcoming/Live/Completed)
-- ✅ Comprehensive match statistics
-- ✅ Player performance analytics
+### Match Management
+- Create and schedule matches
+- Team and umpire assignment
+- Match status tracking (Upcoming/Live/Completed)
+- Comprehensive match statistics
+- Player performance analytics
 
-### 🎨 Modern UI/UX
-- ✅ Beautiful, intuitive interface
-- ✅ Pull-to-refresh functionality
-- ✅ Countdown timers for upcoming matches
-- ✅ Responsive design
-- ✅ Smooth animations
+### Modern UI/UX
+- Clean, intuitive interface
+- Pull-to-refresh functionality
+- Countdown timers for upcoming matches
+- Responsive design
+- Smooth animations
 
     </td>
   </tr>
@@ -79,7 +79,7 @@ Crease is a **production-ready** React Native application designed for cricket e
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -113,7 +113,7 @@ npm start
 # Scan QR code with Expo Go for physical device
 ```
 
-### 🔥 Firebase Configuration
+### Firebase Configuration
 
 Create a `.env` file in the root directory:
 
@@ -126,16 +126,16 @@ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
-> 💡 **Tip:** Find these values in your Firebase Console under Project Settings → Your Apps → SDK setup and configuration
+> **Tip:** Find these values in your Firebase Console under Project Settings → Your Apps → SDK setup and configuration.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 <div align="center">
   
-| 📖 Guide | 📝 Description |
-|---------|---------------|
+| Guide | Description |
+|-------|-------------|
 | **[Complete Wiki](wiki/)** | Comprehensive documentation hub |
 | **[Getting Started](wiki/Getting-Started.md)** | Detailed setup and installation |
 | **[Architecture](wiki/Project-Architecture.md)** | System design and patterns |
@@ -147,7 +147,7 @@ EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 <div align="center">
 
@@ -163,64 +163,64 @@ EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
 
 ### Firebase Services
 
-- 🔐 **Authentication** - Email/password auth
-- 🗄️ **Cloud Firestore** - Real-time database
-- 📊 **Real-time Listeners** - Live data synchronization
-- 🔒 **Security Rules** - Access control
+- **Authentication** — Email/password auth
+- **Cloud Firestore** — Real-time database
+- **Real-time Listeners** — Live data synchronization
+- **Security Rules** — Access control
 
 </div>
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-🏏 crease/
+crease/
 │
-├── 📱 app/                      # Expo Router routes
-│   ├── (auth)/                 # Authentication flow
+├── app/                         # Expo Router routes
+│   ├── (auth)/                  # Authentication flow
 │   │   ├── login.tsx
 │   │   └── signup.tsx
-│   ├── (tabs)/                 # Tab navigation
-│   │   ├── index.tsx           # Home screen
-│   │   ├── search.tsx          # Search players/teams
-│   │   └── profile.tsx         # User profile
-│   ├── admin/                  # Admin features
+│   ├── (tabs)/                  # Tab navigation
+│   │   ├── index.tsx             # Home screen
+│   │   ├── search.tsx            # Search players/teams
+│   │   └── profile.tsx           # User profile
+│   ├── admin/                   # Admin features
 │   │   └── create-match.tsx
-│   ├── umpire/                 # Live scoring
+│   ├── umpire/                  # Live scoring
 │   │   └── [id].tsx
-│   ├── match/                  # Match details
+│   ├── match/                   # Match details
 │   │   └── [id].tsx
-│   └── _layout.tsx             # Root layout
+│   └── _layout.tsx              # Root layout
 │
-├── 🎨 src/
-│   ├── components/             # Reusable UI components
+├── src/
+│   ├── components/              # Reusable UI components
 │   │   ├── Button.tsx
 │   │   ├── Input.tsx
 │   │   ├── CountdownTimer.tsx
-│   │   └── match-stats/        # Match statistics components
-│   ├── firebase/               # Firebase configuration
+│   │   └── match-stats/         # Match statistics components
+│   ├── firebase/                # Firebase configuration
 │   │   ├── config.ts
 │   │   ├── auth.ts
 │   │   └── firestore.ts
-│   ├── models/                 # TypeScript interfaces
+│   ├── models/                  # TypeScript interfaces
 │   │   ├── User.ts
 │   │   └── Match.ts
-│   ├── providers/              # Context providers
+│   ├── providers/               # Context providers
 │   │   └── AuthProvider.tsx
-│   ├── services/               # Business logic
+│   ├── services/                # Business logic
 │   │   ├── users.ts
 │   │   └── matches.ts
-│   └── utils/                  # Helper functions
+│   └── utils/                   # Helper functions
 │
-├── 📖 wiki/                     # Documentation
-├── 🔧 app.config.ts             # Expo configuration
-└── 📦 package.json
+├── wiki/                        # Documentation
+├── app.config.ts                # Expo configuration
+└── package.json
 ```
 
 ---
 
-## 🔄 Authentication Flow
+## Authentication Flow
 
 ```mermaid
 graph LR
@@ -242,10 +242,10 @@ graph LR
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 <details>
-<summary><b>👤 Users Collection</b></summary>
+<summary><b>Users Collection</b></summary>
 
 ```typescript
 users/{uid}
@@ -263,7 +263,7 @@ users/{uid}
 </details>
 
 <details>
-<summary><b>🏏 Matches Collection</b></summary>
+<summary><b>Matches Collection</b></summary>
 
 ```typescript
 matches/{matchId}
@@ -294,9 +294,9 @@ matches/{matchId}
 
 ---
 
-## 🎯 Key Features Explained
+## Key Features Explained
 
-### 🔴 Live Scoring Panel
+### Live Scoring Panel
 
 The umpire scoring panel provides a comprehensive interface for real-time match scoring:
 
@@ -306,7 +306,7 @@ The umpire scoring panel provides a comprehensive interface for real-time match 
 - **Over completion** - Automatic bowler rotation prompts
 - **Innings tracking** - Seamless transition between innings
 
-### 📊 Match Statistics
+### Match Statistics
 
 Detailed match statistics including:
 
@@ -317,7 +317,7 @@ Detailed match statistics including:
 - **Over Summary** - Visual charts and graphs
 - **Player Highlights** - Top performers
 
-### 🔍 Advanced Search
+### Advanced Search
 
 Multi-tab search functionality:
 
@@ -329,7 +329,7 @@ Multi-tab search functionality:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Here's how you can help:
 
@@ -343,7 +343,7 @@ Please read our [Contribution Guidelines](wiki/Contribution-Guide.md) for more d
 
 ---
 
-## 📱 Screenshots
+## Screenshots
 
 <div align="center">
   <p><i>Coming Soon! Screenshots will be added here.</i></p>
@@ -351,7 +351,7 @@ Please read our [Contribution Guidelines](wiki/Contribution-Guide.md) for more d
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [ ] **Player Statistics Dashboard** - Comprehensive player analytics
 - [ ] **Tournament Management** - Multi-match tournament support
@@ -365,24 +365,24 @@ See the full [Roadmap](wiki/Roadmap.md) for more details.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Made with ❤️ by **abhie2005** & **Krushang1818**
-- Built with ❤️ using [Expo](https://expo.dev/)
-- Powered by [Firebase](https://firebase.google.com/)
-- Icons from [Ionicons](https://ionic.io/ionicons)
+- **abhie2005** and **Krushang1818**
+- [Expo](https://expo.dev/)
+- [Firebase](https://firebase.google.com/)
+- [Ionicons](https://ionic.io/ionicons)
 
 ---
 
 <div align="center">
   
-  ### 🌟 Star this repository if you find it helpful!
+  ### Star this repository if you find it helpful
   
   <p>
     <a href="https://github.com/yourusername/crease/stargazers">
@@ -393,10 +393,10 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
     </a>
   </p>
   
-  **Made with 🏏 by the Crease Team**
+  **Crease Team**
   
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="divider"/>
   
-  <sub>Built with React Native • Powered by Firebase • Designed for Cricket Lovers</sub>
+  <sub>Built with React Native · Powered by Firebase · Designed for Cricket</sub>
   
 </div>
