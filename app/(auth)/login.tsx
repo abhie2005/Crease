@@ -63,13 +63,6 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.heroSection}>
-              <View style={styles.logoWrapper}>
-                <Image
-                  source={require('../../assets/STREACHED.png')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-              </View>
               <View style={styles.taglineBorder} />
               <Text style={styles.heroSubtitle}>Professional Cricket Scoring</Text>
             </View>
