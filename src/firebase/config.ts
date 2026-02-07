@@ -8,7 +8,11 @@ import { initializeAuth, getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+
+// RN build of firebase/auth exports this; Metro resolves to dist/rn
+const { getReactNativePersistence } = require('firebase/auth') as {
+  getReactNativePersistence: (storage: typeof AsyncStorage) => { type: string };
+};
 
 const firebaseConfig = {
   apiKey: Constants.expoConfig?.extra?.firebase?.apiKey || '',
@@ -25,21 +29,15 @@ let db: Firestore;
 
 if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
-  
-  // Initialize auth with AsyncStorage persistence for React Native
-  try {
-    const { getReactNativePersistence } = require('firebase/auth/react-native');
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    });
-  } catch (error) {
-    // Fallback to regular getAuth if react-native persistence is not available
-    auth = getAuth(app);
-  }
-  
+
+  // Use initializeAuth with AsyncStorage so auth state persists across app restarts
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage)
+  });
+
   db = getFirestore(app);
 } else {
-  app = getApps()[0];
+  app = getApps()[0] as FirebaseApp;
   auth = getAuth(app);
   db = getFirestore(app);
 }
