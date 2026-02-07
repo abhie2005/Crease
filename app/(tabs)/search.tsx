@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   ScrollView
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ import { PlayerResultCard } from '@/components/search/PlayerResultCard';
 import { TeamResultCard } from '@/components/search/TeamResultCard';
 import { MatchResultCard } from '@/components/search/MatchResultCard';
 import { saveRecentSearch, getRecentSearches, removeRecentSearch, clearRecentSearches, RecentSearch } from '@/utils/recentSearches';
+import { COLORS } from '@/theme/colors';
 
 type TabType = 'player' | 'team' | 'match';
 
@@ -145,7 +147,7 @@ export default function SearchScreen() {
         <Ionicons 
           name={icon} 
           size={20} 
-          color={isActive ? '#fff' : '#6c757d'} 
+          color={isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)'} 
         />
         <Text style={[styles.tabText, isActive && styles.activeTabText]}>
           {label}
@@ -182,12 +184,12 @@ export default function SearchScreen() {
                   <Ionicons 
                     name={search.type === 'player' ? 'person' : (search.type === 'team' ? 'people' : 'trophy')} 
                     size={16} 
-                    color="#adb5bd" 
+                    color="rgba(255, 255, 255, 0.5)" 
                   />
                   <Text style={styles.recentSearchText}>{search.query}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleRemoveRecent(search.id)}>
-                  <Ionicons name="close" size={20} color="#adb5bd" />
+                  <Ionicons name="close" size={20} color="rgba(255, 255, 255, 0.5)" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -216,7 +218,7 @@ export default function SearchScreen() {
         </View>
 
         <View style={styles.placeholderContainer}>
-          <Ionicons name="search-outline" size={80} color="#e9ecef" />
+          <Ionicons name="search-outline" size={80} color="rgba(255, 255, 255, 0.2)" />
           <Text style={styles.placeholderTitle}>Discover Crease</Text>
           <Text style={styles.placeholderSub}>Find players, teams, and matches in one place</Text>
         </View>
@@ -228,7 +230,7 @@ export default function SearchScreen() {
     if (loading) {
       return (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={COLORS.MINT} />
         </View>
       );
     }
@@ -236,7 +238,7 @@ export default function SearchScreen() {
     if (searchQuery && results.length === 0) {
       return (
         <View style={styles.centerContainer}>
-          <Ionicons name="alert-circle-outline" size={60} color="#e9ecef" />
+          <Ionicons name="alert-circle-outline" size={60} color="rgba(255, 255, 255, 0.3)" />
           <Text style={styles.emptyText}>No results found for "{searchQuery}"</Text>
         </View>
       );
@@ -263,6 +265,11 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <LinearGradient
+        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
+        style={StyleSheet.absoluteFill}
+      />
+      
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Discover</Text>
@@ -275,6 +282,9 @@ export default function SearchScreen() {
             onChangeText={setSearchQuery}
             autoCapitalize="none"
             containerStyle={styles.inputContainer}
+            variant="underline"
+            labelStyle={styles.inputLabel}
+            placeholderTextColor="rgba(255, 255, 255, 0.5)"
           />
         </View>
 
@@ -294,8 +304,7 @@ export default function SearchScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa'
+    flex: 1
   },
   content: {
     flex: 1,
@@ -307,33 +316,24 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: '#fff',
     letterSpacing: 0.5
   },
   searchBox: {
     marginBottom: 16
   },
   inputContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4
+    marginBottom: 0
+  },
+  inputLabel: {
+    color: 'rgba(255, 255, 255, 0.9)'
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.CARD_BG,
     borderRadius: 16,
     padding: 6,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2
+    marginBottom: 20
   },
   tab: {
     flex: 1,
@@ -345,17 +345,12 @@ const styles = StyleSheet.create({
     gap: 8
   },
   activeTab: {
-    backgroundColor: '#007AFF',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4
+    backgroundColor: COLORS.MINT
   },
   tabText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6c757d'
+    color: 'rgba(255, 255, 255, 0.6)'
   },
   activeTabText: {
     color: '#fff'
@@ -381,24 +376,24 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: '#fff',
     letterSpacing: 0.3
   },
   clearAllText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#007AFF'
+    color: COLORS.MINT
   },
   recentSearchItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.CARD_BG,
     padding: 14,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f1f3f5'
+    borderColor: COLORS.BORDER_DEFAULT
   },
   recentSearchContent: {
     flexDirection: 'row',
@@ -408,7 +403,7 @@ const styles = StyleSheet.create({
   },
   recentSearchText: {
     fontSize: 15,
-    color: '#495057',
+    color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '600'
   },
   talentsContainer: {
@@ -417,23 +412,18 @@ const styles = StyleSheet.create({
   },
   talentCard: {
     width: 100,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.CARD_BG,
     borderRadius: 16,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#f1f3f5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2
+    borderColor: COLORS.BORDER_DEFAULT
   },
   talentAvatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#E7F1FF',
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8
@@ -441,17 +431,17 @@ const styles = StyleSheet.create({
   talentAvatarText: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#007AFF'
+    color: COLORS.MINT
   },
   talentName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#fff',
     marginBottom: 2
   },
   talentRole: {
     fontSize: 11,
-    color: '#6c757d',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '600',
     textTransform: 'uppercase'
   },
@@ -463,12 +453,12 @@ const styles = StyleSheet.create({
   placeholderTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#adb5bd',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 16
   },
   placeholderSub: {
     fontSize: 14,
-    color: '#adb5bd',
+    color: 'rgba(255, 255, 255, 0.5)',
     textAlign: 'center',
     marginTop: 4,
     maxWidth: 250
@@ -478,7 +468,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#adb5bd',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 16

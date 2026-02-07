@@ -21,6 +21,7 @@ interface InputProps {
   inputStyle?: TextStyle;
   labelStyle?: TextStyle;
   placeholderTextColor?: string;
+  variant?: 'default' | 'underline';
 }
 
 /** Labeled text input with optional secure entry and multiline. */
@@ -37,14 +38,15 @@ export const Input: React.FC<InputProps> = ({
   containerStyle,
   inputStyle,
   labelStyle,
-  placeholderTextColor = '#999'
+  placeholderTextColor = '#999',
+  variant = 'default'
 }) => {
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
       <TextInput
         style={[
-          styles.input,
+          variant === 'default' ? styles.input : styles.inputUnderline,
           multiline && styles.multilineInput,
           inputStyle
         ]}
@@ -80,6 +82,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     backgroundColor: '#fff'
+  },
+  inputUnderline: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(255, 255, 255, 0.35)',
+    borderRadius: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#fff'
   },
   multilineInput: {
     minHeight: 100,

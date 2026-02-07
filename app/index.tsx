@@ -4,8 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, StatusBar } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/providers/AuthProvider';
+import { COLORS } from '@/theme/colors';
 
 /** Redirects based on auth and profile; renders loading while resolving. */
 export default function IndexRedirect() {
@@ -39,7 +41,12 @@ export default function IndexRedirect() {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#007AFF" />
+      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
+        style={StyleSheet.absoluteFill}
+      />
+      <ActivityIndicator size="large" color={COLORS.MINT} />
     </View>
   );
 }
@@ -48,7 +55,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff'
+    alignItems: 'center'
   }
 });

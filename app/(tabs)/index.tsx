@@ -13,17 +13,14 @@ import {
   ActivityIndicator,
   RefreshControl
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatches } from '@/services/matches';
 import { Match } from '@/models/Match';
 import { CountdownTimer } from '@/components/CountdownTimer';
-
-const ESPN_RED = '#E31937';
-const HEADER_BG = '#0d0d0d';
-const CARD_BG = '#1a1a1a';
-const PAGE_BG = '#121212';
+import { COLORS } from '@/theme/colors';
 
 type Section = { title: string; data: Match[] };
 
@@ -170,6 +167,11 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
+        style={StyleSheet.absoluteFill}
+      />
+      
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.title}>Crease</Text>
         {userProfile && (userProfile.role === 'admin' || userProfile.role === 'president') && (
@@ -185,7 +187,7 @@ export default function HomeScreen() {
 
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={ESPN_RED} />
+          <ActivityIndicator size="large" color={COLORS.MINT} />
         </View>
       ) : matches.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -209,7 +211,7 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={ESPN_RED}
+              tintColor={COLORS.MINT}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -221,11 +223,10 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: PAGE_BG
+    flex: 1
   },
   header: {
-    backgroundColor: HEADER_BG,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     paddingHorizontal: 16,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
     color: '#fff'
   },
   createButton: {
-    backgroundColor: ESPN_RED,
+    backgroundColor: COLORS.MINT,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8
@@ -271,7 +272,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#999',
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
     lineHeight: 20
   },
@@ -289,20 +290,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
-    color: '#888'
+    color: 'rgba(255, 255, 255, 0.6)'
   },
   sectionTitleLive: {
-    color: ESPN_RED
+    color: COLORS.LIVE
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: ESPN_RED,
+    backgroundColor: COLORS.LIVE,
     marginRight: 6
   },
   matchCard: {
-    backgroundColor: CARD_BG,
+    backgroundColor: COLORS.CARD_BG,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12
@@ -325,13 +326,13 @@ const styles = StyleSheet.create({
     borderRadius: 6
   },
   statusBadgeLive: {
-    backgroundColor: ESPN_RED
+    backgroundColor: COLORS.LIVE
   },
   statusBadgeUpcoming: {
-    backgroundColor: '#FFA500'
+    backgroundColor: COLORS.UPCOMING
   },
   statusBadgeCompleted: {
-    backgroundColor: '#00AA00'
+    backgroundColor: COLORS.COMPLETED
   },
   statusText: {
     color: '#fff',
@@ -343,13 +344,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#333'
+    borderTopColor: COLORS.BORDER_DEFAULT
   },
   scoreContainer: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#333'
+    borderTopColor: COLORS.BORDER_DEFAULT
   },
   scoreText: {
     fontSize: 16,
@@ -362,12 +363,12 @@ const styles = StyleSheet.create({
   },
   targetText: {
     fontSize: 13,
-    color: '#FFA500',
+    color: COLORS.UPCOMING,
     marginTop: 4,
     fontWeight: '600'
   },
   winnerText: {
-    color: '#00AA00',
+    color: COLORS.COMPLETED,
     fontWeight: 'bold',
     fontSize: 16
   },

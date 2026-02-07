@@ -13,12 +13,14 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUser } from '@/services/users';
 import { updatePrivacy } from '@/services/users';
 import { User } from '@/models/User';
+import { COLORS } from '@/theme/colors';
 
 export default function ProfileSettingsScreen() {
   const router = useRouter();
@@ -85,6 +87,10 @@ export default function ProfileSettingsScreen() {
   if (loading || !profile) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
+        <LinearGradient
+          colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backText}>← Back</Text>
@@ -92,7 +98,7 @@ export default function ProfileSettingsScreen() {
           <Text style={styles.title}>Privacy</Text>
         </View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={COLORS.MINT} />
         </View>
       </SafeAreaView>
     );
@@ -100,6 +106,11 @@ export default function ProfileSettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <LinearGradient
+        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
+        style={StyleSheet.absoluteFill}
+      />
+      
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
@@ -114,7 +125,7 @@ export default function ProfileSettingsScreen() {
             value={showRecentlyPlayed}
             onValueChange={(v) => handleToggle('showRecentlyPlayed', v)}
             disabled={saving}
-            trackColor={{ false: '#ccc', true: '#007AFF' }}
+            trackColor={{ false: 'rgba(255, 255, 255, 0.3)', true: COLORS.MINT }}
           />
         </View>
         <View style={styles.row}>
@@ -123,7 +134,7 @@ export default function ProfileSettingsScreen() {
             value={showMatchHistory}
             onValueChange={(v) => handleToggle('showMatchHistory', v)}
             disabled={saving}
-            trackColor={{ false: '#ccc', true: '#007AFF' }}
+            trackColor={{ false: 'rgba(255, 255, 255, 0.3)', true: COLORS.MINT }}
           />
         </View>
         <View style={styles.row}>
@@ -132,7 +143,7 @@ export default function ProfileSettingsScreen() {
             value={showPinnedPerformance}
             onValueChange={(v) => handleToggle('showPinnedPerformance', v)}
             disabled={saving}
-            trackColor={{ false: '#ccc', true: '#007AFF' }}
+            trackColor={{ false: 'rgba(255, 255, 255, 0.3)', true: COLORS.MINT }}
           />
         </View>
       </View>
@@ -142,30 +153,29 @@ export default function ProfileSettingsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5'
+    flex: 1
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     borderBottomWidth: 1,
-    borderBottomColor: '#e8e8e8'
+    borderBottomColor: COLORS.BORDER_DEFAULT
   },
   backBtn: {
     marginRight: 12
   },
   backText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: COLORS.MINT,
     fontWeight: '600'
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333'
+    color: '#fff'
   },
   center: {
     flex: 1,
@@ -173,17 +183,17 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.CARD_BG,
     marginTop: 16,
     marginHorizontal: 16,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e8e8e8'
+    borderColor: COLORS.BORDER_DEFAULT
   },
   sectionTitle: {
     fontSize: 14,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 16
   },
   row: {
@@ -192,11 +202,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: COLORS.BORDER_DEFAULT
   },
   label: {
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
     fontWeight: '500'
   }
 });

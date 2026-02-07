@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Alert
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
@@ -18,6 +19,7 @@ import { logOut } from '@/firebase/auth';
 import { setPinnedPerformance, clearPinnedPerformance } from '@/services/users';
 import { Button } from '@/components/Button';
 import { ProfileContent } from '@/components/profile/ProfileContent';
+import { COLORS } from '@/theme/colors';
 
 /** Profile screen with user details, stats sections, Edit, Settings, and logout. */
 export default function ProfileScreen() {
@@ -67,6 +69,11 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <LinearGradient
+        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
+        style={StyleSheet.absoluteFill}
+      />
+      
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={styles.header}>
@@ -131,8 +138,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5'
+    flex: 1
   },
   scrollView: {
     flex: 1
@@ -149,7 +155,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333'
+    color: '#fff'
   },
   headerActions: {
     flexDirection: 'row',
@@ -161,18 +167,20 @@ const styles = StyleSheet.create({
   },
   headerBtnText: {
     fontSize: 15,
-    color: '#007AFF',
+    color: COLORS.MINT,
     fontWeight: '600'
   },
   avatarContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.MINT,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginBottom: 16
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)'
   },
   avatarText: {
     fontSize: 32,
@@ -184,19 +192,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.CARD_BG,
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e8e8e8'
+    borderColor: COLORS.BORDER_DEFAULT
   },
   emailLabel: {
     fontSize: 14,
-    color: '#666'
+    color: 'rgba(255, 255, 255, 0.7)'
   },
   emailValue: {
     fontSize: 14,
-    color: '#333',
+    color: '#fff',
     fontWeight: '500'
   },
   buttonContainer: {
@@ -209,6 +217,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999'
+    color: 'rgba(255, 255, 255, 0.7)'
   }
 });

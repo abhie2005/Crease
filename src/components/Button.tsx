@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { COLORS } from '@/theme/colors';
 
 /** See ButtonProps. */
 interface ButtonProps {
@@ -12,10 +13,10 @@ interface ButtonProps {
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'ghost';
 }
 
-/** Primary or secondary button; supports disabled and loading. */
+/** Primary, secondary, or ghost button; supports disabled and loading. */
 export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
@@ -23,25 +24,59 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   variant = 'primary'
 }) => {
+  const getButtonStyle = () => {
+    switch (variant) {
+      case 'primary':
+        return styles.primaryButton;
+      case 'secondary':
+        return styles.secondaryButton;
+      case 'ghost':
+        return styles.ghostButton;
+      default:
+        return styles.primaryButton;
+    }
+  };
+
+  const getTextStyle = () => {
+    switch (variant) {
+      case 'primary':
+        return styles.primaryText;
+      case 'secondary':
+        return styles.secondaryText;
+      case 'ghost':
+        return styles.ghostText;
+      default:
+        return styles.primaryText;
+    }
+  };
+
+  const getLoaderColor = () => {
+    switch (variant) {
+      case 'primary':
+        return '#fff';
+      case 'secondary':
+        return COLORS.MINT;
+      case 'ghost':
+        return '#fff';
+      default:
+        return '#fff';
+    }
+  };
+
   return (
     <TouchableOpacity
       style={[
         styles.button,
-        variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
+        getButtonStyle(),
         (disabled || loading) && styles.disabledButton
       ]}
       onPress={onPress}
       disabled={disabled || loading}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : '#007AFF'} />
+        <ActivityIndicator color={getLoaderColor()} />
       ) : (
-        <Text
-          style={[
-            styles.buttonText,
-            variant === 'primary' ? styles.primaryText : styles.secondaryText
-          ]}
-        >
+        <Text style={[styles.buttonText, getTextStyle()]}>
           {title}
         </Text>
       )}
@@ -59,12 +94,15 @@ const styles = StyleSheet.create({
     minHeight: 48
   },
   primaryButton: {
-    backgroundColor: '#007AFF'
+    backgroundColor: COLORS.MINT
   },
   secondaryButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#007AFF'
+    borderColor: COLORS.MINT
+  },
+  ghostButton: {
+    backgroundColor: 'transparent'
   },
   disabledButton: {
     opacity: 0.5
@@ -77,7 +115,10 @@ const styles = StyleSheet.create({
     color: '#fff'
   },
   secondaryText: {
-    color: '#007AFF'
+    color: COLORS.MINT
+  },
+  ghostText: {
+    color: '#fff'
   }
 });
 

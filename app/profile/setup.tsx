@@ -12,12 +12,14 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { createOrUpdateUser, checkUsernameAvailability } from '@/services/users';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { validateUsernameFormat } from '@/utils/usernameValidation';
+import { COLORS } from '@/theme/colors';
 
 /** Profile setup form (name, studentId, username). */
 export default function ProfileSetupScreen() {
@@ -122,6 +124,11 @@ export default function ProfileSetupScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <LinearGradient
+        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
+        style={StyleSheet.absoluteFill}
+      />
+      
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -137,6 +144,9 @@ export default function ProfileSetupScreen() {
               onChangeText={setName}
               placeholder="Enter your full name"
               autoCapitalize="words"
+              variant="underline"
+              labelStyle={styles.inputLabel}
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
 
             <Input
@@ -145,6 +155,9 @@ export default function ProfileSetupScreen() {
               onChangeText={setStudentId}
               placeholder="Enter your student ID"
               autoCapitalize="none"
+              variant="underline"
+              labelStyle={styles.inputLabel}
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
             />
 
             <View style={styles.usernameContainer}>
@@ -154,6 +167,9 @@ export default function ProfileSetupScreen() {
                 onChangeText={setUsername}
                 placeholder="Choose a unique username"
                 autoCapitalize="none"
+                variant="underline"
+                labelStyle={styles.inputLabel}
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
               />
               {usernameFormatError && (
                 <Text style={styles.errorText}>{usernameFormatError}</Text>
@@ -188,8 +204,7 @@ export default function ProfileSetupScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff'
+    flex: 1
   },
   scrollContent: {
     flexGrow: 1,
@@ -206,16 +221,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#333'
+    color: '#fff'
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 32,
-    color: '#666'
+    color: 'rgba(255, 255, 255, 0.8)'
   },
   form: {
     width: '100%'
+  },
+  inputLabel: {
+    color: 'rgba(255, 255, 255, 0.9)'
   },
   usernameContainer: {
     marginBottom: 8
@@ -225,21 +243,21 @@ const styles = StyleSheet.create({
     marginLeft: 4
   },
   errorText: {
-    color: '#FF0000',
+    color: COLORS.LIVE,
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4
   },
   checkingText: {
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 12
   },
   availableText: {
-    color: '#00AA00',
+    color: COLORS.COMPLETED,
     fontSize: 12
   },
   takenText: {
-    color: '#FF0000',
+    color: COLORS.LIVE,
     fontSize: 12
   }
 });
