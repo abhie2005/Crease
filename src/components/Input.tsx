@@ -19,6 +19,8 @@ interface InputProps {
   numberOfLines?: number;
   containerStyle?: ViewStyle;
   inputStyle?: TextStyle;
+  labelStyle?: TextStyle;
+  placeholderTextColor?: string;
 }
 
 /** Labeled text input with optional secure entry and multiline. */
@@ -33,11 +35,13 @@ export const Input: React.FC<InputProps> = ({
   multiline = false,
   numberOfLines = 1,
   containerStyle,
-  inputStyle
+  inputStyle,
+  labelStyle,
+  placeholderTextColor = '#999'
 }) => {
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
       <TextInput
         style={[
           styles.input,
@@ -52,7 +56,7 @@ export const Input: React.FC<InputProps> = ({
         autoCapitalize={autoCapitalize}
         multiline={multiline}
         numberOfLines={numberOfLines}
-        placeholderTextColor="#999"
+        placeholderTextColor={placeholderTextColor}
       />
     </View>
   );
