@@ -65,7 +65,7 @@ export default function LoginScreen() {
             <View style={styles.heroSection}>
               <View style={styles.logoWrapper}>
                 <Image
-                  source={require('../../assets/logo.png')}
+                  source={require('../../assets/bg-removed-logo-removebg-preview.png')}
                   style={styles.logo}
                   resizeMode="contain"
                 />
