@@ -1,31 +1,57 @@
 /**
- * Centralized color constants for the app's dark theme design system.
+ * Centralized theme palettes for dark and light modes.
  */
 
+export type ThemeMode = 'dark' | 'light';
+
+export const DARK_THEME = {
+  background: '#0f172a',
+  backgroundLighter: '#1e293b',
+  accent: '#3b82f6',
+  textPrimary: '#fff',
+  textSecondary: 'rgba(255, 255, 255, 0.9)',
+  textTertiary: 'rgba(255, 255, 255, 0.6)',
+  cardBg: 'rgba(255, 255, 255, 0.1)',
+  cardBgElevated: 'rgba(255, 255, 255, 0.15)',
+  borderDefault: 'rgba(255, 255, 255, 0.2)',
+  borderFocus: 'rgba(255, 255, 255, 0.4)',
+  live: '#ef4444',
+  upcoming: '#f59e0b',
+  completed: '#22c55e',
+};
+
+export const LIGHT_THEME = {
+  background: '#f8fafc',
+  backgroundLighter: '#f1f5f9',
+  accent: '#3b82f6',
+  textPrimary: '#1e293b',
+  textSecondary: '#334155',
+  textTertiary: '#64748b',
+  cardBg: '#fff',
+  cardBgElevated: '#fff',
+  borderDefault: '#e2e8f0',
+  borderFocus: '#94a3b8',
+  live: '#ef4444',
+  upcoming: '#f59e0b',
+  completed: '#22c55e',
+};
+
+export type ThemeColors = typeof DARK_THEME;
+
+/** Legacy export for gradual migration. Maps to DARK_THEME. */
 export const COLORS = {
-  // Primary
-  DARK_TEAL: '#0f172a',
-  DARK_TEAL_LIGHTER: '#1e293b',
-  ACCENT: '#3b82f6',
-  
-  // Text
-  TEXT_PRIMARY: '#fff',
-  TEXT_SECONDARY: 'rgba(255, 255, 255, 0.9)',
-  TEXT_TERTIARY: 'rgba(255, 255, 255, 0.6)',
-  
-  // Backgrounds
-  CARD_BG: 'rgba(255, 255, 255, 0.1)',
-  CARD_BG_ELEVATED: 'rgba(255, 255, 255, 0.15)',
-  
-  // Status
-  LIVE: '#ef4444',
-  UPCOMING: '#f59e0b',
-  COMPLETED: '#22c55e',
-  
-  // Borders
-  BORDER_DEFAULT: 'rgba(255, 255, 255, 0.2)',
-  BORDER_FOCUS: 'rgba(255, 255, 255, 0.4)',
-  
-  // Legacy (for gradual migration)
-  MINT: '#3b82f6',
+  DARK_TEAL: DARK_THEME.background,
+  DARK_TEAL_LIGHTER: DARK_THEME.backgroundLighter,
+  ACCENT: DARK_THEME.accent,
+  MINT: DARK_THEME.accent,
+  TEXT_PRIMARY: DARK_THEME.textPrimary,
+  TEXT_SECONDARY: DARK_THEME.textSecondary,
+  TEXT_TERTIARY: DARK_THEME.textTertiary,
+  CARD_BG: DARK_THEME.cardBg,
+  CARD_BG_ELEVATED: DARK_THEME.cardBgElevated,
+  BORDER_DEFAULT: DARK_THEME.borderDefault,
+  BORDER_FOCUS: DARK_THEME.borderFocus,
+  LIVE: DARK_THEME.live,
+  UPCOMING: DARK_THEME.upcoming,
+  COMPLETED: DARK_THEME.completed,
 };

@@ -14,6 +14,7 @@ import {
   Modal
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { 
@@ -57,6 +58,7 @@ export default function UmpireScoringScreen() {
   const [teamBPlayers, setTeamBPlayers] = useState<User[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
   const router = useRouter();
+  const { headerStyle } = useSafeAreaHeader();
 
   useEffect(() => {
     if (!id) return;
@@ -532,7 +534,7 @@ export default function UmpireScoringScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, headerStyle]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
@@ -1066,7 +1068,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#fff',
     padding: 16,
-    paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0'
   },
@@ -1193,9 +1194,9 @@ const styles = StyleSheet.create({
     elevation: 2
   },
   runsSection: {
-    marginBottom: 32,
+    marginBottom: 64,
     backgroundColor: '#fff',
-    padding: 20,
+    padding: 28,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1204,9 +1205,10 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   wicketSection: {
-    marginBottom: 32,
+    marginTop: 16,
+    marginBottom: 48,
     backgroundColor: '#fff',
-    padding: 20,
+    padding: 28,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1215,9 +1217,9 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   extrasSection: {
-    marginBottom: 32,
+    marginBottom: 48,
     backgroundColor: '#fff',
-    padding: 20,
+    padding: 28,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

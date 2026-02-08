@@ -5,15 +5,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/providers/AuthProvider';
-import { COLORS } from '@/theme/colors';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
 /** Redirects based on auth and profile; renders loading while resolving. */
 export default function IndexRedirect() {
   const router = useRouter();
   const segments = useSegments();
   const { user, userProfile, loading } = useAuth();
+  const { theme, colors } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -41,18 +42,21 @@ export default function IndexRedirect() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-      <ActivityIndicator size="large" color={COLORS.MINT} />
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+      <ThemedBackground>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.accent} />
+        </View>
+      </ThemedBackground>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1
+  },
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'

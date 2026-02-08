@@ -12,18 +12,21 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { createOrUpdateUser, checkUsernameAvailability } from '@/services/users';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { validateUsernameFormat } from '@/utils/usernameValidation';
-import { COLORS } from '@/theme/colors';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 
 /** Profile setup form (name, studentId, username). */
 export default function ProfileSetupScreen() {
   const { user, userProfile, refreshUserProfile } = useAuth();
+  const { top } = useSafeAreaHeader();
+  const { colors } = useTheme();
   const [name, setName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [username, setUsername] = useState('');
@@ -124,18 +127,14 @@ export default function ProfileSetupScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-      
+      <ThemedBackground>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: top }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Complete Your Profile</Text>
-          <Text style={styles.subtitle}>Please provide your information</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Complete Your Profile</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Please provide your information</Text>
 
           <View style={styles.form}>
             <Input
@@ -145,8 +144,8 @@ export default function ProfileSetupScreen() {
               placeholder="Enter your full name"
               autoCapitalize="words"
               variant="underline"
-              labelStyle={styles.inputLabel}
-              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              labelStyle={{ ...styles.inputLabel, color: colors.textSecondary }}
+              placeholderTextColor={colors.textTertiary}
             />
 
             <Input
@@ -156,8 +155,8 @@ export default function ProfileSetupScreen() {
               placeholder="Enter your student ID"
               autoCapitalize="none"
               variant="underline"
-              labelStyle={styles.inputLabel}
-              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              labelStyle={{ ...styles.inputLabel, color: colors.textSecondary }}
+              placeholderTextColor={colors.textTertiary}
             />
 
             <View style={styles.usernameContainer}>
@@ -172,18 +171,18 @@ export default function ProfileSetupScreen() {
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
               />
               {usernameFormatError && (
-                <Text style={styles.errorText}>{usernameFormatError}</Text>
+                <Text style={[styles.errorText, { color: colors.live }]}>{usernameFormatError}</Text>
               )}
               {username && !usernameFormatError && (
                 <View style={styles.availabilityContainer}>
                   {usernameAvailability === 'checking' && (
-                    <Text style={styles.checkingText}>Checking availability...</Text>
+                    <Text style={[styles.checkingText, { color: colors.textSecondary }]}>Checking availability...</Text>
                   )}
                   {usernameAvailability === 'available' && (
-                    <Text style={styles.availableText}>✓ Username available</Text>
+                    <Text style={[styles.availableText, { color: colors.completed }]}>✓ Username available</Text>
                   )}
                   {usernameAvailability === 'taken' && (
-                    <Text style={styles.takenText}>✗ Username already taken</Text>
+                    <Text style={[styles.takenText, { color: colors.live }]}>✗ Username already taken</Text>
                   )}
                 </View>
               )}
@@ -198,6 +197,7 @@ export default function ProfileSetupScreen() {
           </View>
         </View>
       </ScrollView>
+      </ThemedBackground>
     </KeyboardAvoidingView>
   );
 }
@@ -220,21 +220,17 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
-    color: '#fff'
+    marginBottom: 8
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 32,
-    color: 'rgba(255, 255, 255, 0.8)'
+    marginBottom: 32
   },
   form: {
     width: '100%'
   },
-  inputLabel: {
-    color: 'rgba(255, 255, 255, 0.9)'
-  },
+  inputLabel: {},
   usernameContainer: {
     marginBottom: 8
   },
@@ -243,21 +239,17 @@ const styles = StyleSheet.create({
     marginLeft: 4
   },
   errorText: {
-    color: COLORS.LIVE,
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4
   },
   checkingText: {
-    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 12
   },
   availableText: {
-    color: COLORS.COMPLETED,
     fontSize: 12
   },
   takenText: {
-    color: COLORS.LIVE,
     fontSize: 12
   }
 });

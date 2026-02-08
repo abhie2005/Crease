@@ -14,12 +14,12 @@ import {
   TouchableOpacity,
   StatusBar
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { signUp } from '@/firebase/auth';
 import { Input } from '@/components/Input';
-import { COLORS } from '@/theme/colors';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
 /** Signup form (email, password, confirm). */
 export default function SignUpScreen() {
@@ -28,7 +28,8 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaHeader(24);
+  const { theme, colors } = useTheme();
 
   const handleSignUp = async () => {
     if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
@@ -58,28 +59,24 @@ export default function SignUpScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <KeyboardAvoidingView
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+      <ThemedBackground>
+        <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
-      >
+        >
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }
+            { paddingTop: top, paddingBottom: bottom + 24 }
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.heroSection}>
-            <Text style={styles.appName}>CREASE</Text>
-            <Text style={styles.heroSubtitle}>Join the community</Text>
+            <Text style={[styles.appName, { color: colors.textPrimary }]}>CREASE</Text>
+            <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Join the community</Text>
           </View>
 
           <View style={styles.formSection}>
@@ -93,8 +90,8 @@ export default function SignUpScreen() {
                 autoCapitalize="none"
                 containerStyle={styles.inputContainer}
                 variant="underline"
-                labelStyle={styles.inputLabel}
-                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                labelStyle={{ ...styles.inputLabel, color: colors.textSecondary }}
+                placeholderTextColor={colors.textTertiary}
               />
 
               <Input
@@ -105,8 +102,8 @@ export default function SignUpScreen() {
                 secureTextEntry
                 containerStyle={styles.inputContainer}
                 variant="underline"
-                labelStyle={styles.inputLabel}
-                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                labelStyle={{ ...styles.inputLabel, color: colors.textSecondary }}
+                placeholderTextColor={colors.textTertiary}
               />
 
               <Input
@@ -117,12 +114,12 @@ export default function SignUpScreen() {
                 secureTextEntry
                 containerStyle={styles.inputContainer}
                 variant="underline"
-                labelStyle={styles.inputLabel}
-                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                labelStyle={{ ...styles.inputLabel, color: colors.textSecondary }}
+                placeholderTextColor={colors.textTertiary}
               />
 
               <TouchableOpacity 
-                style={[styles.signUpButton, loading && styles.disabledButton]}
+                style={[styles.signUpButton, { backgroundColor: colors.accent }, loading && styles.disabledButton]}
                 onPress={handleSignUp}
                 disabled={loading}
                 activeOpacity={0.8}
@@ -133,18 +130,19 @@ export default function SignUpScreen() {
               </TouchableOpacity>
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Already have an account? </Text>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
                 <TouchableOpacity
                   onPress={() => router.push('/login')}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.footerLink}>Sign In</Text>
+                  <Text style={[styles.footerLink, { color: colors.accent }]}>Sign In</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </ThemedBackground>
     </View>
   );
 }
@@ -169,13 +167,11 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 48,
     fontWeight: '900',
-    color: '#fff',
     letterSpacing: 6,
     marginBottom: 8
   },
   heroSubtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '500',
     letterSpacing: 1
   },
@@ -190,11 +186,9 @@ const styles = StyleSheet.create({
     marginBottom: 24
   },
   inputLabel: {
-    color: 'rgba(255, 255, 255, 0.9)',
     marginBottom: 8
   },
   signUpButton: {
-    backgroundColor: COLORS.MINT,
     height: 56,
     borderRadius: 12,
     justifyContent: 'center',
@@ -216,12 +210,10 @@ const styles = StyleSheet.create({
     marginTop: 32
   },
   footerText: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.8)'
+    fontSize: 15
   },
   footerLink: {
     fontSize: 15,
-    color: COLORS.MINT,
     fontWeight: '700'
   }
 });
