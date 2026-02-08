@@ -4,9 +4,9 @@
 
 export const COLORS = {
   // Primary
-  DARK_TEAL: '#042f2e',
-  DARK_TEAL_LIGHTER: '#064e3b',
-  MINT: '#10b981',
+  DARK_TEAL: '#0f172a',
+  DARK_TEAL_LIGHTER: '#1e293b',
+  ACCENT: '#3b82f6',
   
   // Text
   TEXT_PRIMARY: '#fff',
@@ -25,4 +25,7 @@ export const COLORS = {
   // Borders
   BORDER_DEFAULT: 'rgba(255, 255, 255, 0.2)',
   BORDER_FOCUS: 'rgba(255, 255, 255, 0.4)',
+  
+  // Legacy (for gradual migration)
+  MINT: '#3b82f6',
 };
