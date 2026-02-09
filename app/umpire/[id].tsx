@@ -59,6 +59,13 @@ export default function UmpireScoringScreen() {
   const [loadingPlayers, setLoadingPlayers] = useState(false);
   const [pendingRuns, setPendingRuns] = useState(0);
   const [addRunsModalVisible, setAddRunsModalVisible] = useState(false);
+  const [ballHistory, setBallHistory] = useState<Array<{type: string, runs: number, timestamp: number}>>([]);
+  const [wideModalVisible, setWideModalVisible] = useState(false);
+  const [noBallModalVisible, setNoBallModalVisible] = useState(false);
+  const [byeModalVisible, setByeModalVisible] = useState(false);
+  const [legByeModalVisible, setLegByeModalVisible] = useState(false);
+  const [rareRunsModalVisible, setRareRunsModalVisible] = useState(false);
+  const [shortcutsExpanded, setShortcutsExpanded] = useState(false);
   const router = useRouter();
   const { headerStyle } = useSafeAreaHeader();
 
@@ -311,6 +318,7 @@ export default function UmpireScoringScreen() {
     try {
       setScoring(true);
       await addRunsService(id, runs, onStrikeBatsman.uid);
+      setBallHistory(prev => [...prev, { type: 'run', runs, timestamp: Date.now() }]);
       const targetReached = await checkTargetReached();
       if (!targetReached) {
         await checkInningsComplete();
@@ -341,6 +349,7 @@ export default function UmpireScoringScreen() {
     try {
       setScoring(true);
       await addDotBallService(id, onStrikeBatsman.uid);
+      setBallHistory(prev => [...prev, { type: 'run', runs: 0, timestamp: Date.now() }]);
       const targetReached = await checkTargetReached();
       if (!targetReached) {
         await checkInningsComplete();
@@ -365,6 +374,7 @@ export default function UmpireScoringScreen() {
     try {
       setScoring(true);
       await addWideService(id, extraRuns);
+      setBallHistory(prev => [...prev, { type: 'wide', runs: extraRuns, timestamp: Date.now() }]);
       const targetReached = await checkTargetReached();
       if (!targetReached) {
         await checkInningsComplete();
@@ -389,6 +399,7 @@ export default function UmpireScoringScreen() {
     try {
       setScoring(true);
       await addNoBallService(id, extraRuns);
+      setBallHistory(prev => [...prev, { type: 'noball', runs: extraRuns, timestamp: Date.now() }]);
       const targetReached = await checkTargetReached();
       if (!targetReached) {
         await checkInningsComplete();
@@ -426,6 +437,7 @@ export default function UmpireScoringScreen() {
       setScoring(true);
       setBatsmenModalVisible(false);
       await addWicketService(id, dismissedBatsmanUid, newBatsmanUid);
+      setBallHistory(prev => [...prev, { type: 'wicket', runs: 0, timestamp: Date.now() }]);
       setDismissedBatsmanUid(null);
       const targetReached = await checkTargetReached();
       if (!targetReached) {
@@ -461,6 +473,71 @@ export default function UmpireScoringScreen() {
   const handleAddExtraRuns = (extraRuns: number) => {
     setPendingRuns(prev => prev + extraRuns);
     setAddRunsModalVisible(false);
+  };
+
+  const handleUndo = () => {
+    if (ballHistory.length === 0) {
+      Alert.alert('No Action', 'No balls to undo');
+      return;
+    }
+    
+    Alert.alert(
+      'Undo Last Ball',
+      'Undo functionality requires manual correction in match state. Remove last ball from history?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove from History',
+          onPress: () => {
+            setBallHistory(prev => prev.slice(0, -1));
+            Alert.alert('Note', 'Ball removed from history. Please manually correct match score if needed.');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleWideWithRuns = async (runs: number) => {
+    setWideModalVisible(false);
+    await addWide(runs);
+  };
+
+  const handleNoBallWithRuns = async (runs: number) => {
+    setNoBallModalVisible(false);
+    await addNoBall(runs);
+  };
+
+  const handleByeRuns = async (runs: number) => {
+    setByeModalVisible(false);
+    if (!id || scoring) return;
+    try {
+      setScoring(true);
+      await addRunsService(id, runs, ''); // Byes don't credit batsman
+      setBallHistory(prev => [...prev, { type: 'bye', runs, timestamp: Date.now() }]);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to add byes');
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  const handleLegByeRuns = async (runs: number) => {
+    setLegByeModalVisible(false);
+    if (!id || scoring) return;
+    try {
+      setScoring(true);
+      await addRunsService(id, runs, ''); // Leg byes don't credit batsman
+      setBallHistory(prev => [...prev, { type: 'legbye', runs, timestamp: Date.now() }]);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to add leg byes');
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  const handleRareRuns = async (runs: number) => {
+    setRareRunsModalVisible(false);
+    await addRuns(runs);
   };
 
   const handleSecondInningsBatsmanSelect = (uid: string) => {
@@ -698,80 +775,139 @@ export default function UmpireScoringScreen() {
                 </View>
               )}
 
-              {/* Runs */}
+              {/* Ball History */}
+              {ballHistory.length > 0 && (
+                <View style={styles.ballHistorySection}>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.ballHistoryContainer}
+                  >
+                    {ballHistory.slice(-10).map((ball, index) => {
+                      const isRecent = index === ballHistory.slice(-10).length - 1;
+                      const displayText = ball.type === 'wicket' ? 'W' : 
+                                         ball.type === 'wide' ? 'Wd' : 
+                                         ball.type === 'noball' ? 'Nb' :
+                                         ball.type === 'bye' ? `${ball.runs}b` :
+                                         ball.type === 'legbye' ? `${ball.runs}lb` :
+                                         ball.runs.toString();
+                      return (
+                        <View 
+                          key={`${ball.timestamp}-${index}`}
+                          style={[
+                            styles.ballHistoryCircle,
+                            isRecent && styles.ballHistoryRecent
+                          ]}
+                        >
+                          <Text style={styles.ballHistoryText}>{displayText}</Text>
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Runs - CricHeros Style 3x4 Grid */}
               <View style={styles.runsSection}>
-                <Text style={styles.sectionTitle}>Runs</Text>
-                {/* Row 1: Dot, 1, 2 */}
-                <View style={styles.buttonRow}>
+                <Text style={styles.sectionTitle}>Scoring</Text>
+                
+                {/* Row 1: 0, 1, 2, Undo */}
+                <View style={styles.gridRow}>
                   <TouchableOpacity 
-                    style={[styles.compactButton, styles.dotButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={addDotBall}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.scoreButtonText}>Dot</Text>
+                    <Text style={styles.gridButtonText}>0</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.compactButton, (scoring || isInningsComplete() || pendingRuns > 0) && styles.disabledButton]} 
-                    onPress={() => handleAccumulateRuns(1)}
-                    disabled={scoring || isInningsComplete() || pendingRuns > 0}
+                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => addRuns(1)}
+                    disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.scoreButtonText}>1</Text>
+                    <Text style={styles.gridButtonText}>1</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.compactButton, (scoring || isInningsComplete() || pendingRuns > 0) && styles.disabledButton]} 
-                    onPress={() => handleAccumulateRuns(2)}
-                    disabled={scoring || isInningsComplete() || pendingRuns > 0}
+                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => addRuns(2)}
+                    disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.scoreButtonText}>2</Text>
+                    <Text style={styles.gridButtonText}>2</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.gridButton, styles.undoButton, ballHistory.length === 0 && styles.disabledButton]} 
+                    onPress={handleUndo}
+                    disabled={ballHistory.length === 0}
+                  >
+                    <Text style={styles.gridButtonTextSecondary}>Undo</Text>
                   </TouchableOpacity>
                 </View>
                 
-                {/* Row 2: 4, 6, + */}
-                <View style={styles.buttonRow}>
+                {/* Row 2: 3, 4, 6, 5,7 */}
+                <View style={styles.gridRow}>
                   <TouchableOpacity 
-                    style={[styles.compactButton, (scoring || isInningsComplete() || pendingRuns > 0) && styles.disabledButton]} 
-                    onPress={() => handleAccumulateRuns(4)}
-                    disabled={scoring || isInningsComplete() || pendingRuns > 0}
+                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => addRuns(3)}
+                    disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.scoreButtonText}>4</Text>
+                    <Text style={styles.gridButtonText}>3</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.compactButton, (scoring || isInningsComplete() || pendingRuns > 0) && styles.disabledButton]} 
-                    onPress={() => handleAccumulateRuns(6)}
-                    disabled={scoring || isInningsComplete() || pendingRuns > 0}
+                    style={[styles.gridButton, styles.boundaryButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => addRuns(4)}
+                    disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.scoreButtonText}>6</Text>
+                    <Text style={styles.gridButtonText}>4</Text>
+                    <Text style={styles.gridButtonLabel}>FOUR</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.compactButton, styles.plusButton, (scoring || isInningsComplete() || pendingRuns === 0) && styles.disabledButton]} 
-                    onPress={handleOpenAddRunsModal}
-                    disabled={scoring || isInningsComplete() || pendingRuns === 0}
+                    style={[styles.gridButton, styles.boundaryButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => addRuns(6)}
+                    disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.scoreButtonText}>+</Text>
+                    <Text style={styles.gridButtonText}>6</Text>
+                    <Text style={styles.gridButtonLabel}>SIX</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => setRareRunsModalVisible(true)}
+                    disabled={scoring || isInningsComplete()}
+                  >
+                    <Text style={styles.gridButtonTextSecondary}>5, 7</Text>
                   </TouchableOpacity>
                 </View>
-
-                {/* Pending Total Display */}
-                {pendingRuns > 0 && (
-                  <View style={styles.pendingRunsContainer}>
-                    <Text style={styles.pendingRunsText}>{pendingRuns} runs</Text>
-                    <View style={styles.pendingActionsRow}>
-                      <TouchableOpacity 
-                        style={[styles.compactButton, styles.confirmButton, scoring && styles.disabledButton]}
-                        onPress={handleScorePendingRuns}
-                        disabled={scoring}
-                      >
-                        <Text style={styles.scoreButtonText}>Score</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[styles.compactButton, styles.cancelButton]}
-                        onPress={handleCancelPending}
-                      >
-                        <Text style={styles.scoreButtonText}>Cancel</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
+                
+                {/* Row 3: Wd, Nb, Bye, Lb */}
+                <View style={styles.gridRow}>
+                  <TouchableOpacity 
+                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => setWideModalVisible(true)}
+                    disabled={scoring || isInningsComplete()}
+                  >
+                    <Text style={styles.gridButtonTextSecondary}>Wd</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => setNoBallModalVisible(true)}
+                    disabled={scoring || isInningsComplete()}
+                  >
+                    <Text style={styles.gridButtonTextSecondary}>Nb</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => setByeModalVisible(true)}
+                    disabled={scoring || isInningsComplete()}
+                  >
+                    <Text style={styles.gridButtonTextSecondary}>Bye</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    onPress={() => setLegByeModalVisible(true)}
+                    disabled={scoring || isInningsComplete()}
+                  >
+                    <Text style={styles.gridButtonTextSecondary}>Lb</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Wicket */}
@@ -786,78 +922,42 @@ export default function UmpireScoringScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Extras - Wide */}
-              <View style={styles.extrasSection}>
-                <Text style={styles.sectionTitle}>Wide (1 + extra runs)</Text>
-                <View style={styles.buttonGrid}>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addWide(0)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>Wd +0</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addWide(1)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>Wd +1</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addWide(2)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>Wd +2</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addWide(4)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>Wd +4</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Extras - No Ball */}
-              <View style={styles.extrasSection}>
-                <Text style={styles.sectionTitle}>No Ball (1 + extra runs)</Text>
-                <View style={styles.buttonGrid}>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addNoBall(0)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>NB +0</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addNoBall(1)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>NB +1</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addNoBall(2)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>NB +2</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.scoreButton, styles.extraButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
-                    onPress={() => addNoBall(4)}
-                    disabled={scoring || isInningsComplete()}
-                  >
-                    <Text style={styles.scoreButtonText}>NB +4</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.section}>
-                <Button title="Complete Match" onPress={completeMatch} />
+              {/* Scoring Shortcuts - Expandable */}
+              <View style={styles.shortcutsSection}>
+                <TouchableOpacity 
+                  style={styles.shortcutsHeader}
+                  onPress={() => setShortcutsExpanded(!shortcutsExpanded)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.shortcutsTitle}>Scoring Shortcuts</Text>
+                  <Ionicons 
+                    name={shortcutsExpanded ? 'chevron-up' : 'chevron-down'} 
+                    size={24} 
+                    color="#666" 
+                  />
+                </TouchableOpacity>
+                
+                {shortcutsExpanded && (
+                  <View style={styles.shortcutsContent}>
+                    <TouchableOpacity 
+                      style={styles.shortcutButton}
+                      onPress={() => setBowlerSelectionModalVisible(true)}
+                      disabled={scoring || isInningsComplete()}
+                    >
+                      <Ionicons name="person-outline" size={20} color="#007AFF" />
+                      <Text style={styles.shortcutButtonText}>Change Bowler</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={styles.shortcutButton}
+                      onPress={completeMatch}
+                      disabled={scoring}
+                    >
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#34C759" />
+                      <Text style={styles.shortcutButtonText}>Complete Match</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </>
           )}
@@ -1104,41 +1204,196 @@ export default function UmpireScoringScreen() {
         </View>
       </Modal>
 
-      {/* Add Runs Modal */}
+      {/* Wide Modal */}
       <Modal
-        visible={addRunsModalVisible}
+        visible={wideModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={handleCancelPending}
+        onRequestClose={() => setWideModalVisible(false)}
       >
         <TouchableOpacity 
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setAddRunsModalVisible(false)}
+          onPress={() => setWideModalVisible(false)}
         >
-          <View style={styles.addRunsModal} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>Add Extra Runs</Text>
-            <View style={styles.addRunsGrid}>
-              {[1, 2, 3, 4].map(extra => (
+          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>Wide</Text>
+            <Text style={styles.modalSubtitle}>Select runs scored + 1 wide</Text>
+            <View style={styles.extrasGrid}>
+              {[0, 1, 2, 3, 4].map(runs => (
                 <TouchableOpacity
-                  key={extra}
-                  style={styles.addRunButton}
-                  onPress={() => handleAddExtraRuns(extra)}
+                  key={runs}
+                  style={styles.extrasModalButton}
+                  onPress={() => handleWideWithRuns(runs)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.addRunButtonText}>+{extra}</Text>
-                  <Text style={styles.addRunPreviewText}>
-                    Total: {pendingRuns + extra} runs
-                  </Text>
+                  <Text style={styles.extrasModalButtonText}>{runs}</Text>
+                  <Text style={styles.extrasPreviewText}>Wd + {runs}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <TouchableOpacity 
               style={styles.modalCloseButton}
-              onPress={() => setAddRunsModalVisible(false)}
+              onPress={() => setWideModalVisible(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCloseButtonText}>Close</Text>
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* No Ball Modal */}
+      <Modal
+        visible={noBallModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setNoBallModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setNoBallModalVisible(false)}
+        >
+          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>No Ball</Text>
+            <Text style={styles.modalSubtitle}>Select runs scored + 1 no ball</Text>
+            <View style={styles.extrasGrid}>
+              {[0, 1, 2, 3, 4].map(runs => (
+                <TouchableOpacity
+                  key={runs}
+                  style={styles.extrasModalButton}
+                  onPress={() => handleNoBallWithRuns(runs)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.extrasModalButtonText}>{runs}</Text>
+                  <Text style={styles.extrasPreviewText}>Nb + {runs}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setNoBallModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Bye Modal */}
+      <Modal
+        visible={byeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setByeModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setByeModalVisible(false)}
+        >
+          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>Byes</Text>
+            <Text style={styles.modalSubtitle}>Select bye runs</Text>
+            <View style={styles.extrasGrid}>
+              {[1, 2, 3, 4].map(runs => (
+                <TouchableOpacity
+                  key={runs}
+                  style={styles.extrasModalButton}
+                  onPress={() => handleByeRuns(runs)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.extrasModalButtonText}>{runs}</Text>
+                  <Text style={styles.extrasPreviewText}>{runs} bye{runs > 1 ? 's' : ''}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setByeModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Leg Bye Modal */}
+      <Modal
+        visible={legByeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLegByeModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setLegByeModalVisible(false)}
+        >
+          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>Leg Byes</Text>
+            <Text style={styles.modalSubtitle}>Select leg bye runs</Text>
+            <View style={styles.extrasGrid}>
+              {[1, 2, 3, 4].map(runs => (
+                <TouchableOpacity
+                  key={runs}
+                  style={styles.extrasModalButton}
+                  onPress={() => handleLegByeRuns(runs)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.extrasModalButtonText}>{runs}</Text>
+                  <Text style={styles.extrasPreviewText}>{runs} lb</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setLegByeModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Rare Runs Modal (5, 7) */}
+      <Modal
+        visible={rareRunsModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRareRunsModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setRareRunsModalVisible(false)}
+        >
+          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>Rare Runs</Text>
+            <Text style={styles.modalSubtitle}>Select rare run totals</Text>
+            <View style={styles.rareRunsGrid}>
+              {[5, 7].map(runs => (
+                <TouchableOpacity
+                  key={runs}
+                  style={styles.rareRunButton}
+                  onPress={() => handleRareRuns(runs)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.rareRunButtonText}>{runs}</Text>
+                  <Text style={styles.extrasPreviewText}>{runs} runs</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setRareRunsModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -1287,10 +1542,45 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2
   },
-  runsSection: {
-    marginBottom: 64,
+  ballHistorySection: {
+    marginBottom: 20,
     backgroundColor: '#fff',
-    padding: 28,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2
+  },
+  ballHistoryContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 4
+  },
+  ballHistoryCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e0e0e0'
+  },
+  ballHistoryRecent: {
+    backgroundColor: '#FF9500',
+    borderColor: '#FF9500'
+  },
+  ballHistoryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  runsSection: {
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    padding: 20,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1298,11 +1588,61 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4
   },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12
+  },
+  gridButton: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    minHeight: 70
+  },
+  gridButtonText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333'
+  },
+  gridButtonTextSecondary: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666'
+  },
+  gridButtonLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#999',
+    marginTop: 4,
+    letterSpacing: 0.5
+  },
+  boundaryButton: {
+    backgroundColor: '#e8f5e9',
+    borderColor: '#4caf50'
+  },
+  undoButton: {
+    backgroundColor: '#fff3e0',
+    borderColor: '#ff9800'
+  },
+  extrasButton: {
+    backgroundColor: '#f3e5f5',
+    borderColor: '#9c27b0'
+  },
   wicketSection: {
-    marginTop: 16,
-    marginBottom: 48,
+    marginTop: 8,
+    marginBottom: 20,
     backgroundColor: '#fff',
-    padding: 28,
+    padding: 20,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1430,6 +1770,100 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 16,
     fontWeight: '600'
+  },
+  extrasModal: {
+    backgroundColor: '#fff',
+    marginHorizontal: 24,
+    borderRadius: 20,
+    padding: 24,
+    maxWidth: 400,
+    alignSelf: 'center'
+  },
+  extrasGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginVertical: 16,
+    justifyContent: 'center'
+  },
+  extrasModalButton: {
+    width: 70,
+    backgroundColor: '#007AFF',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center'
+  },
+  extrasModalButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4
+  },
+  extrasPreviewText: {
+    color: '#fff',
+    fontSize: 11,
+    opacity: 0.9
+  },
+  rareRunsGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    marginVertical: 16,
+    justifyContent: 'center'
+  },
+  rareRunButton: {
+    width: 100,
+    backgroundColor: '#007AFF',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center'
+  },
+  rareRunButtonText: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: 4
+  },
+  shortcutsSection: {
+    marginTop: 8,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2
+  },
+  shortcutsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16
+  },
+  shortcutsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  shortcutsContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 12
+  },
+  shortcutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 14,
+    borderRadius: 10,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0'
+  },
+  shortcutButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#333'
   },
   scoreButtonText: {
     color: '#fff',
