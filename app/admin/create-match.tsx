@@ -17,6 +17,8 @@ import {
   FlatList
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
+import { useTheme } from '@/providers/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { createMatch, updateMatchStatus } from '@/services/matches';
@@ -24,6 +26,7 @@ import { searchUsersByUsername } from '@/services/users';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { DateTimePicker } from '@/components/DateTimePicker';
+import { ThemedBackground } from '@/components/ThemedBackground';
 import { User } from '@/models/User';
 
 /**
@@ -33,6 +36,7 @@ import { User } from '@/models/User';
  */
 export default function CreateMatchScreen() {
   const { userProfile } = useAuth();
+  const { theme, colors } = useTheme();
   const [teamAName, setTeamAName] = useState('');
   const [teamBName, setTeamBName] = useState('');
   const [umpireUid, setUmpireUid] = useState('');
@@ -53,14 +57,15 @@ export default function CreateMatchScreen() {
   const [searching, setSearching] = useState(false);
   
   const router = useRouter();
+  const { headerStyle } = useSafeAreaHeader();
 
   // Check authorization
   if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'president')) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Unauthorized access</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Unauthorized access</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={[styles.backButtonText, { color: colors.accent }]}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -244,16 +249,16 @@ export default function CreateMatchScreen() {
   };
 
   const renderSelectedPlayer = (player: User, team: 'A' | 'B') => (
-    <View key={player.uid} style={styles.playerChip}>
+    <View key={player.uid} style={[styles.playerChip, { backgroundColor: colors.backgroundLighter, borderColor: colors.borderDefault }]}>
       <View style={styles.playerChipAvatar}>
         <Text style={styles.playerChipAvatarText}>
           {player.name.charAt(0).toUpperCase()}
         </Text>
       </View>
       <View style={styles.playerChipInfo}>
-        <Text style={styles.playerChipName}>{player.name}</Text>
+        <Text style={[styles.playerChipName, { color: colors.textPrimary }]}>{player.name}</Text>
         {player.username && (
-          <Text style={styles.playerChipUsername}>@{player.username}</Text>
+          <Text style={[styles.playerChipUsername, { color: colors.textSecondary }]}>@{player.username}</Text>
         )}
       </View>
       <TouchableOpacity
@@ -268,21 +273,21 @@ export default function CreateMatchScreen() {
   const renderSearchResult = (user: User) => (
     <TouchableOpacity
       key={user.uid}
-      style={styles.searchResultItem}
+      style={[styles.searchResultItem, { backgroundColor: colors.cardBg }]}
       onPress={() => handleAddPlayer(user)}
       activeOpacity={0.7}
     >
-      <View style={styles.searchResultAvatar}>
+      <View style={[styles.searchResultAvatar, { backgroundColor: colors.accent }]}>
         <Text style={styles.searchResultAvatarText}>
           {user.name.charAt(0).toUpperCase()}
         </Text>
       </View>
       <View style={styles.searchResultInfo}>
-        <Text style={styles.searchResultName}>{user.name}</Text>
+        <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>{user.name}</Text>
         {user.username && (
-          <Text style={styles.searchResultUsername}>@{user.username}</Text>
+          <Text style={[styles.searchResultUsername, { color: colors.textSecondary }]}>@{user.username}</Text>
         )}
-        <Text style={styles.searchResultRole}>{user.role}</Text>
+        <Text style={[styles.searchResultRole, { color: colors.textTertiary }]}>{user.role}</Text>
       </View>
       <View style={styles.addIconContainer}>
         <Ionicons name="add-circle" size={28} color="#34C759" />
@@ -292,23 +297,25 @@ export default function CreateMatchScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <ThemedBackground>
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
+        <View style={[styles.header, headerStyle, { backgroundColor: colors.cardBg, borderBottomColor: colors.borderDefault }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={[styles.backButtonText, { color: colors.accent }]}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Match</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Create Match</Text>
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Match Details</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Match Details</Text>
 
           <View style={styles.scheduleRow}>
-            <Text style={styles.scheduleLabel}>Schedule this match</Text>
+            <Text style={[styles.scheduleLabel, { color: colors.textPrimary }]}>Schedule this match</Text>
             <Switch
+              trackColor={{ false: colors.borderDefault, true: colors.accent }}
               value={isScheduled}
               onValueChange={(value) => {
                 setIsScheduled(value);
@@ -328,17 +335,18 @@ export default function CreateMatchScreen() {
           )}
 
           {!isScheduled && (
-            <View style={styles.startImmediatelyContainer}>
+            <View style={[styles.startImmediatelyContainer, { backgroundColor: colors.backgroundLighter, borderColor: colors.borderDefault }]}>
               <View style={styles.scheduleRow}>
                 <View style={styles.startImmediatelyTextContainer}>
-                  <Text style={styles.scheduleLabel}>Start match immediately</Text>
-                  <Text style={styles.helperText}>
+                  <Text style={[styles.scheduleLabel, { color: colors.textPrimary }]}>Start match immediately</Text>
+                  <Text style={[styles.helperText, { color: colors.textTertiary }]}>
                     Match will be LIVE right after creation
                   </Text>
                 </View>
                 <Switch
                   value={startImmediately}
                   onValueChange={setStartImmediately}
+                  trackColor={{ false: colors.borderDefault, true: colors.accent }}
                 />
               </View>
             </View>
@@ -350,20 +358,23 @@ export default function CreateMatchScreen() {
             onChangeText={setTeamAName}
             placeholder="Enter team A name"
             autoCapitalize="words"
+            variant="underline"
+            labelStyle={{ color: colors.textSecondary }}
+            placeholderTextColor={colors.textTertiary}
           />
 
           {/* Team A Players */}
-          <View style={styles.playersSection}>
-            <View style={styles.playersSectionHeader}>
-              <Text style={styles.playersSectionTitle}>
+          <View style={[styles.playersSection, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}>
+            <View style={[styles.playersSectionHeader, { borderBottomColor: colors.borderDefault }]}>
+              <Text style={[styles.playersSectionTitle, { color: colors.textPrimary }]}>
                 Team A Players ({teamAPlayers.length})
               </Text>
               <TouchableOpacity
-                style={styles.addPlayerButton}
+                style={[styles.addPlayerButton, { backgroundColor: colors.backgroundLighter }]}
                 onPress={() => openPlayerSearch('A')}
               >
-                <Ionicons name="add-circle" size={24} color="#007AFF" />
-                <Text style={styles.addPlayerText}>Add Player</Text>
+                <Ionicons name="add-circle" size={24} color={colors.accent} />
+                <Text style={[styles.addPlayerText, { color: colors.accent }]}>Add Player</Text>
               </TouchableOpacity>
             </View>
             
@@ -372,7 +383,7 @@ export default function CreateMatchScreen() {
                 {teamAPlayers.map(player => renderSelectedPlayer(player, 'A'))}
               </View>
             ) : (
-              <Text style={styles.noPlayersText}>No players added yet</Text>
+              <Text style={[styles.noPlayersText, { color: colors.textTertiary, backgroundColor: colors.backgroundLighter, borderColor: colors.borderDefault }]}>No players added yet</Text>
             )}
           </View>
 
@@ -382,20 +393,23 @@ export default function CreateMatchScreen() {
             onChangeText={setTeamBName}
             placeholder="Enter team B name"
             autoCapitalize="words"
+            variant="underline"
+            labelStyle={{ color: colors.textSecondary }}
+            placeholderTextColor={colors.textTertiary}
           />
 
           {/* Team B Players */}
-          <View style={styles.playersSection}>
-            <View style={styles.playersSectionHeader}>
-              <Text style={styles.playersSectionTitle}>
+          <View style={[styles.playersSection, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}>
+            <View style={[styles.playersSectionHeader, { borderBottomColor: colors.borderDefault }]}>
+              <Text style={[styles.playersSectionTitle, { color: colors.textPrimary }]}>
                 Team B Players ({teamBPlayers.length})
               </Text>
               <TouchableOpacity
-                style={styles.addPlayerButton}
+                style={[styles.addPlayerButton, { backgroundColor: colors.backgroundLighter }]}
                 onPress={() => openPlayerSearch('B')}
               >
-                <Ionicons name="add-circle" size={24} color="#007AFF" />
-                <Text style={styles.addPlayerText}>Add Player</Text>
+                <Ionicons name="add-circle" size={24} color={colors.accent} />
+                <Text style={[styles.addPlayerText, { color: colors.accent }]}>Add Player</Text>
               </TouchableOpacity>
             </View>
             
@@ -404,39 +418,39 @@ export default function CreateMatchScreen() {
                 {teamBPlayers.map(player => renderSelectedPlayer(player, 'B'))}
               </View>
             ) : (
-              <Text style={styles.noPlayersText}>No players added yet</Text>
+              <Text style={[styles.noPlayersText, { color: colors.textTertiary, backgroundColor: colors.backgroundLighter, borderColor: colors.borderDefault }]}>No players added yet</Text>
             )}
           </View>
 
           {/* Umpire Selection */}
-          <View style={styles.playersSection}>
-            <View style={styles.playersSectionHeader}>
-              <Text style={styles.playersSectionTitle}>
+          <View style={[styles.playersSection, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}>
+            <View style={[styles.playersSectionHeader, { borderBottomColor: colors.borderDefault }]}>
+              <Text style={[styles.playersSectionTitle, { color: colors.textPrimary }]}>
                 Umpire {selectedUmpire ? '(1)' : '(Required)'}
               </Text>
               {!selectedUmpire && (
                 <TouchableOpacity
-                  style={styles.addPlayerButton}
+                  style={[styles.addPlayerButton, { backgroundColor: colors.backgroundLighter }]}
                   onPress={openUmpireSearch}
                 >
-                  <Ionicons name="add-circle" size={24} color="#007AFF" />
-                  <Text style={styles.addPlayerText}>Select Umpire</Text>
+                  <Ionicons name="add-circle" size={24} color={colors.accent} />
+                  <Text style={[styles.addPlayerText, { color: colors.accent }]}>Select Umpire</Text>
                 </TouchableOpacity>
               )}
             </View>
             
             {selectedUmpire ? (
               <View style={styles.selectedPlayersList}>
-                <View style={styles.playerChip}>
+                <View style={[styles.playerChip, { backgroundColor: colors.backgroundLighter, borderColor: colors.borderDefault }]}>
                   <View style={styles.playerChipAvatar}>
                     <Text style={styles.playerChipAvatarText}>
                       {selectedUmpire.name.charAt(0).toUpperCase()}
                     </Text>
                   </View>
                   <View style={styles.playerChipInfo}>
-                    <Text style={styles.playerChipName}>{selectedUmpire.name}</Text>
+                    <Text style={[styles.playerChipName, { color: colors.textPrimary }]}>{selectedUmpire.name}</Text>
                     {selectedUmpire.username && (
-                      <Text style={styles.playerChipUsername}>@{selectedUmpire.username}</Text>
+                      <Text style={[styles.playerChipUsername, { color: colors.textSecondary }]}>@{selectedUmpire.username}</Text>
                     )}
                   </View>
                   <TouchableOpacity
@@ -448,7 +462,7 @@ export default function CreateMatchScreen() {
                 </View>
               </View>
             ) : (
-              <Text style={styles.noPlayersText}>No umpire selected</Text>
+              <Text style={[styles.noPlayersText, { color: colors.textTertiary, backgroundColor: colors.backgroundLighter, borderColor: colors.borderDefault }]}>No umpire selected</Text>
             )}
           </View>
 
@@ -458,6 +472,9 @@ export default function CreateMatchScreen() {
             onChangeText={setTotalOvers}
             keyboardType="numeric"
             placeholder="Enter total overs (e.g., 20 for T20)"
+            variant="underline"
+            labelStyle={{ color: colors.textSecondary }}
+            placeholderTextColor={colors.textTertiary}
           />
 
           <Button
@@ -468,6 +485,7 @@ export default function CreateMatchScreen() {
           />
         </View>
       </ScrollView>
+      </ThemedBackground>
 
       {/* Player Search Modal Overlay */}
       {activeTeam && (
@@ -477,62 +495,64 @@ export default function CreateMatchScreen() {
           onPress={closePlayerSearch}
         >
           <TouchableOpacity 
-            style={styles.searchModal} 
+            style={[styles.searchModal, { backgroundColor: theme === 'dark' ? '#1e293b' : '#fff' }]} 
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-            <View style={styles.searchModalHeader}>
+            <View style={[styles.searchModalHeader, { backgroundColor: theme === 'dark' ? '#1e293b' : '#fff', borderBottomColor: colors.borderDefault }]}>
               <View style={styles.searchModalTitleContainer}>
-                <Text style={styles.searchModalTitle}>
+                <Text style={[styles.searchModalTitle, { color: colors.textPrimary }]}>
                   Add Player to Team {activeTeam}
                 </Text>
-                <Text style={styles.searchModalSubtitle}>
+                <Text style={[styles.searchModalSubtitle, { color: colors.textTertiary }]}>
                   Players can only be on one team
                 </Text>
               </View>
               <TouchableOpacity onPress={closePlayerSearch}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.searchInputContainer}>
+            <View style={[styles.searchInputContainer, { backgroundColor: theme === 'dark' ? '#1e293b' : '#fff' }]}>
               <Input
                 placeholder="Search by username..."
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoCapitalize="none"
+                variant="underline"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
 
-            <ScrollView style={styles.searchResultsContainer} contentContainerStyle={styles.searchResultsContent}>
+            <ScrollView style={[styles.searchResultsContainer, { backgroundColor: theme === 'dark' ? '#0f172a' : '#f8fafc' }]} contentContainerStyle={styles.searchResultsContent}>
               {searching && (
                 <View style={styles.searchLoader}>
-                  <ActivityIndicator size="large" color="#007AFF" />
-                  <Text style={styles.searchLoadingText}>Searching...</Text>
+                  <ActivityIndicator size="large" color={colors.accent} />
+                  <Text style={[styles.searchLoadingText, { color: colors.textTertiary }]}>Searching...</Text>
                 </View>
               )}
 
               {!searching && searchQuery.trim() && searchResults.length === 0 && (
                 <View style={styles.searchEmptyState}>
-                  <Ionicons name="search-outline" size={48} color="#ccc" />
-                  <Text style={styles.searchEmptyText}>No users found</Text>
-                  <Text style={styles.searchEmptySubtext}>Try searching by username</Text>
+                  <Ionicons name="search-outline" size={48} color={colors.borderDefault} />
+                  <Text style={[styles.searchEmptyText, { color: colors.textSecondary }]}>No users found</Text>
+                  <Text style={[styles.searchEmptySubtext, { color: colors.textTertiary }]}>Try searching by username</Text>
                 </View>
               )}
 
               {!searching && !searchQuery.trim() && (
                 <View style={styles.searchEmptyState}>
-                  <Ionicons name="people-outline" size={48} color="#ccc" />
-                  <Text style={styles.searchPlaceholderText}>
+                  <Ionicons name="people-outline" size={48} color={colors.borderDefault} />
+                  <Text style={[styles.searchPlaceholderText, { color: colors.textSecondary }]}>
                     Start typing to search for players...
                   </Text>
-                  <Text style={styles.searchEmptySubtext}>Search by @username</Text>
+                  <Text style={[styles.searchEmptySubtext, { color: colors.textTertiary }]}>Search by @username</Text>
                 </View>
               )}
 
               {!searching && searchResults.length > 0 && (
                 <>
-                  <Text style={styles.searchResultsCount}>
+                  <Text style={[styles.searchResultsCount, { color: colors.textSecondary }]}>
                     Found {searchResults.length} player{searchResults.length !== 1 ? 's' : ''}
                   </Text>
                   {searchResults.map((item) => renderSearchResult(item))}
@@ -551,82 +571,84 @@ export default function CreateMatchScreen() {
           onPress={closeUmpireSearch}
         >
           <TouchableOpacity 
-            style={styles.searchModal} 
+            style={[styles.searchModal, { backgroundColor: theme === 'dark' ? '#1e293b' : '#fff' }]} 
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-            <View style={styles.searchModalHeader}>
+            <View style={[styles.searchModalHeader, { backgroundColor: theme === 'dark' ? '#1e293b' : '#fff', borderBottomColor: colors.borderDefault }]}>
               <View style={styles.searchModalTitleContainer}>
-                <Text style={styles.searchModalTitle}>
+                <Text style={[styles.searchModalTitle, { color: colors.textPrimary }]}>
                   Select Umpire
                 </Text>
-                <Text style={styles.searchModalSubtitle}>
+                <Text style={[styles.searchModalSubtitle, { color: colors.textTertiary }]}>
                   Choose a user to be the match umpire
                 </Text>
               </View>
               <TouchableOpacity onPress={closeUmpireSearch}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.searchInputContainer}>
+            <View style={[styles.searchInputContainer, { backgroundColor: theme === 'dark' ? '#1e293b' : '#fff' }]}>
               <Input
                 placeholder="Search by username..."
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoCapitalize="none"
+                variant="underline"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
 
-            <ScrollView style={styles.searchResultsContainer} contentContainerStyle={styles.searchResultsContent}>
+            <ScrollView style={[styles.searchResultsContainer, { backgroundColor: theme === 'dark' ? '#0f172a' : '#f8fafc' }]} contentContainerStyle={styles.searchResultsContent}>
               {searching && (
                 <View style={styles.searchLoader}>
-                  <ActivityIndicator size="large" color="#007AFF" />
-                  <Text style={styles.searchLoadingText}>Searching...</Text>
+                  <ActivityIndicator size="large" color={colors.accent} />
+                  <Text style={[styles.searchLoadingText, { color: colors.textTertiary }]}>Searching...</Text>
                 </View>
               )}
 
               {!searching && searchQuery.trim() && searchResults.length === 0 && (
                 <View style={styles.searchEmptyState}>
-                  <Ionicons name="search-outline" size={48} color="#ccc" />
-                  <Text style={styles.searchEmptyText}>No users found</Text>
-                  <Text style={styles.searchEmptySubtext}>Try searching by username</Text>
+                  <Ionicons name="search-outline" size={48} color={colors.borderDefault} />
+                  <Text style={[styles.searchEmptyText, { color: colors.textSecondary }]}>No users found</Text>
+                  <Text style={[styles.searchEmptySubtext, { color: colors.textTertiary }]}>Try searching by username</Text>
                 </View>
               )}
 
               {!searching && !searchQuery.trim() && (
                 <View style={styles.searchEmptyState}>
-                  <Ionicons name="person-outline" size={48} color="#ccc" />
-                  <Text style={styles.searchPlaceholderText}>
+                  <Ionicons name="person-outline" size={48} color={colors.borderDefault} />
+                  <Text style={[styles.searchPlaceholderText, { color: colors.textSecondary }]}>
                     Start typing to search for an umpire...
                   </Text>
-                  <Text style={styles.searchEmptySubtext}>Search by @username</Text>
+                  <Text style={[styles.searchEmptySubtext, { color: colors.textTertiary }]}>Search by @username</Text>
                 </View>
               )}
 
               {!searching && searchResults.length > 0 && (
                 <>
-                  <Text style={styles.searchResultsCount}>
+                  <Text style={[styles.searchResultsCount, { color: colors.textSecondary }]}>
                     Found {searchResults.length} user{searchResults.length !== 1 ? 's' : ''}
                   </Text>
                   {searchResults.map((item) => (
                     <TouchableOpacity
                       key={item.uid}
-                      style={styles.searchResultItem}
+                      style={[styles.searchResultItem, { backgroundColor: colors.cardBg }]}
                       onPress={() => handleSelectUmpire(item)}
                       activeOpacity={0.7}
                     >
-                      <View style={styles.searchResultAvatar}>
+                      <View style={[styles.searchResultAvatar, { backgroundColor: colors.accent }]}>
                         <Text style={styles.searchResultAvatarText}>
                           {item.name.charAt(0).toUpperCase()}
                         </Text>
                       </View>
                       <View style={styles.searchResultInfo}>
-                        <Text style={styles.searchResultName}>{item.name}</Text>
+                        <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>{item.name}</Text>
                         {item.username && (
-                          <Text style={styles.searchResultUsername}>@{item.username}</Text>
+                          <Text style={[styles.searchResultUsername, { color: colors.textSecondary }]}>@{item.username}</Text>
                         )}
-                        <Text style={styles.searchResultRole}>{item.role}</Text>
+                        <Text style={[styles.searchResultRole, { color: colors.textTertiary }]}>{item.role}</Text>
                       </View>
                       <View style={styles.addIconContainer}>
                         <Ionicons name="checkmark-circle" size={28} color="#34C759" />
@@ -661,7 +683,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#fff',
     padding: 16,
-    paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0'
   },

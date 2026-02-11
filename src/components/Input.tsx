@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { TextInput, StyleSheet, Text, View, ViewStyle, TextStyle } from 'react-native';
+import { useTheme } from '@/providers/ThemeProvider';
 
 /** See InputProps. */
 interface InputProps {
@@ -38,15 +39,29 @@ export const Input: React.FC<InputProps> = ({
   containerStyle,
   inputStyle,
   labelStyle,
-  placeholderTextColor = '#999',
+  placeholderTextColor,
   variant = 'default'
 }) => {
+  const { colors } = useTheme();
+  const phColor = placeholderTextColor ?? colors.textTertiary;
+  const labelColor = labelStyle?.color ?? colors.textSecondary;
+
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: labelColor }, labelStyle]}>{label}</Text>}
       <TextInput
         style={[
           variant === 'default' ? styles.input : styles.inputUnderline,
+          variant === 'default'
+            ? {
+                borderColor: colors.borderDefault,
+                backgroundColor: colors.cardBg,
+                color: colors.textPrimary
+              }
+            : {
+                borderBottomColor: colors.borderFocus,
+                color: colors.textPrimary
+              },
           multiline && styles.multilineInput,
           inputStyle
         ]}
@@ -58,7 +73,7 @@ export const Input: React.FC<InputProps> = ({
         autoCapitalize={autoCapitalize}
         multiline={multiline}
         numberOfLines={numberOfLines}
-        placeholderTextColor={placeholderTextColor}
+        placeholderTextColor={phColor}
       />
     </View>
   );
@@ -71,28 +86,23 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
-    color: '#333'
+    marginBottom: 8
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: '#fff'
+    fontSize: 16
   },
   inputUnderline: {
     backgroundColor: 'transparent',
     borderWidth: 0,
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(255, 255, 255, 0.35)',
     borderRadius: 0,
     paddingHorizontal: 0,
     paddingVertical: 12,
-    fontSize: 16,
-    color: '#fff'
+    fontSize: 16
   },
   multilineInput: {
     minHeight: 100,

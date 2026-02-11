@@ -14,15 +14,12 @@ import {
   TouchableOpacity,
   StatusBar
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { logInWithEmailOrUsername } from '@/firebase/auth';
 import { Input } from '@/components/Input';
-
-const MINT = '#10b981';
-const DARK_TEAL = '#042f2e';
-const DARK_TEAL_LIGHTER = '#064e3b';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
 /** Login form (email or username + password). */
 export default function LoginScreen() {
@@ -30,7 +27,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaHeader(24);
+  const { theme, colors } = useTheme();
 
   const handleLogin = async () => {
     if (!emailOrUsername.trim() || !password.trim()) {
@@ -50,27 +48,23 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={[DARK_TEAL, DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-      >
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+      <ThemedBackground>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }
+            { paddingTop: top, paddingBottom: bottom + 24 }
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.heroSection}>
-            <Text style={styles.appName}>CREASE</Text>
+            <Text style={[styles.appName, { color: colors.textPrimary }]}>CREASE</Text>
           </View>
 
           <View style={styles.formSection}>
@@ -82,9 +76,9 @@ export default function LoginScreen() {
                 placeholder="Enter your email or username"
                 autoCapitalize="none"
                 containerStyle={styles.inputContainer}
-                inputStyle={styles.inputField}
-                labelStyle={styles.inputLabel}
-                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                variant="underline"
+                labelStyle={{ ...styles.inputLabel, color: colors.textSecondary }}
+                placeholderTextColor={colors.textTertiary}
               />
 
               <Input
@@ -94,13 +88,13 @@ export default function LoginScreen() {
                 placeholder="Enter your password"
                 secureTextEntry
                 containerStyle={styles.inputContainer}
-                inputStyle={styles.inputField}
-                labelStyle={styles.inputLabel}
-                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                variant="underline"
+                labelStyle={{ ...styles.inputLabel, color: colors.textSecondary }}
+                placeholderTextColor={colors.textTertiary}
               />
 
               <TouchableOpacity
-                style={[styles.signInButton, loading && styles.disabledButton]}
+                style={[styles.signInButton, { backgroundColor: colors.accent }, loading && styles.disabledButton]}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.8}
@@ -111,18 +105,19 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>New to Crease? </Text>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>New to Crease? </Text>
                 <TouchableOpacity
                   onPress={() => router.push('/signup')}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.footerLink}>Create Account</Text>
+                  <Text style={[styles.footerLink, { color: colors.accent }]}>Create Account</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </ThemedBackground>
     </View>
   );
 }
@@ -147,7 +142,6 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 48,
     fontWeight: '900',
-    color: '#fff',
     letterSpacing: 6
   },
   formSection: {
@@ -161,22 +155,9 @@ const styles = StyleSheet.create({
     marginBottom: 24
   },
   inputLabel: {
-    color: 'rgba(255, 255, 255, 0.9)',
     marginBottom: 8
   },
-  inputField: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(255, 255, 255, 0.35)',
-    borderRadius: 0,
-    paddingHorizontal: 0,
-    paddingVertical: 12,
-    color: '#fff',
-    fontSize: 16
-  },
   signInButton: {
-    backgroundColor: MINT,
     height: 56,
     borderRadius: 12,
     justifyContent: 'center',
@@ -198,12 +179,10 @@ const styles = StyleSheet.create({
     marginTop: 32
   },
   footerText: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.8)'
+    fontSize: 15
   },
   footerLink: {
     fontSize: 15,
-    color: MINT,
     fontWeight: '700'
   }
 });

@@ -6,21 +6,22 @@ import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/providers/ThemeProvider';
 
 /** Bottom tabs: Home, Search, Profile. */
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.MINT,
-        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: {
-          backgroundColor: COLORS.DARK_TEAL,
+          backgroundColor: colors.background,
           borderTopWidth: 1,
-          borderTopColor: COLORS.BORDER_DEFAULT,
+          borderTopColor: colors.borderDefault,
           height: 60 + (Platform.OS === 'ios' ? insets.bottom : 0),
           paddingBottom: Platform.OS === 'ios' ? insets.bottom : 8,
           paddingTop: 8,

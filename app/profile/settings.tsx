@@ -13,18 +13,20 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUser } from '@/services/users';
 import { updatePrivacy } from '@/services/users';
 import { User } from '@/models/User';
-import { COLORS } from '@/theme/colors';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
 export default function ProfileSettingsScreen() {
   const router = useRouter();
+  const { headerStyle } = useSafeAreaHeader();
   const { user: authUser, userProfile, refreshUserProfile } = useAuth();
+  const { theme, colors, setTheme } = useTheme();
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,68 +88,91 @@ export default function ProfileSettingsScreen() {
 
   if (loading || !profile) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <LinearGradient
-          colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.header}>
+      <View style={styles.container}>
+        <ThemedBackground>
+        <View style={[styles.header, headerStyle, { backgroundColor: colors.backgroundLighter, borderBottomColor: colors.borderDefault }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>← Back</Text>
+            <Text style={[styles.backText, { color: colors.accent }]}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Privacy</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Privacy</Text>
         </View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.MINT} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
-      </SafeAreaView>
+        </ThemedBackground>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-      
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <ThemedBackground>
+      <View style={[styles.header, headerStyle, { backgroundColor: colors.backgroundLighter, borderBottomColor: colors.borderDefault }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={[styles.backText, { color: colors.accent }]}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Privacy</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Privacy</Text>
       </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>What others can see on your profile</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Show recently played</Text>
+      <View style={[styles.section, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Theme</Text>
+        <View style={[styles.row, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Appearance</Text>
+          <View style={styles.themeButtons}>
+            <TouchableOpacity
+              style={[
+                styles.themeBtn,
+                theme === 'dark' && { backgroundColor: colors.accent },
+                { borderColor: colors.borderDefault }
+              ]}
+              onPress={() => setTheme('dark')}
+            >
+              <Text style={[styles.themeBtnText, { color: theme === 'dark' ? '#fff' : colors.textSecondary }]}>Dark</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.themeBtn,
+                theme === 'light' && { backgroundColor: colors.accent },
+                { borderColor: colors.borderDefault }
+              ]}
+              onPress={() => setTheme('light')}
+            >
+              <Text style={[styles.themeBtnText, { color: theme === 'light' ? '#fff' : colors.textSecondary }]}>Light</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+      <View style={[styles.section, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>What others can see on your profile</Text>
+        <View style={[styles.row, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Show recently played</Text>
           <Switch
             value={showRecentlyPlayed}
             onValueChange={(v) => handleToggle('showRecentlyPlayed', v)}
             disabled={saving}
-            trackColor={{ false: 'rgba(255, 255, 255, 0.3)', true: COLORS.MINT }}
+            trackColor={{ false: colors.borderDefault, true: colors.accent }}
           />
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Show match history</Text>
+        <View style={[styles.row, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Show match history</Text>
           <Switch
             value={showMatchHistory}
             onValueChange={(v) => handleToggle('showMatchHistory', v)}
             disabled={saving}
-            trackColor={{ false: 'rgba(255, 255, 255, 0.3)', true: COLORS.MINT }}
+            trackColor={{ false: colors.borderDefault, true: colors.accent }}
           />
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Show pinned performance</Text>
+        <View style={[styles.row, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Show pinned performance</Text>
           <Switch
             value={showPinnedPerformance}
             onValueChange={(v) => handleToggle('showPinnedPerformance', v)}
             disabled={saving}
-            trackColor={{ false: 'rgba(255, 255, 255, 0.3)', true: COLORS.MINT }}
+            trackColor={{ false: colors.borderDefault, true: colors.accent }}
           />
         </View>
       </View>
-    </SafeAreaView>
+      </ThemedBackground>
+    </View>
   );
 }
 
@@ -159,23 +184,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER_DEFAULT
+    paddingBottom: 12,
+    borderBottomWidth: 1
   },
   backBtn: {
     marginRight: 12
   },
   backText: {
     fontSize: 16,
-    color: COLORS.MINT,
     fontWeight: '600'
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff'
+    fontWeight: '700'
+  },
+  themeButtons: {
+    flexDirection: 'row',
+    gap: 8
+  },
+  themeBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1
+  },
+  themeBtnText: {
+    fontSize: 14,
+    fontWeight: '600'
   },
   center: {
     flex: 1,
@@ -183,17 +218,14 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   section: {
-    backgroundColor: COLORS.CARD_BG,
     marginTop: 16,
     marginHorizontal: 16,
     borderRadius: 12,
     padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_DEFAULT
+    borderWidth: 1
   },
   sectionTitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 16
   },
   row: {
@@ -201,12 +233,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER_DEFAULT
+    borderBottomWidth: 1
   },
   label: {
     fontSize: 16,
-    color: '#fff',
     fontWeight: '500'
   }
 });

@@ -13,15 +13,15 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { getUserByUsername } from '@/services/users';
 import { useAuth } from '@/providers/AuthProvider';
 import { User } from '@/models/User';
 import { ProfileContent } from '@/components/profile/ProfileContent';
 import { setPinnedPerformance, clearPinnedPerformance } from '@/services/users';
-import { COLORS } from '@/theme/colors';
 
 /**
  * Screen that shows a user's public profile when navigating by username (e.g. /user/johndoe).
@@ -34,6 +34,8 @@ export default function UserProfileScreen() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const { headerStyle } = useSafeAreaHeader();
+  const { theme, colors } = useTheme();
   const isOwnProfile = !!(
     currentUser?.username &&
     username &&
@@ -86,47 +88,40 @@ export default function UserProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <LinearGradient
-          colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-          style={StyleSheet.absoluteFill}
-        />
+      <View style={[styles.container, headerStyle]}>
+        <ThemedBackground>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={COLORS.MINT} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
-      </SafeAreaView>
+        </ThemedBackground>
+      </View>
     );
   }
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <LinearGradient
-          colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-          style={StyleSheet.absoluteFill}
-        />
+      <View style={[styles.container, headerStyle]}>
+        <ThemedBackground>
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>User not found</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>Go Back</Text>
+            <Text style={[styles.backButtonText, { color: colors.accent }]}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+        </ThemedBackground>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
+    <View style={styles.container}>
+      <ThemedBackground>
       
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          <View style={styles.header}>
+          <View style={[styles.header, headerStyle]}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <Text style={styles.backButtonText}>← Back</Text>
+              <Text style={[styles.backButtonText, { color: colors.accent }]}>← Back</Text>
             </TouchableOpacity>
             {isOwnProfile && (
               <View style={styles.headerActions}>
@@ -134,19 +129,19 @@ export default function UserProfileScreen() {
                   style={styles.headerBtn}
                   onPress={() => router.push('/profile/setup')}
                 >
-                  <Text style={styles.headerBtnText}>Edit</Text>
+                  <Text style={[styles.headerBtnText, { color: colors.accent }]}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.headerBtn}
                   onPress={() => router.push('/profile/settings')}
                 >
-                  <Text style={styles.headerBtnText}>Settings</Text>
+                  <Text style={[styles.headerBtnText, { color: colors.accent }]}>Settings</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
 
-          <Text style={styles.title}>User Profile</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>User Profile</Text>
 
           <ProfileContent
             user={user}
@@ -160,7 +155,8 @@ export default function UserProfileScreen() {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </ThemedBackground>
+    </View>
   );
 }
 
@@ -187,7 +183,6 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: COLORS.MINT,
     fontWeight: '600'
   },
   headerActions: {
@@ -200,13 +195,11 @@ const styles = StyleSheet.create({
   },
   headerBtnText: {
     fontSize: 15,
-    color: COLORS.MINT,
     fontWeight: '600'
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 24
   },
   centerContainer: {
@@ -217,7 +210,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 24
   }
 });

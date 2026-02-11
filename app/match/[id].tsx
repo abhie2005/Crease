@@ -13,7 +13,8 @@ import {
   Alert,
   Animated
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router'; 
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader'; 
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatch, deleteMatch, updateMatchStatus } from '@/services/matches';
@@ -40,6 +41,7 @@ export default function MatchDetailsScreen() {
   const [teamBExpanded, setTeamBExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('details');
   const router = useRouter();
+  const { headerStyle } = useSafeAreaHeader();
   const blinkAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -361,7 +363,7 @@ export default function MatchDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, headerStyle]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
@@ -656,7 +658,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#fff',
     padding: 16,
-    paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0'
   },

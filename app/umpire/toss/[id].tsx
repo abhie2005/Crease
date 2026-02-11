@@ -13,6 +13,7 @@ import {
   Alert
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatch, updateToss } from '@/services/matches';
@@ -47,6 +48,7 @@ export default function TossScreen() {
   const [showCoinResult, setShowCoinResult] = useState(false);
   
   const router = useRouter();
+  const { headerStyle } = useSafeAreaHeader();
 
   useEffect(() => {
     if (!id) return;
@@ -201,7 +203,7 @@ export default function TossScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
+      <View style={[styles.header, headerStyle]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>

@@ -12,9 +12,8 @@ import {
   ActivityIndicator,
   ScrollView
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '@/components/Input';
 import { useAuth } from '@/providers/AuthProvider';
@@ -25,13 +24,16 @@ import { PlayerResultCard } from '@/components/search/PlayerResultCard';
 import { TeamResultCard } from '@/components/search/TeamResultCard';
 import { MatchResultCard } from '@/components/search/MatchResultCard';
 import { saveRecentSearch, getRecentSearches, removeRecentSearch, clearRecentSearches, RecentSearch } from '@/utils/recentSearches';
-import { COLORS } from '@/theme/colors';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
 type TabType = 'player' | 'team' | 'match';
 
 /** Search screen with Players/Teams/Matches tabs and recent searches. */
 export default function SearchScreen() {
   const { user } = useAuth();
+  const { headerStyle } = useSafeAreaHeader();
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('player');
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
@@ -138,7 +140,7 @@ export default function SearchScreen() {
     const isActive = activeTab === type;
     return (
       <TouchableOpacity
-        style={[styles.tab, isActive && styles.activeTab]}
+        style={[styles.tab, isActive && { backgroundColor: colors.accent }]}
         onPress={() => {
           setActiveTab(type);
           setResults([]);
@@ -149,7 +151,7 @@ export default function SearchScreen() {
           size={20} 
           color={isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)'} 
         />
-        <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+        <Text style={[styles.tabText, { color: isActive ? '#fff' : colors.textTertiary }]}>
           {label}
         </Text>
       </TouchableOpacity>
@@ -170,13 +172,13 @@ export default function SearchScreen() {
         {recentSearches.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Searches</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Searches</Text>
               <TouchableOpacity onPress={handleClearAllRecent}>
-                <Text style={styles.clearAllText}>Clear All</Text>
+                <Text style={[styles.clearAllText, { color: colors.accent }]}>Clear All</Text>
               </TouchableOpacity>
             </View>
             {recentSearches.map((search) => (
-              <View key={search.id} style={styles.recentSearchItem}>
+              <View key={search.id} style={[styles.recentSearchItem, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}>
                 <TouchableOpacity 
                   style={styles.recentSearchContent}
                   onPress={() => handleRecentSearchPress(search)}
@@ -186,7 +188,7 @@ export default function SearchScreen() {
                     size={16} 
                     color="rgba(255, 255, 255, 0.5)" 
                   />
-                  <Text style={styles.recentSearchText}>{search.query}</Text>
+                  <Text style={[styles.recentSearchText, { color: colors.textSecondary }]}>{search.query}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleRemoveRecent(search.id)}>
                   <Ionicons name="close" size={20} color="rgba(255, 255, 255, 0.5)" />
@@ -197,30 +199,30 @@ export default function SearchScreen() {
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>New Talents</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>New Talents</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.talentsContainer}>
             {newTalents.map((talent) => (
               <TouchableOpacity 
                 key={talent.uid} 
-                style={styles.talentCard}
+                style={[styles.talentCard, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}
                 onPress={() => router.push(`/user/${talent.username}`)}
               >
-                <View style={styles.talentAvatar}>
-                  <Text style={styles.talentAvatarText}>
+                <View style={[styles.talentAvatar, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
+                  <Text style={[styles.talentAvatarText, { color: colors.accent }]}>
                     {talent.name.charAt(0).toUpperCase()}
                   </Text>
                 </View>
-                <Text style={styles.talentName} numberOfLines={1}>{talent.name.split(' ')[0]}</Text>
-                <Text style={styles.talentRole}>{talent.role}</Text>
+                <Text style={[styles.talentName, { color: colors.textPrimary }]} numberOfLines={1}>{talent.name.split(' ')[0]}</Text>
+                <Text style={[styles.talentRole, { color: colors.textTertiary }]}>{talent.role}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
         <View style={styles.placeholderContainer}>
-          <Ionicons name="search-outline" size={80} color="rgba(255, 255, 255, 0.2)" />
-          <Text style={styles.placeholderTitle}>Discover Crease</Text>
-          <Text style={styles.placeholderSub}>Find players, teams, and matches in one place</Text>
+          <Ionicons name="search-outline" size={80} color={colors.borderDefault} />
+          <Text style={[styles.placeholderTitle, { color: colors.textTertiary }]}>Discover Crease</Text>
+          <Text style={[styles.placeholderSub, { color: colors.textTertiary }]}>Find players, teams, and matches in one place</Text>
         </View>
       </ScrollView>
     );
@@ -230,7 +232,7 @@ export default function SearchScreen() {
     if (loading) {
       return (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={COLORS.MINT} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       );
     }
@@ -238,8 +240,8 @@ export default function SearchScreen() {
     if (searchQuery && results.length === 0) {
       return (
         <View style={styles.centerContainer}>
-          <Ionicons name="alert-circle-outline" size={60} color="rgba(255, 255, 255, 0.3)" />
-          <Text style={styles.emptyText}>No results found for "{searchQuery}"</Text>
+          <Ionicons name="alert-circle-outline" size={60} color={colors.borderFocus} />
+          <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No results found for "{searchQuery}"</Text>
         </View>
       );
     }
@@ -264,15 +266,11 @@ export default function SearchScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-      
-      <View style={styles.content}>
+    <View style={styles.container}>
+      <ThemedBackground>
+      <View style={[styles.content, headerStyle]}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Discover</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Discover</Text>
         </View>
 
         <View style={styles.searchBox}>
@@ -283,12 +281,11 @@ export default function SearchScreen() {
             autoCapitalize="none"
             containerStyle={styles.inputContainer}
             variant="underline"
-            labelStyle={styles.inputLabel}
-            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+            placeholderTextColor={colors.textTertiary}
           />
         </View>
 
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, { backgroundColor: colors.cardBg }]}>
           {renderTab('player', 'Players', 'person')}
           {renderTab('team', 'Teams', 'people')}
           {renderTab('match', 'Matches', 'trophy')}
@@ -298,7 +295,8 @@ export default function SearchScreen() {
           {!searchQuery.trim() ? renderInitialView() : renderResults()}
         </View>
       </View>
-    </SafeAreaView>
+      </ThemedBackground>
+    </View>
   );
 }
 
@@ -316,7 +314,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#fff',
     letterSpacing: 0.5
   },
   searchBox: {
@@ -325,12 +322,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 0
   },
-  inputLabel: {
-    color: 'rgba(255, 255, 255, 0.9)'
-  },
+  inputLabel: {},
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: COLORS.CARD_BG,
     borderRadius: 16,
     padding: 6,
     marginBottom: 20
@@ -344,16 +338,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 8
   },
-  activeTab: {
-    backgroundColor: COLORS.MINT
-  },
   tabText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.6)'
-  },
-  activeTabText: {
-    color: '#fff'
+    fontWeight: '700'
   },
   mainContainer: {
     flex: 1
@@ -376,24 +363,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#fff',
     letterSpacing: 0.3
   },
   clearAllText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.MINT
+    fontWeight: '700'
   },
   recentSearchItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.CARD_BG,
     padding: 14,
     borderRadius: 12,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_DEFAULT
+    borderWidth: 1
   },
   recentSearchContent: {
     flexDirection: 'row',
@@ -403,7 +386,6 @@ const styles = StyleSheet.create({
   },
   recentSearchText: {
     fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '600'
   },
   talentsContainer: {
@@ -412,36 +394,30 @@ const styles = StyleSheet.create({
   },
   talentCard: {
     width: 100,
-    backgroundColor: COLORS.CARD_BG,
     borderRadius: 16,
     padding: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_DEFAULT
+    borderWidth: 1
   },
   talentAvatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8
   },
   talentAvatarText: {
     fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.MINT
+    fontWeight: '800'
   },
   talentName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#fff',
     marginBottom: 2
   },
   talentRole: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '600',
     textTransform: 'uppercase'
   },
@@ -453,12 +429,10 @@ const styles = StyleSheet.create({
   placeholderTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 16
   },
   placeholderSub: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
     textAlign: 'center',
     marginTop: 4,
     maxWidth: 250
@@ -468,7 +442,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 16

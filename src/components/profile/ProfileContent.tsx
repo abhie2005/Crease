@@ -9,6 +9,7 @@ import { User } from '@/models/User';
 import { RecentlyPlayedSection } from './RecentlyPlayedSection';
 import { PinnedPerformanceSection } from './PinnedPerformanceSection';
 import { MatchHistorySection } from './MatchHistorySection';
+import { useTheme } from '@/providers/ThemeProvider';
 
 export interface ProfileContentProps {
   user: User;
@@ -47,6 +48,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
   onUnpin,
   onRefreshUser
 }) => {
+  const { colors } = useTheme();
   const showRecent = isOwnProfile || showRecentlyPlayed !== false;
   const showHistory = isOwnProfile || showMatchHistory !== false;
   const showPinned = isOwnProfile || showPinnedPerformance !== false;
@@ -54,24 +56,24 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.basicInfo}>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Name</Text>
-          <Text style={styles.value}>{user.name}</Text>
+      <View style={[styles.basicInfo, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}>
+        <View style={[styles.infoRow, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textTertiary }]}>Name</Text>
+          <Text style={[styles.value, { color: colors.textPrimary }]}>{user.name}</Text>
         </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Username</Text>
-          <Text style={[styles.value, !user.username && styles.notSet]}>
+        <View style={[styles.infoRow, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textTertiary }]}>Username</Text>
+          <Text style={[styles.value, !user.username && styles.notSet, { color: user.username ? colors.textPrimary : colors.textTertiary }]}>
             {user.username || 'Not set'}
           </Text>
         </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Student ID</Text>
-          <Text style={styles.value}>{user.studentId}</Text>
+        <View style={[styles.infoRow, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textTertiary }]}>Student ID</Text>
+          <Text style={[styles.value, { color: colors.textPrimary }]}>{user.studentId}</Text>
         </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Role</Text>
-          <Text style={styles.value}>{getRoleDisplayName(user.role)}</Text>
+        <View style={[styles.infoRow, { borderBottomColor: colors.borderDefault }]}>
+          <Text style={[styles.label, { color: colors.textTertiary }]}>Role</Text>
+          <Text style={[styles.value, { color: colors.textPrimary }]}>{getRoleDisplayName(user.role)}</Text>
         </View>
       </View>
 
@@ -109,12 +111,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   basicInfo: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#e8e8e8'
+    borderWidth: 1
   },
   infoRow: {
     flexDirection: 'row',
@@ -122,21 +122,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
     minHeight: 44
   },
   label: {
     fontSize: 16,
-    color: '#666',
     fontWeight: '500'
   },
   value: {
     fontSize: 16,
-    color: '#333',
     fontWeight: '600'
   },
   notSet: {
-    color: '#999',
-    fontStyle: 'italic'
+    fontStyle: 'italic' as const
   }
 });
