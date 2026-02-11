@@ -1,88 +1,14 @@
 /**
- * Match and related cricket types (teams, innings, ball events).
- * Used by match services, scoring, and stats.
+ * Match model. Re-exports from types for backward compatibility.
  */
 
-import { Timestamp } from 'firebase/firestore';
-
-/** Match lifecycle status. */
-export type MatchStatus = 'upcoming' | 'live' | 'completed';
-
-/** Team definition with name and player UIDs. */
-export interface Team {
-  name: string;
-  playerUids: string[];
-}
-
-/** Legacy score summary (runs, wickets, overs, balls). */
-export interface Score {
-  runs: number;
-  wickets: number;
-  overs: number;
-  balls: number;
-}
-
-/** Single ball outcome for an over. */
-export interface BallEvent {
-  runs: number;
-  isWide?: boolean;
-  isNoBall?: boolean;
-  isWicket?: boolean;
-  isDot?: boolean;
-  batsmanUid?: string;
-  timestamp: number;
-}
-
-/** Batsman state in the current partnership. */
-export interface Batsman {
-  uid: string;
-  runs: number;
-  balls: number;
-  isOnStrike: boolean;
-}
-
-/** Bowler stats for an innings. */
-export interface Bowler {
-  uid: string;
-  overs: number;        // Full overs bowled (integer part)
-  balls: number;        // Balls in current over (0-5)
-  runs: number;         // Total runs conceded
-  wickets: number;      // Wickets taken
-  maidens: number;      // Maiden overs (optional)
-}
-
-/** Full innings score and ball-by-ball data. */
-export interface InningsScore {
-  runs: number;
-  wickets: number;
-  overs: number;
-  balls: number;
-  ballEvents: BallEvent[];
-  currentBowlerUid?: string;      // Who is currently bowling
-  lastBowlerUid?: string;         // Who bowled the last over
-  bowlers?: Bowler[];             // List of all bowlers who have bowled
-}
-
-/** Match document with teams, innings, and live state. */
-export interface Match {
-  status: MatchStatus;
-  createdBy: string; // uid
-  umpireUid: string; // uid
-  teamA: Team;
-  teamB: Team;
-  score: Score; // DEPRECATED: kept for backward compatibility
-  scheduledDate?: Timestamp; // Optional scheduled date/time
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  
-  // NEW: Cricket match fields
-  totalOvers: number;
-  tossWonBy?: 'teamA' | 'teamB';
-  tossDecision?: 'bat' | 'bowl';
-  currentInnings: 1 | 2;
-  battingTeam?: 'teamA' | 'teamB';
-  currentBatsmen: Batsman[];
-  teamAInnings: InningsScore;
-  teamBInnings: InningsScore;
-}
-
+export type {
+  Match,
+  MatchStatus,
+  Team,
+  Score,
+  BallEvent,
+  Batsman,
+  Bowler,
+  InningsScore
+} from '@/types/match';

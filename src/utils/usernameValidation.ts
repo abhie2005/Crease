@@ -3,11 +3,9 @@
  * Used by profile setup and username availability checks.
  */
 
-/** Result of username validation (valid flag and optional error message). */
-export interface UsernameValidationResult {
-  valid: boolean;
-  error?: string;
-}
+import type { UsernameValidationResult } from '@/types/username';
+
+export type { UsernameValidationResult };
 
 /**
  * Validates username format.

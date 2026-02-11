@@ -19,12 +19,10 @@ import {
 } from 'firebase/firestore';
 import { userDoc, usersCollection } from '@/firebase/firestore';
 import { User, DEFAULT_USER_ROLE } from '@/models/User';
-/**
- * Normalize username to lowercase for case-insensitive storage and search
- * @param username Username to normalize
- * @returns Normalized username in lowercase, or undefined if input is empty
- */
-const normalizeUsernameLocal = (username?: string): string | undefined =>
+import type { UsernameInput, NormalizedUsername } from '@/types/user';
+
+/** Normalize username to lowercase for case-insensitive storage and search. */
+const normalizeUsernameLocal = (username?: UsernameInput): NormalizedUsername =>
   (username?.trim() || undefined)?.toLowerCase();
 
 /**

@@ -4,20 +4,12 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { SearchType, RecentSearch } from '@/types/search';
+
+export type { SearchType, RecentSearch };
 
 const RECENT_SEARCHES_KEY = '@recent_searches';
 const MAX_RECENT_SEARCHES = 10;
-
-/** Type of search: player, team, or match. */
-export type SearchType = 'player' | 'team' | 'match';
-
-/** Single recent search entry. */
-export interface RecentSearch {
-  id: string;
-  query: string;
-  type: SearchType;
-  timestamp: number;
-}
 
 /**
  * Saves a search to recent list (moves to top if exists; caps at MAX_RECENT_SEARCHES).
