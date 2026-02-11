@@ -24,12 +24,8 @@ import { User, DEFAULT_USER_ROLE } from '@/models/User';
  * @param username Username to normalize
  * @returns Normalized username in lowercase, or undefined if input is empty
  */
-const normalizeUsernameLocal = (username?: string): string | undefined => {
-  if (!username || !username.trim()) {
-    return undefined;
-  }
-  return username.trim().toLowerCase();
-};
+const normalizeUsernameLocal = (username?: string): string | undefined =>
+  (username?.trim() || undefined)?.toLowerCase();
 
 /**
  * Creates or updates a user profile in Firestore (merge).
