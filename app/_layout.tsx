@@ -5,11 +5,14 @@
 
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ThemeProvider, useTheme } from '@/providers/ThemeProvider';
+import { ActivityIndicator, View, StyleSheet, StatusBar } from 'react-native';
 
 function RootLayoutNav() {
   const { user, userProfile, loading } = useAuth();
+  const { theme, colors } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -41,8 +44,9 @@ function RootLayoutNav() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -56,12 +60,16 @@ function RootLayoutNav() {
   );
 }
 
-/** Root layout: wraps app with AuthProvider and Stack with route guards. */
+/** Root layout: wraps app with SafeAreaProvider, ThemeProvider, AuthProvider, and Stack with route guards. */
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -69,7 +77,6 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff'
+    alignItems: 'center'
   }
 });

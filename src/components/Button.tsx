@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/providers/ThemeProvider';
 
 /** See ButtonProps. */
 interface ButtonProps {
@@ -24,29 +24,31 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   variant = 'primary'
 }) => {
+  const { colors } = useTheme();
+
   const getButtonStyle = () => {
     switch (variant) {
       case 'primary':
-        return styles.primaryButton;
+        return { backgroundColor: colors.accent };
       case 'secondary':
-        return styles.secondaryButton;
+        return { backgroundColor: 'transparent' as const, borderWidth: 1, borderColor: colors.accent };
       case 'ghost':
-        return styles.ghostButton;
+        return { backgroundColor: 'transparent' as const };
       default:
-        return styles.primaryButton;
+        return { backgroundColor: colors.accent };
     }
   };
 
   const getTextStyle = () => {
     switch (variant) {
       case 'primary':
-        return styles.primaryText;
+        return { color: '#fff' as const };
       case 'secondary':
-        return styles.secondaryText;
+        return { color: colors.accent };
       case 'ghost':
-        return styles.ghostText;
+        return { color: colors.textPrimary };
       default:
-        return styles.primaryText;
+        return { color: '#fff' as const };
     }
   };
 
@@ -55,9 +57,9 @@ export const Button: React.FC<ButtonProps> = ({
       case 'primary':
         return '#fff';
       case 'secondary':
-        return COLORS.MINT;
+        return colors.accent;
       case 'ghost':
-        return '#fff';
+        return colors.textPrimary;
       default:
         return '#fff';
     }
@@ -93,32 +95,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48
   },
-  primaryButton: {
-    backgroundColor: COLORS.MINT
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: COLORS.MINT
-  },
-  ghostButton: {
-    backgroundColor: 'transparent'
-  },
   disabledButton: {
     opacity: 0.5
   },
   buttonText: {
     fontSize: 16,
     fontWeight: '600'
-  },
-  primaryText: {
-    color: '#fff'
-  },
-  secondaryText: {
-    color: COLORS.MINT
-  },
-  ghostText: {
-    color: '#fff'
   }
 });
 

@@ -13,25 +13,26 @@ import {
   ActivityIndicator,
   RefreshControl
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { useAuth } from '@/providers/AuthProvider';
 import { subscribeToMatches } from '@/services/matches';
 import { Match } from '@/models/Match';
 import { CountdownTimer } from '@/components/CountdownTimer';
-import { COLORS } from '@/theme/colors';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
 type Section = { title: string; data: Match[] };
 
 /** Matches list with countdown for upcoming and scores for live/completed. */
 export default function HomeScreen() {
   const { userProfile } = useAuth();
+  const { theme, colors } = useTheme();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { headerStyle } = useSafeAreaHeader();
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const sections = useMemo<Section[]>(() => {
@@ -80,8 +81,8 @@ export default function HomeScreen() {
     const isLive = section.title === 'LIVE';
     return (
       <View style={styles.sectionHeader}>
-        {isLive && <View style={styles.liveDot} />}
-        <Text style={[styles.sectionTitle, isLive && styles.sectionTitleLive]}>
+        {isLive && <View style={[styles.liveDot, { backgroundColor: colors.live }]} />}
+        <Text style={[styles.sectionTitle, { color: colors.textTertiary }, isLive && { color: colors.live }]}>
           {section.title}
         </Text>
       </View>
@@ -89,51 +90,45 @@ export default function HomeScreen() {
   };
 
   const renderMatchItem = ({ item }: { item: Match }) => {
+    const statusBg = item.status === 'live' ? colors.live : item.status === 'upcoming' ? colors.upcoming : colors.completed;
     return (
       <TouchableOpacity
-        style={styles.matchCard}
+        style={[styles.matchCard, { backgroundColor: colors.cardBg }]}
         onPress={() => router.push(`/match/${(item as any).id}`)}
         activeOpacity={0.7}
       >
         <View style={styles.matchHeader}>
-          <Text style={styles.matchTeams}>
+          <Text style={[styles.matchTeams, { color: colors.textPrimary }]}>
             {item.teamA.name} vs {item.teamB.name}
           </Text>
-          <View
-            style={[
-              styles.statusBadge,
-              item.status === 'live' && styles.statusBadgeLive,
-              item.status === 'upcoming' && styles.statusBadgeUpcoming,
-              item.status === 'completed' && styles.statusBadgeCompleted
-            ]}
-          >
+          <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
             <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
           </View>
         </View>
         {item.status === 'upcoming' && (item as any).scheduledDate && (
-          <View style={styles.countdownContainer}>
+          <View style={[styles.countdownContainer, { borderTopColor: colors.borderDefault }]}>
             <CountdownTimer
               scheduledDate={(item as any).scheduledDate}
               compact
-              labelColor="#999"
-              valueColor="#e0e0e0"
+              labelColor={colors.textTertiary}
+              valueColor={colors.textSecondary}
             />
           </View>
         )}
         {item.status === 'live' && (
-          <View style={styles.scoreContainer}>
+          <View style={[styles.scoreContainer, { borderTopColor: colors.borderDefault }]}>
             {(() => {
               const currentInnings = item.battingTeam === 'teamA' ? item.teamAInnings : item.teamBInnings;
               const battingTeamName = item.battingTeam === 'teamA' ? item.teamA.name : item.teamB.name;
               if (!currentInnings) return null;
               return (
                 <>
-                  <Text style={styles.scoreText}>
-                    <Text style={styles.scoreLabel}>{battingTeamName}: </Text>
+                  <Text style={[styles.scoreText, { color: colors.textSecondary }]}>
+                    <Text style={[styles.scoreLabel, { color: colors.textPrimary }]}>{battingTeamName}: </Text>
                     {currentInnings.runs}/{currentInnings.wickets} ({currentInnings.overs}.{currentInnings.balls}/{item.totalOvers})
                   </Text>
                   {item.currentInnings === 2 && (
-                    <Text style={styles.targetText}>
+                    <Text style={[styles.targetText, { color: colors.upcoming }]}>
                       Target: {((item.battingTeam === 'teamA' ? item.teamBInnings?.runs : item.teamAInnings?.runs) ?? 0) + 1} runs
                     </Text>
                   )}
@@ -143,8 +138,8 @@ export default function HomeScreen() {
           </View>
         )}
         {item.status === 'completed' && (
-          <View style={styles.scoreContainer}>
-            <Text style={styles.winnerText}>
+          <View style={[styles.scoreContainer, { borderTopColor: colors.borderDefault }]}>
+            <Text style={[styles.winnerText, { color: colors.completed }]}>
               {(() => {
                 const teamAScore = item.teamAInnings?.runs ?? 0;
                 const teamBScore = item.teamBInnings?.runs ?? 0;
@@ -153,10 +148,10 @@ export default function HomeScreen() {
                 return `${winner} won`;
               })()}
             </Text>
-            <Text style={styles.scoreLine}>
+            <Text style={[styles.scoreLine, { color: colors.textTertiary }]}>
               {item.teamA.name}: {item.teamAInnings?.runs ?? 0}/{item.teamAInnings?.wickets ?? 0} ({item.teamAInnings?.overs ?? 0}.{item.teamAInnings?.balls ?? 0})
             </Text>
-            <Text style={styles.scoreLine}>
+            <Text style={[styles.scoreLine, { color: colors.textTertiary }]}>
               {item.teamB.name}: {item.teamBInnings?.runs ?? 0}/{item.teamBInnings?.wickets ?? 0} ({item.teamBInnings?.overs ?? 0}.{item.teamBInnings?.balls ?? 0})
             </Text>
           </View>
@@ -167,16 +162,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-      
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.title}>Crease</Text>
+      <ThemedBackground>
+      <View style={[styles.header, headerStyle, { backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : colors.borderDefault }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Crease</Text>
         {userProfile && (userProfile.role === 'admin' || userProfile.role === 'president') && (
           <TouchableOpacity
-            style={styles.createButton}
+            style={[styles.createButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/admin/create-match')}
             activeOpacity={0.7}
           >
@@ -187,13 +178,13 @@ export default function HomeScreen() {
 
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={COLORS.MINT} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : matches.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🏏</Text>
-          <Text style={styles.emptyTitle}>No matches yet</Text>
-          <Text style={styles.emptySubtitle}>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No matches yet</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
             {userProfile && (userProfile.role === 'admin' || userProfile.role === 'president')
               ? 'Create your first match to get started!'
               : 'Matches will appear here once they are created.'}
@@ -211,12 +202,13 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={COLORS.MINT}
+              tintColor={colors.accent}
             />
           }
           showsVerticalScrollIndicator={false}
         />
       )}
+      </ThemedBackground>
     </View>
   );
 }
@@ -226,7 +218,6 @@ const styles = StyleSheet.create({
     flex: 1
   },
   header: {
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     paddingHorizontal: 16,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -235,11 +226,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff'
+    fontWeight: 'bold'
   },
   createButton: {
-    backgroundColor: COLORS.MINT,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8
@@ -267,12 +256,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
     marginBottom: 8
   },
   emptySubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
     lineHeight: 20
   },
@@ -289,21 +276,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1,
-    color: 'rgba(255, 255, 255, 0.6)'
-  },
-  sectionTitleLive: {
-    color: COLORS.LIVE
+    letterSpacing: 1
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.LIVE,
     marginRight: 6
   },
   matchCard: {
-    backgroundColor: COLORS.CARD_BG,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12
@@ -317,22 +298,12 @@ const styles = StyleSheet.create({
   matchTeams: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
     flex: 1
   },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6
-  },
-  statusBadgeLive: {
-    backgroundColor: COLORS.LIVE
-  },
-  statusBadgeUpcoming: {
-    backgroundColor: COLORS.UPCOMING
-  },
-  statusBadgeCompleted: {
-    backgroundColor: COLORS.COMPLETED
   },
   statusText: {
     color: '#fff',
@@ -343,38 +314,31 @@ const styles = StyleSheet.create({
   countdownContainer: {
     marginTop: 8,
     paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER_DEFAULT
+    borderTopWidth: 1
   },
   scoreContainer: {
     marginTop: 8,
     paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER_DEFAULT
+    borderTopWidth: 1
   },
   scoreText: {
     fontSize: 16,
-    color: '#e0e0e0',
     fontWeight: '500'
   },
   scoreLabel: {
-    fontWeight: '700',
-    color: '#fff'
+    fontWeight: '700'
   },
   targetText: {
     fontSize: 13,
-    color: COLORS.UPCOMING,
     marginTop: 4,
     fontWeight: '600'
   },
   winnerText: {
-    color: COLORS.COMPLETED,
     fontWeight: 'bold',
     fontSize: 16
   },
   scoreLine: {
     fontSize: 13,
-    color: '#b0b0b0',
     marginTop: 2
   }
 });

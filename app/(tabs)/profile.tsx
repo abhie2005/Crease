@@ -11,20 +11,22 @@ import {
   TouchableOpacity,
   Alert
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { logOut } from '@/firebase/auth';
 import { setPinnedPerformance, clearPinnedPerformance } from '@/services/users';
 import { Button } from '@/components/Button';
 import { ProfileContent } from '@/components/profile/ProfileContent';
-import { COLORS } from '@/theme/colors';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
-/** Profile screen with user details, stats sections, Edit, Settings, and logout. */
+/** Profile screen with user details, stats sections, Edit, Settings, theme toggle, and logout. */
 export default function ProfileScreen() {
   const { userProfile, user, refreshUserProfile } = useAuth();
   const router = useRouter();
+  const { headerStyle } = useSafeAreaHeader();
+  const { theme, colors, setTheme } = useTheme();
 
   const handleLogout = async () => {
     Alert.alert(
@@ -68,27 +70,29 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient
-        colors={[COLORS.DARK_TEAL, COLORS.DARK_TEAL_LIGHTER]}
-        style={StyleSheet.absoluteFill}
-      />
-      
+    <View style={styles.container}>
+      <ThemedBackground>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {userProfile ? (
           <>
-            <View style={styles.profileHeader}>
+            <View style={[styles.profileHeader, headerStyle]}>
               <View style={styles.profileHeaderTop}>
-                <Text style={styles.headerTitle}>Profile</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Profile</Text>
                 <View style={styles.headerActions}>
                   <TouchableOpacity
-                    style={styles.iconButton}
+                    style={[styles.iconButton, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}
                     onPress={() => router.push('/profile/setup')}
                   >
                     <Text style={styles.iconButtonText}>✏️</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.iconButton}
+                    style={[styles.iconButton, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}
+                    onPress={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  >
+                    <Text style={styles.iconButtonText}>{theme === 'dark' ? '☀️' : '🌙'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.iconButton, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}
                     onPress={() => router.push('/profile/settings')}
                   >
                     <Text style={styles.iconButtonText}>⚙️</Text>
@@ -96,31 +100,31 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
-              <View style={styles.profileCard}>
-                <View style={styles.avatarContainer}>
+              <View style={[styles.profileCard, { backgroundColor: colors.cardBgElevated, borderColor: colors.borderDefault }]}>
+                <View style={[styles.avatarContainer, { backgroundColor: colors.accent }]}>
                   <Text style={styles.avatarText}>
                     {userProfile.name.charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 
-                <Text style={styles.profileName}>{userProfile.name}</Text>
-                <Text style={styles.profileUsername}>@{userProfile.username}</Text>
+                <Text style={[styles.profileName, { color: colors.textPrimary }]}>{userProfile.name}</Text>
+                <Text style={[styles.profileUsername, { color: colors.textTertiary }]}>@{userProfile.username}</Text>
                 
                 <View style={styles.profileDetails}>
                   <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Role</Text>
-                    <Text style={styles.detailValue}>{userProfile.role}</Text>
+                    <Text style={[styles.detailLabel, { color: colors.textTertiary }]}>Role</Text>
+                    <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{userProfile.role}</Text>
                   </View>
                   {userProfile.studentId && (
                     <View style={styles.detailItem}>
-                      <Text style={styles.detailLabel}>Student ID</Text>
-                      <Text style={styles.detailValue}>{userProfile.studentId}</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textTertiary }]}>Student ID</Text>
+                      <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{userProfile.studentId}</Text>
                     </View>
                   )}
                   {user?.email && (
                     <View style={styles.detailItem}>
-                      <Text style={styles.detailLabel}>Email</Text>
-                      <Text style={styles.detailValue}>{user.email}</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textTertiary }]}>Email</Text>
+                      <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{user.email}</Text>
                     </View>
                   )}
                 </View>
@@ -150,11 +154,12 @@ export default function ProfileScreen() {
           </>
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No profile data available</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No profile data available</Text>
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+      </ThemedBackground>
+    </View>
   );
 }
 
@@ -166,7 +171,6 @@ const styles = StyleSheet.create({
     flex: 1
   },
   profileHeader: {
-    paddingTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 24
   },
@@ -178,8 +182,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff'
+    fontWeight: 'bold'
   },
   headerActions: {
     flexDirection: 'row',
@@ -189,32 +192,27 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.CARD_BG,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_DEFAULT
+    borderWidth: 1
   },
   iconButtonText: {
     fontSize: 16
   },
   profileCard: {
-    backgroundColor: COLORS.CARD_BG_ELEVATED,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER_DEFAULT
+    borderWidth: 1
   },
   avatarContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: COLORS.ACCENT,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: COLORS.ACCENT,
+    shadowColor: 'rgba(59, 130, 246, 0.5)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -228,12 +226,10 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#fff',
     marginBottom: 4
   },
   profileUsername: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 20
   },
   profileDetails: {
@@ -248,12 +244,10 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '500'
   },
   detailValue: {
     fontSize: 14,
-    color: '#fff',
     fontWeight: '600'
   },
   content: {
@@ -270,7 +264,6 @@ const styles = StyleSheet.create({
     padding: 32
   },
   emptyText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)'
+    fontSize: 16
   }
 });
