@@ -18,6 +18,23 @@ export const DARK_THEME = {
   live: '#ef4444',
   upcoming: '#f59e0b',
   completed: '#22c55e',
+  // Scoring panel
+  scoringBg: '#1a1a2e',
+  gridButton: '#16213e',
+  gridButtonBorder: '#2a3a5c',
+  boundary: '#166534',
+  boundaryBorder: '#22c55e',
+  undo: '#78350f',
+  undoBorder: '#f59e0b',
+  extras: '#581c87',
+  extrasBorder: '#a855f7',
+  wicket: '#dc2626',
+  strikeHighlight: 'rgba(245, 158, 11, 0.15)',
+  strikeBorder: '#f59e0b',
+  selected: 'rgba(34, 197, 94, 0.15)',
+  selectedBorder: '#22c55e',
+  modalBg: '#1e293b',
+  modalOverlay: 'rgba(0, 0, 0, 0.7)',
 };
 
 export const LIGHT_THEME = {
@@ -34,6 +51,23 @@ export const LIGHT_THEME = {
   live: '#ef4444',
   upcoming: '#f59e0b',
   completed: '#22c55e',
+  // Scoring panel
+  scoringBg: '#fff',
+  gridButton: '#f8f9fa',
+  gridButtonBorder: '#e0e0e0',
+  boundary: '#e8f5e9',
+  boundaryBorder: '#4caf50',
+  undo: '#fff3e0',
+  undoBorder: '#ff9800',
+  extras: '#f3e5f5',
+  extrasBorder: '#9c27b0',
+  wicket: '#FF3B30',
+  strikeHighlight: '#fff9f0',
+  strikeBorder: '#FF9500',
+  selected: '#f0fdf4',
+  selectedBorder: '#34C759',
+  modalBg: '#fff',
+  modalOverlay: 'rgba(0, 0, 0, 0.5)',
 };
 
 export type ThemeColors = typeof DARK_THEME;

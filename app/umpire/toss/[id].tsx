@@ -10,7 +10,8 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
@@ -21,6 +22,8 @@ import { getUsersByUids } from '@/services/users';
 import { Match } from '@/models/Match';
 import { User } from '@/models/User';
 import { Button } from '@/components/Button';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 
 /**
  * Toss screen for the match umpire (route param: match id). Conduct toss (winner + bat/bowl),
@@ -49,6 +52,7 @@ export default function TossScreen() {
   
   const router = useRouter();
   const { headerStyle } = useSafeAreaHeader();
+  const { theme, colors } = useTheme();
 
   useEffect(() => {
     if (!id) return;
@@ -91,31 +95,34 @@ export default function TossScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
+      <ThemedBackground style={styles.centerContainer}>
+        <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+        <ActivityIndicator size="large" color={colors.accent} />
+      </ThemedBackground>
     );
   }
 
   if (!match) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Match not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.button}>
+      <ThemedBackground style={styles.centerContainer}>
+        <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+        <Text style={[styles.errorText, { color: colors.textTertiary }]}>Match not found</Text>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.button, { backgroundColor: colors.accent }]}>
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>
-      </View>
+      </ThemedBackground>
     );
   }
 
   if (!userProfile || match.umpireUid !== userProfile.uid) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Unauthorized: You are not the umpire for this match</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.button}>
+      <ThemedBackground style={styles.centerContainer}>
+        <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+        <Text style={[styles.errorText, { color: colors.textTertiary }]}>Unauthorized: You are not the umpire for this match</Text>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.button, { backgroundColor: colors.accent }]}>
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>
-      </View>
+      </ThemedBackground>
     );
   }
 
@@ -202,216 +209,223 @@ export default function TossScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={[styles.header, headerStyle]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#007AFF" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Toss & Setup</Text>
-      </View>
+    <ThemedBackground style={styles.container}>
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <View style={[styles.header, headerStyle]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.accent} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Toss & Setup</Text>
+        </View>
 
-      <View style={styles.matchInfo}>
-        <Text style={styles.matchTeams}>{match.teamA.name} vs {match.teamB.name}</Text>
-        <Text style={styles.matchFormat}>{match.totalOvers} Overs Match</Text>
-      </View>
+        <View style={[styles.matchInfo, { backgroundColor: colors.cardBg }]}>
+          <Text style={[styles.matchTeams, { color: colors.textPrimary }]}>{match.teamA.name} vs {match.teamB.name}</Text>
+          <Text style={[styles.matchFormat, { color: colors.textSecondary }]}>{match.totalOvers} Overs Match</Text>
+        </View>
 
-      {/* Coin Flip */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Flip Coin</Text>
-        <TouchableOpacity
-          style={styles.coinButton}
-          onPress={flipCoin}
-          disabled={coinFlipping}
-        >
-          {coinFlipping ? (
-            <ActivityIndicator size="large" color="#FFD700" />
-          ) : (
-            <Ionicons name="disc" size={64} color="#FFD700" />
-          )}
-          <Text style={styles.coinButtonText}>
-            {coinFlipping ? 'Flipping...' : 'Tap to Flip Coin'}
-          </Text>
-        </TouchableOpacity>
-        
-        {showCoinResult && coinResult && (
-          <View style={styles.coinResultCard}>
-            <Ionicons 
-              name={coinResult === 'heads' ? 'arrow-up-circle' : 'arrow-down-circle'} 
-              size={48} 
-              color="#34C759" 
-            />
-            <Text style={styles.coinResultText}>
-              Result: {coinResult.toUpperCase()}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Step 1: Toss Winner */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>1. Which team won the toss?</Text>
-        <View style={styles.buttonRow}>
+        {/* Coin Flip */}
+        <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Flip Coin</Text>
           <TouchableOpacity
-            style={[styles.choiceButton, tossWonBy === 'teamA' && styles.choiceButtonActive]}
-            onPress={() => setTossWonBy('teamA')}
+            style={[styles.coinButton, { backgroundColor: colors.gridButton, borderColor: '#FFD700' }]}
+            onPress={flipCoin}
+            disabled={coinFlipping}
           >
-            <Text style={[styles.choiceButtonText, tossWonBy === 'teamA' && styles.choiceButtonTextActive]}>
-              {match.teamA.name}
+            {coinFlipping ? (
+              <ActivityIndicator size="large" color="#FFD700" />
+            ) : (
+              <Ionicons name="disc" size={64} color="#FFD700" />
+            )}
+            <Text style={[styles.coinButtonText, { color: colors.textPrimary }]}>
+              {coinFlipping ? 'Flipping...' : 'Tap to Flip Coin'}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.choiceButton, tossWonBy === 'teamB' && styles.choiceButtonActive]}
-            onPress={() => setTossWonBy('teamB')}
-          >
-            <Text style={[styles.choiceButtonText, tossWonBy === 'teamB' && styles.choiceButtonTextActive]}>
-              {match.teamB.name}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Step 2: Toss Decision */}
-      {tossWonBy && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            2. {tossWonBy === 'teamA' ? match.teamA.name : match.teamB.name} chose to:
-          </Text>
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={[styles.choiceButton, tossDecision === 'bat' && styles.choiceButtonActive]}
-              onPress={() => setTossDecision('bat')}
-            >
-              <Ionicons 
-                name="baseball" 
-                size={24} 
-                color={tossDecision === 'bat' ? '#fff' : '#007AFF'} 
-              />
-              <Text style={[styles.choiceButtonText, tossDecision === 'bat' && styles.choiceButtonTextActive]}>
-                Bat First
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.choiceButton, tossDecision === 'bowl' && styles.choiceButtonActive]}
-              onPress={() => setTossDecision('bowl')}
-            >
-              <Ionicons 
-                name="football" 
-                size={24} 
-                color={tossDecision === 'bowl' ? '#fff' : '#007AFF'} 
-              />
-              <Text style={[styles.choiceButtonText, tossDecision === 'bowl' && styles.choiceButtonTextActive]}>
-                Bowl First
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Step 3: Select Opening Batsmen */}
-      {battingTeam && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            3. Select opening batsmen for {battingTeamName}
-          </Text>
-          <Text style={styles.sectionSubtitle}>
-            Select 2 batsmen ({selectedBatsmen.length}/2 selected)
-          </Text>
           
-          {loadingPlayers ? (
-            <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 16 }} />
-          ) : (
-            <View style={styles.playersList}>
-              {battingTeamPlayers.map((player) => (
-                <TouchableOpacity
-                  key={player.uid}
-                  style={[
-                    styles.playerItem,
-                    selectedBatsmen.includes(player.uid) && styles.playerItemSelected
-                  ]}
-                  onPress={() => handleBatsmanSelect(player.uid)}
-                >
-                  <View style={styles.playerItemContent}>
-                    <View style={styles.playerAvatar}>
-                      <Text style={styles.playerAvatarText}>
-                        {player.name.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View style={styles.playerInfo}>
-                      <Text style={styles.playerName}>{player.name}</Text>
-                      {player.username && (
-                        <Text style={styles.playerUsername}>@{player.username}</Text>
-                      )}
-                    </View>
-                  </View>
-                  {selectedBatsmen.includes(player.uid) && (
-                    <Ionicons name="checkmark-circle" size={24} color="#34C759" />
-                  )}
-                </TouchableOpacity>
-              ))}
+          {showCoinResult && coinResult && (
+            <View style={[styles.coinResultCard, { backgroundColor: colors.selected, borderColor: colors.selectedBorder }]}>
+              <Ionicons 
+                name={coinResult === 'heads' ? 'arrow-up-circle' : 'arrow-down-circle'} 
+                size={48} 
+                color={colors.selectedBorder} 
+              />
+              <Text style={[styles.coinResultText, { color: colors.selectedBorder }]}>
+                Result: {coinResult.toUpperCase()}
+              </Text>
             </View>
           )}
         </View>
-      )}
 
-      {/* Step 4: Select On-Strike Batsman */}
-      {selectedBatsmen.length === 2 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. Who will face the first ball?</Text>
-          <View style={styles.playersList}>
-            {selectedBatsmen.map((uid) => {
-              const player = battingTeamPlayers.find(p => p.uid === uid);
-              if (!player) return null;
-              
-              return (
-                <TouchableOpacity
-                  key={uid}
-                  style={[
-                    styles.playerItem,
-                    onStrikeBatsman === uid && styles.playerItemOnStrike
-                  ]}
-                  onPress={() => setOnStrikeBatsman(uid)}
-                >
-                  <View style={styles.playerItemContent}>
-                    <View style={styles.playerAvatar}>
-                      <Text style={styles.playerAvatarText}>
-                        {player.name.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View style={styles.playerInfo}>
-                      <Text style={styles.playerName}>{player.name}</Text>
-                      {onStrikeBatsman === uid && (
-                        <Text style={styles.onStrikeLabel}>On Strike</Text>
-                      )}
-                    </View>
-                  </View>
-                  {onStrikeBatsman === uid && (
-                    <Ionicons name="radio-button-on" size={24} color="#FF9500" />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+        {/* Step 1: Toss Winner */}
+        <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>1. Which team won the toss?</Text>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.choiceButton, { borderColor: colors.accent, backgroundColor: colors.cardBgElevated }, tossWonBy === 'teamA' && { backgroundColor: colors.accent }]}
+              onPress={() => setTossWonBy('teamA')}
+            >
+              <Text style={[styles.choiceButtonText, { color: colors.accent }, tossWonBy === 'teamA' && { color: '#fff' }]}>
+                {match.teamA.name}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.choiceButton, { borderColor: colors.accent, backgroundColor: colors.cardBgElevated }, tossWonBy === 'teamB' && { backgroundColor: colors.accent }]}
+              onPress={() => setTossWonBy('teamB')}
+            >
+              <Text style={[styles.choiceButtonText, { color: colors.accent }, tossWonBy === 'teamB' && { color: '#fff' }]}>
+                {match.teamB.name}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-      )}
 
-      {/* Start Match Button */}
-      {selectedBatsmen.length === 2 && onStrikeBatsman && (
-        <View style={styles.section}>
-          <Button
-            title="Start Match"
-            onPress={handleStartMatch}
-            loading={saving}
-          />
-        </View>
-      )}
-    </ScrollView>
+        {/* Step 2: Toss Decision */}
+        {tossWonBy && (
+          <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              2. {tossWonBy === 'teamA' ? match.teamA.name : match.teamB.name} chose to:
+            </Text>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[styles.choiceButton, { borderColor: colors.accent, backgroundColor: colors.cardBgElevated }, tossDecision === 'bat' && { backgroundColor: colors.accent }]}
+                onPress={() => setTossDecision('bat')}
+              >
+                <Ionicons 
+                  name="baseball" 
+                  size={24} 
+                  color={tossDecision === 'bat' ? '#fff' : colors.accent} 
+                />
+                <Text style={[styles.choiceButtonText, { color: colors.accent }, tossDecision === 'bat' && { color: '#fff' }]}>
+                  Bat First
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.choiceButton, { borderColor: colors.accent, backgroundColor: colors.cardBgElevated }, tossDecision === 'bowl' && { backgroundColor: colors.accent }]}
+                onPress={() => setTossDecision('bowl')}
+              >
+                <Ionicons 
+                  name="football" 
+                  size={24} 
+                  color={tossDecision === 'bowl' ? '#fff' : colors.accent} 
+                />
+                <Text style={[styles.choiceButtonText, { color: colors.accent }, tossDecision === 'bowl' && { color: '#fff' }]}>
+                  Bowl First
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Step 3: Select Opening Batsmen */}
+        {battingTeam && (
+          <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              3. Select opening batsmen for {battingTeamName}
+            </Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+              Select 2 batsmen ({selectedBatsmen.length}/2 selected)
+            </Text>
+            
+            {loadingPlayers ? (
+              <ActivityIndicator size="small" color={colors.accent} style={{ marginTop: 16 }} />
+            ) : (
+              <View style={styles.playersList}>
+                {battingTeamPlayers.map((player) => {
+                  const isSelected = selectedBatsmen.includes(player.uid);
+                  return (
+                    <TouchableOpacity
+                      key={player.uid}
+                      style={[
+                        styles.playerItem,
+                        { backgroundColor: colors.cardBgElevated, borderColor: colors.borderDefault },
+                        isSelected && { backgroundColor: colors.selected, borderColor: colors.selectedBorder }
+                      ]}
+                      onPress={() => handleBatsmanSelect(player.uid)}
+                    >
+                      <View style={styles.playerItemContent}>
+                        <View style={[styles.playerAvatar, { backgroundColor: colors.accent }]}>
+                          <Text style={styles.playerAvatarText}>
+                            {player.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={styles.playerInfo}>
+                          <Text style={[styles.playerName, { color: colors.textPrimary }]}>{player.name}</Text>
+                          {player.username && (
+                            <Text style={[styles.playerUsername, { color: colors.textSecondary }]}>@{player.username}</Text>
+                          )}
+                        </View>
+                      </View>
+                      {isSelected && (
+                        <Ionicons name="checkmark-circle" size={24} color={colors.selectedBorder} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Step 4: Select On-Strike Batsman */}
+        {selectedBatsmen.length === 2 && (
+          <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>4. Who will face the first ball?</Text>
+            <View style={styles.playersList}>
+              {selectedBatsmen.map((uid) => {
+                const player = battingTeamPlayers.find(p => p.uid === uid);
+                if (!player) return null;
+                
+                return (
+                  <TouchableOpacity
+                    key={uid}
+                    style={[
+                      styles.playerItem,
+                      { backgroundColor: colors.cardBgElevated, borderColor: colors.borderDefault },
+                      onStrikeBatsman === uid && { backgroundColor: colors.strikeHighlight, borderColor: colors.strikeBorder }
+                    ]}
+                    onPress={() => setOnStrikeBatsman(uid)}
+                  >
+                    <View style={styles.playerItemContent}>
+                      <View style={[styles.playerAvatar, { backgroundColor: colors.accent }]}>
+                        <Text style={styles.playerAvatarText}>
+                          {player.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.playerInfo}>
+                        <Text style={[styles.playerName, { color: colors.textPrimary }]}>{player.name}</Text>
+                        {onStrikeBatsman === uid && (
+                          <Text style={[styles.onStrikeLabel, { color: colors.strikeBorder }]}>On Strike</Text>
+                        )}
+                      </View>
+                    </View>
+                    {onStrikeBatsman === uid && (
+                      <Ionicons name="radio-button-on" size={24} color={colors.strikeBorder} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Start Match Button */}
+        {selectedBatsmen.length === 2 && onStrikeBatsman && (
+          <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
+            <Button
+              title="Start Match"
+              onPress={handleStartMatch}
+              loading={saving}
+            />
+          </View>
+        )}
+      </ScrollView>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
   },
   contentContainer: {
     padding: 16,
@@ -434,10 +448,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333'
   },
   matchInfo: {
-    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 12,
     marginBottom: 24,
@@ -446,15 +458,12 @@ const styles = StyleSheet.create({
   matchTeams: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 4
   },
   matchFormat: {
     fontSize: 14,
-    color: '#666'
   },
   section: {
-    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16
@@ -462,12 +471,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 12
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 12
   },
   buttonRow: {
@@ -483,19 +490,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#007AFF',
-    backgroundColor: '#fff'
-  },
-  choiceButtonActive: {
-    backgroundColor: '#007AFF'
   },
   choiceButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#007AFF'
-  },
-  choiceButtonTextActive: {
-    color: '#fff'
   },
   playersList: {
     gap: 8
@@ -507,16 +505,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    backgroundColor: '#fff'
-  },
-  playerItemSelected: {
-    borderColor: '#34C759',
-    backgroundColor: '#f0fdf4'
-  },
-  playerItemOnStrike: {
-    borderColor: '#FF9500',
-    backgroundColor: '#fff9f0'
   },
   playerItemContent: {
     flexDirection: 'row',
@@ -527,7 +515,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12
@@ -543,27 +530,22 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
   },
   playerUsername: {
     fontSize: 14,
-    color: '#666'
   },
   onStrikeLabel: {
     fontSize: 12,
-    color: '#FF9500',
     fontWeight: '600'
   },
   errorText: {
     fontSize: 16,
-    color: '#999',
     textAlign: 'center',
     marginBottom: 16
   },
   button: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#007AFF',
     borderRadius: 8
   },
   buttonText: {
@@ -572,33 +554,27 @@ const styles = StyleSheet.create({
     fontWeight: '600'
   },
   coinButton: {
-    backgroundColor: '#f0f0f0',
     padding: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFD700'
   },
   coinButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
     marginTop: 12
   },
   coinResultCard: {
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#f0fdf4',
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#34C759',
     alignItems: 'center',
     gap: 8
   },
   coinResultText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#34C759'
   }
 });

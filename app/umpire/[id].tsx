@@ -11,12 +11,15 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  Modal
+  Modal,
+  StatusBar
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaHeader } from '@/hooks/useSafeAreaHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/providers/AuthProvider';
+import { ThemedBackground } from '@/components/ThemedBackground';
+import { useTheme } from '@/providers/ThemeProvider';
 import { 
   subscribeToMatch, 
   updateMatchStatus, 
@@ -68,6 +71,7 @@ export default function UmpireScoringScreen() {
   const [shortcutsExpanded, setShortcutsExpanded] = useState(false);
   const router = useRouter();
   const { headerStyle } = useSafeAreaHeader();
+  const { theme, colors } = useTheme();
 
   useEffect(() => {
     if (!id) return;
@@ -259,32 +263,35 @@ export default function UmpireScoringScreen() {
   // Early returns must come AFTER all hooks
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
+      <ThemedBackground style={styles.centerContainer}>
+        <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+        <ActivityIndicator size="large" color={colors.accent} />
+      </ThemedBackground>
     );
   }
 
   if (!match) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Match not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.button}>
+      <ThemedBackground style={styles.centerContainer}>
+        <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+        <Text style={[styles.errorText, { color: colors.textTertiary }]}>Match not found</Text>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.button, { backgroundColor: colors.accent }]}>
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>
-      </View>
+      </ThemedBackground>
     );
   }
 
   // Check if current user is the umpire
   if (!userProfile || match.umpireUid !== userProfile.uid) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Unauthorized: You are not the umpire for this match</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.button}>
+      <ThemedBackground style={styles.centerContainer}>
+        <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+        <Text style={[styles.errorText, { color: colors.textTertiary }]}>Unauthorized: You are not the umpire for this match</Text>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.button, { backgroundColor: colors.accent }]}>
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>
-      </View>
+      </ThemedBackground>
     );
   }
 
@@ -637,12 +644,13 @@ export default function UmpireScoringScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, headerStyle]}>
+    <ThemedBackground style={styles.container}>
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
+      <View style={[styles.header, headerStyle, { backgroundColor: colors.cardBg, borderBottomColor: colors.borderDefault }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={[styles.backButtonText, { color: colors.accent }]}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Umpire Panel</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Umpire Panel</Text>
       </View>
 
       <ScrollView style={styles.scrollContent}>
@@ -650,21 +658,29 @@ export default function UmpireScoringScreen() {
           {match.scheduledDate && match.status === 'upcoming' && (
             <CountdownTimer scheduledDate={match.scheduledDate} />
           )}
-          <Text style={styles.matchTitle}>
+          <Text style={[styles.matchTitle, { color: colors.textPrimary }]}>
             {match.teamA.name} vs {match.teamB.name}
           </Text>
 
           {match.battingTeam ? (
             <>
-              <View style={styles.scoreDisplay}>
-                <Text style={styles.scoreLabel}>Current Score</Text>
-                <Text style={styles.scoreValue}>
+              <View style={[
+                styles.scoreDisplay, 
+                { backgroundColor: colors.cardBgElevated },
+                theme === 'dark' && styles.scoreDisplayGlow
+              ]}>
+                <Text style={[styles.scoreLabel, { color: colors.textSecondary }]}>Current Score</Text>
+                <Text style={[
+                  styles.scoreValue, 
+                  { color: colors.textPrimary },
+                  theme === 'dark' && { textShadowColor: 'rgba(59, 130, 246, 0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 12 }
+                ]}>
                   {match.battingTeam === 'teamA' 
                     ? `${match.teamAInnings.runs}/${match.teamAInnings.wickets}`
                     : `${match.teamBInnings.runs}/${match.teamBInnings.wickets}`
                   }
                 </Text>
-                <Text style={styles.oversValue}>
+                <Text style={[styles.oversValue, { color: colors.textSecondary }]}>
                   ({match.battingTeam === 'teamA'
                     ? `${match.teamAInnings.overs}.${match.teamAInnings.balls}`
                     : `${match.teamBInnings.overs}.${match.teamBInnings.balls}`
@@ -673,12 +689,12 @@ export default function UmpireScoringScreen() {
               </View>
 
               {isInningsComplete() && match.currentInnings === 1 && (
-                <View style={styles.inningsCompleteCard}>
-                  <Text style={styles.inningsCompleteText}>
+                <View style={[styles.inningsCompleteCard, { backgroundColor: colors.selected, borderColor: colors.selectedBorder }]}>
+                  <Text style={[styles.inningsCompleteText, { color: colors.selectedBorder }]}>
                     First Innings Complete!
                   </Text>
                   <TouchableOpacity 
-                    style={styles.startSecondInningsButton}
+                    style={[styles.startSecondInningsButton, { backgroundColor: colors.selectedBorder }]}
                     onPress={() => checkInningsComplete()}
                   >
                     <Text style={styles.startSecondInningsButtonText}>Start 2nd Innings</Text>
@@ -686,8 +702,8 @@ export default function UmpireScoringScreen() {
                 </View>
               )}
 
-              <View style={styles.bowlerInfo}>
-                <Text style={styles.bowlerLabel}>Current Bowler</Text>
+              <View style={[styles.bowlerInfo, { backgroundColor: colors.cardBg }]}>
+                <Text style={[styles.bowlerLabel, { color: colors.textSecondary }]}>Current Bowler</Text>
                 {(() => {
                   const currentInnings = match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings;
                   const bowlingPlayers = match.battingTeam === 'teamA' ? teamBPlayers : teamAPlayers;
@@ -697,7 +713,7 @@ export default function UmpireScoringScreen() {
                     const bowlerStats = currentInnings.bowlers?.find(b => b.uid === currentInnings.currentBowlerUid);
                     
                     return (
-                      <Text style={styles.bowlerName}>
+                      <Text style={[styles.bowlerName, { color: colors.accent }]}>
                         {bowler?.name || 'Unknown'} 
                         {bowlerStats && ` (${bowlerStats.overs}.${bowlerStats.balls} - ${bowlerStats.runs}/${bowlerStats.wickets})`}
                       </Text>
@@ -705,7 +721,7 @@ export default function UmpireScoringScreen() {
                   } else {
                     return (
                       <TouchableOpacity onPress={() => setBowlerSelectionModalVisible(true)}>
-                        <Text style={styles.selectBowlerText}>Tap to Select Bowler</Text>
+                        <Text style={[styles.selectBowlerText, { color: colors.upcoming }]}>Tap to Select Bowler</Text>
                       </TouchableOpacity>
                     );
                   }
@@ -713,15 +729,19 @@ export default function UmpireScoringScreen() {
               </View>
             </>
           ) : (
-            <View style={styles.scoreDisplay}>
-              <Text style={styles.scoreLabel}>Waiting for Toss</Text>
-              <Text style={styles.scoreValue}>0/0</Text>
-              <Text style={styles.oversValue}>(0.0 overs)</Text>
+            <View style={[
+              styles.scoreDisplay, 
+              { backgroundColor: colors.cardBgElevated },
+              theme === 'dark' && styles.scoreDisplayGlow
+            ]}>
+              <Text style={[styles.scoreLabel, { color: colors.textSecondary }]}>Waiting for Toss</Text>
+              <Text style={[styles.scoreValue, { color: colors.textPrimary }]}>0/0</Text>
+              <Text style={[styles.oversValue, { color: colors.textSecondary }]}>(0.0 overs)</Text>
             </View>
           )}
 
           {match.status === 'upcoming' && (
-            <View style={styles.section}>
+            <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
               <Button title="Conduct Toss & Start Match" onPress={startMatch} />
             </View>
           )}
@@ -729,15 +749,15 @@ export default function UmpireScoringScreen() {
           {match.status === 'live' && match.battingTeam && (
             <>
               {/* Innings and Team Info */}
-              <View style={styles.inningsInfo}>
-                <Text style={styles.inningsLabel}>
+              <View style={[styles.inningsInfo, { backgroundColor: colors.cardBg }]}>
+                <Text style={[styles.inningsLabel, { color: colors.textSecondary }]}>
                   {match.currentInnings === 1 ? '1st' : '2nd'} Innings  •  Overs: {(match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings).overs}.{(match.battingTeam === 'teamA' ? match.teamAInnings : match.teamBInnings).balls}/{match.totalOvers}
                 </Text>
-                <Text style={styles.teamBatting}>
+                <Text style={[styles.teamBatting, { color: colors.textPrimary }]}>
                   {match.battingTeam === 'teamA' ? match.teamA.name : match.teamB.name} Batting
                 </Text>
                 {match.currentInnings === 2 && (
-                  <Text style={styles.targetText}>
+                  <Text style={[styles.targetText, { color: colors.upcoming }]}>
                     Target: {(match.battingTeam === 'teamA' ? match.teamBInnings.runs : match.teamAInnings.runs) + 1} runs
                   </Text>
                 )}
@@ -745,8 +765,8 @@ export default function UmpireScoringScreen() {
 
               {/* Current Batsmen */}
               {match.currentBatsmen && match.currentBatsmen.length > 0 && (
-                <View style={styles.batsmenSection}>
-                  <Text style={styles.sectionTitle}>Current Batsmen</Text>
+                <View style={[styles.batsmenSection, { backgroundColor: colors.cardBg }]}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Current Batsmen</Text>
                   {match.currentBatsmen.map((batsman) => {
                     const player = [...teamAPlayers, ...teamBPlayers].find(p => p.uid === batsman.uid);
                     return (
@@ -754,20 +774,21 @@ export default function UmpireScoringScreen() {
                         key={batsman.uid} 
                         style={[
                           styles.batsmanCard,
-                          batsman.isOnStrike && styles.batsmanOnStrike
+                          { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder },
+                          batsman.isOnStrike && { backgroundColor: colors.strikeHighlight, borderColor: colors.strikeBorder, borderWidth: 2 }
                         ]}
                       >
                         <View style={styles.batsmanInfo}>
-                          <Text style={styles.batsmanName}>
+                          <Text style={[styles.batsmanName, { color: colors.textPrimary }]}>
                             {player?.name || 'Unknown'}
                             {batsman.isOnStrike && ' *'}
                           </Text>
-                          <Text style={styles.batsmanStats}>
+                          <Text style={[styles.batsmanStats, { color: colors.textSecondary }]}>
                             {batsman.runs} runs ({batsman.balls} balls)
                           </Text>
                         </View>
                         {batsman.isOnStrike && (
-                          <Ionicons name="radio-button-on" size={20} color="#FF9500" />
+                          <Ionicons name="radio-button-on" size={20} color={colors.strikeBorder} />
                         )}
                       </View>
                     );
@@ -777,7 +798,7 @@ export default function UmpireScoringScreen() {
 
               {/* Ball History */}
               {ballHistory.length > 0 && (
-                <View style={styles.ballHistorySection}>
+                <View style={[styles.ballHistorySection, { backgroundColor: colors.cardBg }]}>
                   <ScrollView 
                     horizontal 
                     showsHorizontalScrollIndicator={false}
@@ -785,6 +806,10 @@ export default function UmpireScoringScreen() {
                   >
                     {ballHistory.slice(-10).map((ball, index) => {
                       const isRecent = index === ballHistory.slice(-10).length - 1;
+                      const ballColor = ball.type === 'wicket' ? colors.wicket
+                        : ball.type === 'wide' || ball.type === 'noball' ? colors.extrasBorder
+                        : (ball.runs === 4 || ball.runs === 6) ? colors.boundaryBorder
+                        : colors.gridButtonBorder;
                       const displayText = ball.type === 'wicket' ? 'W' : 
                                          ball.type === 'wide' ? 'Wd' : 
                                          ball.type === 'noball' ? 'Nb' :
@@ -796,10 +821,11 @@ export default function UmpireScoringScreen() {
                           key={`${ball.timestamp}-${index}`}
                           style={[
                             styles.ballHistoryCircle,
-                            isRecent && styles.ballHistoryRecent
+                            { backgroundColor: colors.gridButton, borderColor: ballColor },
+                            isRecent && { backgroundColor: colors.upcoming, borderColor: colors.upcoming }
                           ]}
                         >
-                          <Text style={styles.ballHistoryText}>{displayText}</Text>
+                          <Text style={[styles.ballHistoryText, { color: isRecent ? '#fff' : colors.textPrimary }]}>{displayText}</Text>
                         </View>
                       );
                     })}
@@ -808,113 +834,113 @@ export default function UmpireScoringScreen() {
               )}
 
               {/* Runs - CricHeros Style 3x4 Grid */}
-              <View style={styles.runsSection}>
-                <Text style={styles.sectionTitle}>Scoring</Text>
+              <View style={[styles.runsSection, { backgroundColor: colors.scoringBg }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Scoring</Text>
                 
                 {/* Row 1: 0, 1, 2, Undo */}
                 <View style={styles.gridRow}>
                   <TouchableOpacity 
-                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={addDotBall}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonText}>0</Text>
+                    <Text style={[styles.gridButtonText, { color: colors.textPrimary }]}>0</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(1)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonText}>1</Text>
+                    <Text style={[styles.gridButtonText, { color: colors.textPrimary }]}>1</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(2)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonText}>2</Text>
+                    <Text style={[styles.gridButtonText, { color: colors.textPrimary }]}>2</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, styles.undoButton, ballHistory.length === 0 && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.undo, borderColor: colors.undoBorder }, ballHistory.length === 0 && styles.disabledButton]} 
                     onPress={handleUndo}
                     disabled={ballHistory.length === 0}
                   >
-                    <Text style={styles.gridButtonTextSecondary}>Undo</Text>
+                    <Text style={[styles.gridButtonTextSecondary, { color: colors.undoBorder }]}>Undo</Text>
                   </TouchableOpacity>
                 </View>
                 
                 {/* Row 2: 3, 4, 6, 5,7 */}
                 <View style={styles.gridRow}>
                   <TouchableOpacity 
-                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(3)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonText}>3</Text>
+                    <Text style={[styles.gridButtonText, { color: colors.textPrimary }]}>3</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, styles.boundaryButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.boundary, borderColor: colors.boundaryBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(4)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonText}>4</Text>
-                    <Text style={styles.gridButtonLabel}>FOUR</Text>
+                    <Text style={[styles.gridButtonText, { color: colors.textPrimary }]}>4</Text>
+                    <Text style={[styles.gridButtonLabel, { color: colors.boundaryBorder }]}>FOUR</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, styles.boundaryButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.boundary, borderColor: colors.boundaryBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => addRuns(6)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonText}>6</Text>
-                    <Text style={styles.gridButtonLabel}>SIX</Text>
+                    <Text style={[styles.gridButtonText, { color: colors.textPrimary }]}>6</Text>
+                    <Text style={[styles.gridButtonLabel, { color: colors.boundaryBorder }]}>SIX</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => setRareRunsModalVisible(true)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonTextSecondary}>5, 7</Text>
+                    <Text style={[styles.gridButtonTextSecondary, { color: colors.textSecondary }]}>5, 7</Text>
                   </TouchableOpacity>
                 </View>
                 
                 {/* Row 3: Wd, Nb, Bye, Lb */}
                 <View style={styles.gridRow}>
                   <TouchableOpacity 
-                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.extras, borderColor: colors.extrasBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => setWideModalVisible(true)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonTextSecondary}>Wd</Text>
+                    <Text style={[styles.gridButtonTextSecondary, { color: colors.extrasBorder }]}>Wd</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.extras, borderColor: colors.extrasBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => setNoBallModalVisible(true)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonTextSecondary}>Nb</Text>
+                    <Text style={[styles.gridButtonTextSecondary, { color: colors.extrasBorder }]}>Nb</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.extras, borderColor: colors.extrasBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => setByeModalVisible(true)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonTextSecondary}>Bye</Text>
+                    <Text style={[styles.gridButtonTextSecondary, { color: colors.extrasBorder }]}>Bye</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.gridButton, styles.extrasButton, (scoring || isInningsComplete()) && styles.disabledButton]} 
+                    style={[styles.gridButton, { backgroundColor: colors.extras, borderColor: colors.extrasBorder }, (scoring || isInningsComplete()) && styles.disabledButton]} 
                     onPress={() => setLegByeModalVisible(true)}
                     disabled={scoring || isInningsComplete()}
                   >
-                    <Text style={styles.gridButtonTextSecondary}>Lb</Text>
+                    <Text style={[styles.gridButtonTextSecondary, { color: colors.extrasBorder }]}>Lb</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
               {/* Wicket */}
-              <View style={styles.wicketSection}>
-                <Text style={styles.sectionTitle}>Wicket</Text>
+              <View style={[styles.wicketSection, { backgroundColor: colors.scoringBg }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Wicket</Text>
                 <TouchableOpacity
-                  style={[styles.scoreButton, styles.wicketButton, styles.fullWidthButton, (scoring || isInningsComplete()) && styles.disabledButton]}
+                  style={[styles.scoreButton, styles.fullWidthButton, { backgroundColor: colors.wicket }, (scoring || isInningsComplete()) && styles.disabledButton]}
                   onPress={handleWicket}
                   disabled={scoring || isInningsComplete()}
                 >
@@ -923,38 +949,38 @@ export default function UmpireScoringScreen() {
               </View>
 
               {/* Scoring Shortcuts - Expandable */}
-              <View style={styles.shortcutsSection}>
+              <View style={[styles.shortcutsSection, { backgroundColor: colors.cardBg }]}>
                 <TouchableOpacity 
                   style={styles.shortcutsHeader}
                   onPress={() => setShortcutsExpanded(!shortcutsExpanded)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.shortcutsTitle}>Scoring Shortcuts</Text>
+                  <Text style={[styles.shortcutsTitle, { color: colors.textPrimary }]}>Scoring Shortcuts</Text>
                   <Ionicons 
                     name={shortcutsExpanded ? 'chevron-up' : 'chevron-down'} 
                     size={24} 
-                    color="#666" 
+                    color={colors.textSecondary} 
                   />
                 </TouchableOpacity>
                 
                 {shortcutsExpanded && (
                   <View style={styles.shortcutsContent}>
                     <TouchableOpacity 
-                      style={styles.shortcutButton}
+                      style={[styles.shortcutButton, { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder }]}
                       onPress={() => setBowlerSelectionModalVisible(true)}
                       disabled={scoring || isInningsComplete()}
                     >
-                      <Ionicons name="person-outline" size={20} color="#007AFF" />
-                      <Text style={styles.shortcutButtonText}>Change Bowler</Text>
+                      <Ionicons name="person-outline" size={20} color={colors.accent} />
+                      <Text style={[styles.shortcutButtonText, { color: colors.textPrimary }]}>Change Bowler</Text>
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
-                      style={styles.shortcutButton}
+                      style={[styles.shortcutButton, { backgroundColor: colors.gridButton, borderColor: colors.gridButtonBorder }]}
                       onPress={completeMatch}
                       disabled={scoring}
                     >
-                      <Ionicons name="checkmark-circle-outline" size={20} color="#34C759" />
-                      <Text style={styles.shortcutButtonText}>Complete Match</Text>
+                      <Ionicons name="checkmark-circle-outline" size={20} color={colors.completed} />
+                      <Text style={[styles.shortcutButtonText, { color: colors.textPrimary }]}>Complete Match</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -963,8 +989,8 @@ export default function UmpireScoringScreen() {
           )}
 
           {match.status === 'completed' && (
-            <View style={styles.section}>
-              <Text style={styles.completedText}>Match Completed</Text>
+            <View style={[styles.section, { backgroundColor: colors.cardBg }]}>
+              <Text style={[styles.completedText, { color: colors.completed }]}>Match Completed</Text>
             </View>
           )}
         </View>
@@ -977,18 +1003,18 @@ export default function UmpireScoringScreen() {
         animationType="slide"
         onRequestClose={() => setBatsmenModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select New Batsman</Text>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.modalBg }, theme === 'dark' && { borderWidth: 1, borderColor: colors.borderDefault }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.borderDefault }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select New Batsman</Text>
               <TouchableOpacity onPress={() => setBatsmenModalVisible(false)}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalScroll}>
               {loadingPlayers ? (
-                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
+                <ActivityIndicator size="small" color={colors.accent} style={{ marginTop: 20 }} />
               ) : (
                 <>
                   {(match?.battingTeam === 'teamA' ? teamAPlayers : teamBPlayers)
@@ -996,21 +1022,21 @@ export default function UmpireScoringScreen() {
                     .map((player) => (
                       <TouchableOpacity
                         key={player.uid}
-                        style={styles.playerSelectItem}
+                        style={[styles.playerSelectItem, { backgroundColor: colors.cardBg, borderColor: colors.borderDefault }]}
                         onPress={() => handleSelectNewBatsman(player.uid)}
                       >
-                        <View style={styles.playerSelectAvatar}>
+                        <View style={[styles.playerSelectAvatar, { backgroundColor: colors.accent }]}>
                           <Text style={styles.playerSelectAvatarText}>
                             {player.name.charAt(0).toUpperCase()}
                           </Text>
                         </View>
                         <View style={styles.playerSelectInfo}>
-                          <Text style={styles.playerSelectName}>{player.name}</Text>
+                          <Text style={[styles.playerSelectName, { color: colors.textPrimary }]}>{player.name}</Text>
                           {player.username && (
-                            <Text style={styles.playerSelectUsername}>@{player.username}</Text>
+                            <Text style={[styles.playerSelectUsername, { color: colors.textSecondary }]}>@{player.username}</Text>
                           )}
                         </View>
-                        <Ionicons name="checkmark-circle-outline" size={24} color="#007AFF" />
+                        <Ionicons name="checkmark-circle-outline" size={24} color={colors.accent} />
                       </TouchableOpacity>
                     ))}
                 </>
@@ -1027,27 +1053,27 @@ export default function UmpireScoringScreen() {
         animationType="slide"
         onRequestClose={() => setSecondInningsSetupOpen(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.modalBg }, theme === 'dark' && { borderWidth: 1, borderColor: colors.borderDefault }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.borderDefault }]}>
               <View>
-                <Text style={styles.modalTitle}>2nd Innings Setup</Text>
-                <Text style={styles.modalSubtitle}>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>2nd Innings Setup</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
                   {match?.battingTeam === 'teamA' ? match?.teamA.name : match?.teamB.name} to Bat
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setSecondInningsSetupOpen(false)}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalScroll}>
-              <Text style={styles.setupInstructions}>
+              <Text style={[styles.setupInstructions, { color: colors.textSecondary }]}>
                 Select 2 opening batsmen ({secondInningsBatsmen.length}/2 selected)
               </Text>
 
               {loadingPlayers ? (
-                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
+                <ActivityIndicator size="small" color={colors.accent} style={{ marginTop: 20 }} />
               ) : (
                 <>
                   {(match?.battingTeam === 'teamA' ? teamAPlayers : teamBPlayers).map((player) => {
@@ -1059,24 +1085,25 @@ export default function UmpireScoringScreen() {
                         key={player.uid}
                         style={[
                           styles.playerSelectItem,
-                          isSelected && styles.playerSelectItemSelected,
-                          isOnStrike && styles.playerSelectItemOnStrike
+                          { backgroundColor: colors.cardBg, borderColor: colors.borderDefault },
+                          isSelected && { backgroundColor: colors.selected, borderColor: colors.selectedBorder },
+                          isOnStrike && { backgroundColor: colors.strikeHighlight, borderColor: colors.strikeBorder }
                         ]}
                         onPress={() => handleSecondInningsBatsmanSelect(player.uid)}
                       >
-                        <View style={styles.playerSelectAvatar}>
+                        <View style={[styles.playerSelectAvatar, { backgroundColor: colors.accent }]}>
                           <Text style={styles.playerSelectAvatarText}>
                             {player.name.charAt(0).toUpperCase()}
                           </Text>
                         </View>
                         <View style={styles.playerSelectInfo}>
-                          <Text style={styles.playerSelectName}>{player.name}</Text>
+                          <Text style={[styles.playerSelectName, { color: colors.textPrimary }]}>{player.name}</Text>
                           {player.username && (
-                            <Text style={styles.playerSelectUsername}>@{player.username}</Text>
+                            <Text style={[styles.playerSelectUsername, { color: colors.textSecondary }]}>@{player.username}</Text>
                           )}
                         </View>
                         {isSelected && (
-                          <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                          <Ionicons name="checkmark-circle" size={24} color={colors.selectedBorder} />
                         )}
                       </TouchableOpacity>
                     );
@@ -1084,7 +1111,7 @@ export default function UmpireScoringScreen() {
 
                   {secondInningsBatsmen.length === 2 && (
                     <>
-                      <Text style={styles.onStrikeInstructions}>
+                      <Text style={[styles.onStrikeInstructions, { color: colors.textSecondary }]}>
                         Tap a selected batsman to mark them on strike:
                       </Text>
                       
@@ -1097,13 +1124,14 @@ export default function UmpireScoringScreen() {
                             key={uid}
                             style={[
                               styles.strikeSelectItem,
-                              secondInningsOnStrike === uid && styles.strikeSelectItemActive
+                              { backgroundColor: colors.cardBg, borderColor: colors.borderDefault },
+                              secondInningsOnStrike === uid && { backgroundColor: colors.strikeHighlight, borderColor: colors.strikeBorder }
                             ]}
                             onPress={() => setSecondInningsOnStrike(uid)}
                           >
-                            <Text style={styles.strikeSelectName}>{player.name}</Text>
+                            <Text style={[styles.strikeSelectName, { color: colors.textPrimary }]}>{player.name}</Text>
                             {secondInningsOnStrike === uid && (
-                              <Ionicons name="radio-button-on" size={24} color="#FF9500" />
+                              <Ionicons name="radio-button-on" size={24} color={colors.strikeBorder} />
                             )}
                           </TouchableOpacity>
                         );
@@ -1132,21 +1160,21 @@ export default function UmpireScoringScreen() {
         animationType="slide"
         onRequestClose={() => setBowlerSelectionModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.modalBg }, theme === 'dark' && { borderWidth: 1, borderColor: colors.borderDefault }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.borderDefault }]}>
               <View>
-                <Text style={styles.modalTitle}>Select Bowler</Text>
-                <Text style={styles.modalSubtitle}>Choose who will bowl this over</Text>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Bowler</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Choose who will bowl this over</Text>
               </View>
               <TouchableOpacity onPress={() => setBowlerSelectionModalVisible(false)}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalScroll}>
               {loadingPlayers ? (
-                <ActivityIndicator size="small" color="#007AFF" style={{ marginTop: 20 }} />
+                <ActivityIndicator size="small" color={colors.accent} style={{ marginTop: 20 }} />
               ) : (
                 <>
                   {(match?.battingTeam === 'teamA' ? teamBPlayers : teamAPlayers).map((player) => {
@@ -1160,39 +1188,40 @@ export default function UmpireScoringScreen() {
                         key={player.uid}
                         style={[
                           styles.bowlerSelectItem,
-                          isLastBowler && styles.bowlerSelectItemDisabled,
-                          isCurrentBowler && styles.bowlerSelectItemCurrent
+                          { backgroundColor: colors.cardBg, borderColor: colors.borderDefault },
+                          isLastBowler && { backgroundColor: colors.gridButton, opacity: 0.6 },
+                          isCurrentBowler && { backgroundColor: colors.selected, borderColor: colors.selectedBorder }
                         ]}
                         onPress={() => handleSelectBowler(player.uid)}
                         disabled={isLastBowler || selectingBowler}
                       >
-                        <View style={styles.playerSelectAvatar}>
+                        <View style={[styles.playerSelectAvatar, { backgroundColor: colors.accent }]}>
                           <Text style={styles.playerSelectAvatarText}>
                             {player.name.charAt(0).toUpperCase()}
                           </Text>
                         </View>
                         <View style={styles.playerSelectInfo}>
-                          <Text style={[styles.playerSelectName, isLastBowler && styles.disabledText]}>
+                          <Text style={[styles.playerSelectName, { color: colors.textPrimary }, isLastBowler && { color: colors.textTertiary }]}>
                             {player.name}
                           </Text>
                           {player.username && (
-                            <Text style={[styles.playerSelectUsername, isLastBowler && styles.disabledText]}>
+                            <Text style={[styles.playerSelectUsername, { color: colors.textSecondary }, isLastBowler && { color: colors.textTertiary }]}>
                               @{player.username}
                             </Text>
                           )}
                           {bowlerStats && (
-                            <Text style={styles.bowlerStatsText}>
+                            <Text style={[styles.bowlerStatsText, { color: colors.accent }]}>
                               {bowlerStats.overs}.{bowlerStats.balls} overs - {bowlerStats.runs}/{bowlerStats.wickets}
                             </Text>
                           )}
                           {isLastBowler && (
-                            <Text style={styles.rotationRuleText}>
+                            <Text style={[styles.rotationRuleText, { color: colors.wicket }]}>
                               Cannot bowl consecutive overs
                             </Text>
                           )}
                         </View>
                         {isCurrentBowler && (
-                          <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                          <Ionicons name="checkmark-circle" size={24} color={colors.selectedBorder} />
                         )}
                       </TouchableOpacity>
                     );
@@ -1212,32 +1241,32 @@ export default function UmpireScoringScreen() {
         onRequestClose={() => setWideModalVisible(false)}
       >
         <TouchableOpacity 
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}
           activeOpacity={1}
           onPress={() => setWideModalVisible(false)}
         >
-          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>Wide</Text>
-            <Text style={styles.modalSubtitle}>Select runs scored + 1 wide</Text>
+          <View style={[styles.extrasModal, { backgroundColor: colors.modalBg }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Wide</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Select runs scored + 1 wide</Text>
             <View style={styles.extrasGrid}>
               {[0, 1, 2, 3, 4].map(runs => (
                 <TouchableOpacity
                   key={runs}
-                  style={styles.extrasModalButton}
+                  style={[styles.extrasModalButton, { backgroundColor: colors.extras, borderWidth: 1, borderColor: colors.extrasBorder }]}
                   onPress={() => handleWideWithRuns(runs)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.extrasModalButtonText}>{runs}</Text>
-                  <Text style={styles.extrasPreviewText}>Wd + {runs}</Text>
+                  <Text style={[styles.extrasModalButtonText, { color: colors.textPrimary }]}>{runs}</Text>
+                  <Text style={[styles.extrasPreviewText, { color: colors.textSecondary }]}>Wd + {runs}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <TouchableOpacity 
-              style={styles.modalCloseButton}
+              style={[styles.modalCloseButton, { backgroundColor: colors.gridButton }]}
               onPress={() => setWideModalVisible(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+              <Text style={[styles.modalCloseButtonText, { color: colors.textPrimary }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -1251,32 +1280,32 @@ export default function UmpireScoringScreen() {
         onRequestClose={() => setNoBallModalVisible(false)}
       >
         <TouchableOpacity 
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}
           activeOpacity={1}
           onPress={() => setNoBallModalVisible(false)}
         >
-          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>No Ball</Text>
-            <Text style={styles.modalSubtitle}>Select runs scored + 1 no ball</Text>
+          <View style={[styles.extrasModal, { backgroundColor: colors.modalBg }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>No Ball</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Select runs scored + 1 no ball</Text>
             <View style={styles.extrasGrid}>
               {[0, 1, 2, 3, 4].map(runs => (
                 <TouchableOpacity
                   key={runs}
-                  style={styles.extrasModalButton}
+                  style={[styles.extrasModalButton, { backgroundColor: colors.extras, borderWidth: 1, borderColor: colors.extrasBorder }]}
                   onPress={() => handleNoBallWithRuns(runs)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.extrasModalButtonText}>{runs}</Text>
-                  <Text style={styles.extrasPreviewText}>Nb + {runs}</Text>
+                  <Text style={[styles.extrasModalButtonText, { color: colors.textPrimary }]}>{runs}</Text>
+                  <Text style={[styles.extrasPreviewText, { color: colors.textSecondary }]}>Nb + {runs}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <TouchableOpacity 
-              style={styles.modalCloseButton}
+              style={[styles.modalCloseButton, { backgroundColor: colors.gridButton }]}
               onPress={() => setNoBallModalVisible(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+              <Text style={[styles.modalCloseButtonText, { color: colors.textPrimary }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -1290,18 +1319,18 @@ export default function UmpireScoringScreen() {
         onRequestClose={() => setByeModalVisible(false)}
       >
         <TouchableOpacity 
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}
           activeOpacity={1}
           onPress={() => setByeModalVisible(false)}
         >
-          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>Byes</Text>
-            <Text style={styles.modalSubtitle}>Select bye runs</Text>
+          <View style={[styles.extrasModal, { backgroundColor: colors.modalBg }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Byes</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Select bye runs</Text>
             <View style={styles.extrasGrid}>
               {[1, 2, 3, 4].map(runs => (
                 <TouchableOpacity
                   key={runs}
-                  style={styles.extrasModalButton}
+                  style={[styles.extrasModalButton, { backgroundColor: colors.accent }]}
                   onPress={() => handleByeRuns(runs)}
                   activeOpacity={0.7}
                 >
@@ -1311,11 +1340,11 @@ export default function UmpireScoringScreen() {
               ))}
             </View>
             <TouchableOpacity 
-              style={styles.modalCloseButton}
+              style={[styles.modalCloseButton, { backgroundColor: colors.gridButton }]}
               onPress={() => setByeModalVisible(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+              <Text style={[styles.modalCloseButtonText, { color: colors.textPrimary }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -1329,18 +1358,18 @@ export default function UmpireScoringScreen() {
         onRequestClose={() => setLegByeModalVisible(false)}
       >
         <TouchableOpacity 
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}
           activeOpacity={1}
           onPress={() => setLegByeModalVisible(false)}
         >
-          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>Leg Byes</Text>
-            <Text style={styles.modalSubtitle}>Select leg bye runs</Text>
+          <View style={[styles.extrasModal, { backgroundColor: colors.modalBg }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Leg Byes</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Select leg bye runs</Text>
             <View style={styles.extrasGrid}>
               {[1, 2, 3, 4].map(runs => (
                 <TouchableOpacity
                   key={runs}
-                  style={styles.extrasModalButton}
+                  style={[styles.extrasModalButton, { backgroundColor: colors.accent }]}
                   onPress={() => handleLegByeRuns(runs)}
                   activeOpacity={0.7}
                 >
@@ -1350,11 +1379,11 @@ export default function UmpireScoringScreen() {
               ))}
             </View>
             <TouchableOpacity 
-              style={styles.modalCloseButton}
+              style={[styles.modalCloseButton, { backgroundColor: colors.gridButton }]}
               onPress={() => setLegByeModalVisible(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+              <Text style={[styles.modalCloseButtonText, { color: colors.textPrimary }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -1368,18 +1397,18 @@ export default function UmpireScoringScreen() {
         onRequestClose={() => setRareRunsModalVisible(false)}
       >
         <TouchableOpacity 
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}
           activeOpacity={1}
           onPress={() => setRareRunsModalVisible(false)}
         >
-          <View style={styles.extrasModal} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>Rare Runs</Text>
-            <Text style={styles.modalSubtitle}>Select rare run totals</Text>
+          <View style={[styles.extrasModal, { backgroundColor: colors.modalBg }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Rare Runs</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Select rare run totals</Text>
             <View style={styles.rareRunsGrid}>
               {[5, 7].map(runs => (
                 <TouchableOpacity
                   key={runs}
-                  style={styles.rareRunButton}
+                  style={[styles.rareRunButton, { backgroundColor: colors.accent }]}
                   onPress={() => handleRareRuns(runs)}
                   activeOpacity={0.7}
                 >
@@ -1389,66 +1418,58 @@ export default function UmpireScoringScreen() {
               ))}
             </View>
             <TouchableOpacity 
-              style={styles.modalCloseButton}
+              style={[styles.modalCloseButton, { backgroundColor: colors.gridButton }]}
               onPress={() => setRareRunsModalVisible(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+              <Text style={[styles.modalCloseButtonText, { color: colors.textPrimary }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 24
+    padding: 24,
   },
   header: {
-    backgroundColor: '#fff',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
   },
   backButton: {
     paddingVertical: 8,
-    marginBottom: 8
+    marginBottom: 8,
   },
   backButtonText: {
-    color: '#007AFF',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333'
   },
   scrollContent: {
-    flex: 1
+    flex: 1,
   },
   content: {
-    padding: 16
+    padding: 16,
   },
   matchTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 24,
-    color: '#333'
   },
   scoreDisplay: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
@@ -1457,26 +1478,31 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3
+    elevation: 3,
+  },
+  scoreDisplayGlow: {
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
   },
   scoreLabel: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 8,
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
   },
   scoreValue: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4
+    marginBottom: 4,
   },
   oversValue: {
     fontSize: 20,
-    color: '#666'
   },
   bowlerInfo: {
-    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 12,
     marginTop: 12,
@@ -1484,452 +1510,402 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2
+    elevation: 2,
   },
   bowlerLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
-    marginBottom: 8
+    marginBottom: 8,
   },
   bowlerName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#007AFF'
   },
   selectBowlerText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FF9500',
-    textDecorationLine: 'underline'
+    textDecorationLine: 'underline',
   },
   inningsCompleteCard: {
-    backgroundColor: '#f0fdf4',
     padding: 20,
     borderRadius: 12,
     marginTop: 12,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#34C759',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   inningsCompleteText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#34C759',
     marginBottom: 16,
-    textAlign: 'center'
+    textAlign: 'center',
   },
   startSecondInningsButton: {
-    backgroundColor: '#34C759',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8
+    borderRadius: 8,
   },
   startSecondInningsButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   section: {
     marginBottom: 28,
-    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2
+    elevation: 2,
   },
   ballHistorySection: {
     marginBottom: 20,
-    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2
+    elevation: 2,
   },
   ballHistoryContainer: {
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 4
+    paddingHorizontal: 4,
   },
   ballHistoryCircle: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#f5f5f5',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#e0e0e0'
   },
   ballHistoryRecent: {
-    backgroundColor: '#FF9500',
-    borderColor: '#FF9500'
+    // Colors applied inline
   },
   ballHistoryText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
   },
   runsSection: {
     marginBottom: 20,
-    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 4
+    elevation: 4,
   },
   gridRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12
+    marginBottom: 12,
   },
   gridButton: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
     paddingVertical: 20,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
-    minHeight: 70
+    minHeight: 70,
   },
   gridButtonText: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333'
   },
   gridButtonTextSecondary: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666'
   },
   gridButtonLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#999',
     marginTop: 4,
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
   },
   boundaryButton: {
-    backgroundColor: '#e8f5e9',
-    borderColor: '#4caf50'
+    // Colors applied inline
   },
   undoButton: {
-    backgroundColor: '#fff3e0',
-    borderColor: '#ff9800'
+    // Colors applied inline
   },
   extrasButton: {
-    backgroundColor: '#f3e5f5',
-    borderColor: '#9c27b0'
+    // Colors applied inline
   },
   wicketSection: {
     marginTop: 8,
     marginBottom: 20,
-    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 4
+    elevation: 4,
   },
   extrasSection: {
     marginBottom: 48,
-    backgroundColor: '#fff',
     padding: 28,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 4
+    elevation: 4,
   },
   fullWidthButton: {
     width: '100%',
     maxWidth: '100%',
-    minWidth: '100%'
+    minWidth: '100%',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 12,
-    color: '#333'
   },
   buttonRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12
+    marginBottom: 12,
   },
   scoreButton: {
     flex: 1,
     minWidth: '22%',
-    backgroundColor: '#007AFF',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   compactButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56
+    minHeight: 56,
   },
   dotButton: {
-    backgroundColor: '#6B7280'
+    // Colors applied inline
   },
   plusButton: {
-    backgroundColor: '#34C759'
+    // Colors applied inline
   },
   confirmButton: {
-    backgroundColor: '#34C759'
+    // Colors applied inline
   },
   cancelButton: {
-    backgroundColor: '#FF3B30'
+    // Colors applied inline
   },
   pendingRunsContainer: {
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#FFF9E6',
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#FFD700'
   },
   pendingRunsText: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333',
     textAlign: 'center',
-    marginBottom: 12
+    marginBottom: 12,
   },
   pendingActionsRow: {
     flexDirection: 'row',
     gap: 12,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   addRunsModal: {
-    backgroundColor: '#fff',
     marginHorizontal: 24,
     borderRadius: 20,
     padding: 24,
     maxWidth: 400,
-    alignSelf: 'center'
+    alignSelf: 'center',
   },
   addRunsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginVertical: 16
+    marginVertical: 16,
   },
   addRunButton: {
     width: '47%',
-    backgroundColor: '#007AFF',
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   addRunButtonText: {
     color: '#fff',
     fontSize: 20,
     fontWeight: '700',
-    marginBottom: 4
+    marginBottom: 4,
   },
   addRunPreviewText: {
     color: '#fff',
     fontSize: 12,
-    opacity: 0.9
+    opacity: 0.9,
   },
   modalCloseButton: {
-    backgroundColor: '#E0E0E0',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   modalCloseButtonText: {
-    color: '#333',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   extrasModal: {
-    backgroundColor: '#fff',
     marginHorizontal: 24,
     borderRadius: 20,
     padding: 24,
     maxWidth: 400,
-    alignSelf: 'center'
+    alignSelf: 'center',
   },
   extrasGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginVertical: 16,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   extrasModalButton: {
     width: 70,
-    backgroundColor: '#007AFF',
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   extrasModalButtonText: {
     color: '#fff',
     fontSize: 24,
     fontWeight: '700',
-    marginBottom: 4
+    marginBottom: 4,
   },
   extrasPreviewText: {
     color: '#fff',
     fontSize: 11,
-    opacity: 0.9
+    opacity: 0.9,
   },
   rareRunsGrid: {
     flexDirection: 'row',
     gap: 16,
     marginVertical: 16,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   rareRunButton: {
     width: 100,
-    backgroundColor: '#007AFF',
     padding: 20,
     borderRadius: 12,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   rareRunButtonText: {
     color: '#fff',
     fontSize: 32,
     fontWeight: '700',
-    marginBottom: 4
+    marginBottom: 4,
   },
   shortcutsSection: {
     marginTop: 8,
     marginBottom: 20,
-    backgroundColor: '#fff',
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 2
+    elevation: 2,
   },
   shortcutsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16
+    padding: 16,
   },
   shortcutsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
   },
   shortcutsContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-    gap: 12
+    gap: 12,
   },
   shortcutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
     padding: 14,
     borderRadius: 10,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0'
   },
   shortcutButtonText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#333'
   },
   scoreButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   wicketButton: {
-    backgroundColor: '#FF3B30'
+    // Colors applied inline
   },
   ballButton: {
-    backgroundColor: '#34C759'
+    // Colors applied inline
   },
   disabledButton: {
-    opacity: 0.5
+    opacity: 0.5,
   },
   errorText: {
     fontSize: 18,
-    color: '#999',
     marginBottom: 16,
-    textAlign: 'center'
+    textAlign: 'center',
   },
   completedText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#00AA00',
-    textAlign: 'center'
+    textAlign: 'center',
   },
   button: {
-    backgroundColor: '#007AFF',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8
+    borderRadius: 8,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   inningsInfo: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   inningsLabel: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 4
+    marginBottom: 4,
   },
   teamBatting: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333',
-    marginBottom: 4
+    marginBottom: 4,
   },
   targetText: {
     fontSize: 14,
-    color: '#FF9500',
-    fontWeight: '600'
+    fontWeight: '600',
   },
   batsmenSection: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16
+    marginBottom: 16,
   },
   batsmanCard: {
     flexDirection: 'row',
@@ -1938,48 +1914,40 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     marginTop: 8,
-    backgroundColor: '#f9f9f9'
   },
   batsmanOnStrike: {
-    borderColor: '#FF9500',
-    backgroundColor: '#fff9f0',
-    borderWidth: 2
+    // Colors applied inline
   },
   batsmanInfo: {
-    flex: 1
+    flex: 1,
   },
   batsmanName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4
+    marginBottom: 4,
   },
   batsmanStats: {
     fontSize: 14,
-    color: '#666'
   },
   buttonGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   extraButton: {
-    backgroundColor: '#FF9500'
+    // Colors applied inline
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '70%',
-    paddingBottom: 34
+    paddingBottom: 34,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1987,15 +1955,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333'
   },
   modalScroll: {
-    padding: 16
+    padding: 16,
   },
   playerSelectItem: {
     flexDirection: 'row',
@@ -2003,61 +1969,51 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     marginBottom: 8,
-    backgroundColor: '#fff'
   },
   playerSelectAvatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12
+    marginRight: 12,
   },
   playerSelectAvatarText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   playerSelectInfo: {
-    flex: 1
+    flex: 1,
   },
   playerSelectName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
   },
   playerSelectUsername: {
     fontSize: 14,
-    color: '#666'
   },
   playerSelectItemSelected: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#34C759'
+    // Colors applied inline
   },
   playerSelectItemOnStrike: {
-    backgroundColor: '#fff9f0',
-    borderColor: '#FF9500'
+    // Colors applied inline
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#666',
-    marginTop: 4
+    marginTop: 4,
   },
   setupInstructions: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 12,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   onStrikeInstructions: {
     fontSize: 14,
-    color: '#666',
     marginTop: 16,
     marginBottom: 12,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   strikeSelectItem: {
     flexDirection: 'row',
@@ -2066,21 +2022,17 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
     marginBottom: 8,
-    backgroundColor: '#fff'
   },
   strikeSelectItemActive: {
-    backgroundColor: '#fff9f0',
-    borderColor: '#FF9500'
+    // Colors applied inline
   },
   strikeSelectName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
   },
   startInningsButtonContainer: {
-    marginTop: 20
+    marginTop: 20,
   },
   bowlerSelectItem: {
     flexDirection: 'row',
@@ -2089,31 +2041,25 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     marginBottom: 8,
-    backgroundColor: '#fff'
   },
   bowlerSelectItemDisabled: {
-    backgroundColor: '#f5f5f5',
-    opacity: 0.6
+    // Colors applied inline
   },
   bowlerSelectItemCurrent: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#34C759'
+    // Colors applied inline
   },
   bowlerStatsText: {
     fontSize: 12,
-    color: '#007AFF',
     fontWeight: '600',
-    marginTop: 4
+    marginTop: 4,
   },
   rotationRuleText: {
     fontSize: 11,
-    color: '#FF3B30',
     fontStyle: 'italic',
-    marginTop: 2
+    marginTop: 2,
   },
   disabledText: {
-    color: '#999'
-  }
+    // Colors applied inline
+  },
 });
