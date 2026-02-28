@@ -60,7 +60,7 @@ Crease is a **production-ready** React Native application designed for cricket e
     <td width="50%">
       
 ### Match Management
-- Create and schedule matches
+- Create and schedule matches !
 - Team and umpire assignment
 - Match status tracking (Upcoming/Live/Completed)
 - Comprehensive match statistics
