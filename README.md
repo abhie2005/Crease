@@ -118,12 +118,7 @@ npm start
 Create a `.env` file in the root directory:
 
 ```env
-EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key_here
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
+Need Permission
 ```
 
 > **Tip:** Find these values in your Firebase Console under Project Settings → Your Apps → SDK setup and configuration.
