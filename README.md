@@ -94,7 +94,7 @@ Before you begin, ensure you have:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/crease.git
+git clone https://github.com/abhie2005/crease.git
 cd crease
 
 # 2. Install dependencies
