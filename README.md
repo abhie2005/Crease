@@ -341,7 +341,7 @@ Please read our [Contribution Guidelines](wiki/Contribution-Guide.md) for more d
 ## Screenshots
 
 <div align="center">
-  <p><i>Coming Soon !!</i></p>
+  <p><i>Coming Soon !</i></p>
 </div>
 
 ---
