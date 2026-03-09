@@ -83,7 +83,7 @@ Crease is a **production-ready** React Native application designed for cricket e
 
 ### Prerequisites
 
-Before you begin, ensure you have:
+Before you begin, ensure you have
 
 - **Node.js** (v16 or higher) - [Download](https://nodejs.org/)
 - **npm** or **yarn**
