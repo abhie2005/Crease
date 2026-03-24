@@ -1,21 +1,21 @@
 <div align="center">
   <img src="./assets/logo.png" alt="Crease Logo" width="200"/>
-  
+
   # Crease
-  
+
   ### *Where Every Ball Counts*
-  
+
   <p align="center">
     <strong>A cutting-edge mobile platform for cricket club management, live scoring, and match administration</strong>
   </p>
-  
+
   <p align="center">
     <img src="https://img.shields.io/badge/React_Native-0.73.2-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React Native"/>
     <img src="https://img.shields.io/badge/Expo-~50.0.0-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo"/>
     <img src="https://img.shields.io/badge/TypeScript-5.1.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
     <img src="https://img.shields.io/badge/Firebase-10.7.1-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"/>
   </p>
-  
+
   <p align="center">
     <a href="#features">Features</a> •
     <a href="#quick-start">Quick Start</a> •
@@ -23,7 +23,7 @@
     <a href="#tech-stack">Tech Stack</a> •
     <a href="#contributing">Contributing</a>
   </p>
-  
+
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="divider"/>
 </div>
 
@@ -42,12 +42,13 @@ Crease is a **production-ready** React Native application designed for cricket e
 <table>
   <tr>
     <td width="50%">
-      
+
 ### Authentication and Security
 - Secure email/password authentication
 - Role-based access control (Admin/President/Umpire/Player)
 - Automated route guarding
 - Profile management with student ID verification
+- Username-based public profiles
 
 ### Live Match Scoring
 - Real-time score updates via Firestore
@@ -55,23 +56,33 @@ Crease is a **production-ready** React Native application designed for cricket e
 - Wicket tracking with dismissal types
 - Over-by-over statistics
 - Live leaderboards
+- Toss management (coin flip, team selection, opening batsmen)
 
     </td>
     <td width="50%">
-      
+
 ### Match Management
-- Create and schedule matches
+- Create and schedule matches with date/time picker
 - Team and umpire assignment
 - Match status tracking (Upcoming/Live/Completed)
 - Comprehensive match statistics
 - Player performance analytics
+- Innings tracking with target display
 
 ### Modern UI/UX
-- Clean, intuitive interface
+- Dark and light theme with persistent preference
+- ESPN-style sectioned match list (Live / Upcoming / Final)
 - Pull-to-refresh functionality
 - Countdown timers for upcoming matches
-- Responsive design
-- Smooth animations
+- Responsive design with smooth animations
+- Themed gradient backgrounds
+
+### Player Profiles and Privacy
+- Pinned performance highlight
+- Recently played matches section
+- Full match history
+- Privacy toggles (show/hide sections from public)
+- Public profile lookup by username
 
     </td>
   </tr>
@@ -128,7 +139,7 @@ Need Permission
 ## Documentation
 
 <div align="center">
-  
+
 | Guide | Description |
 |-------|-------------|
 | **[Complete Wiki](wiki/)** | Comprehensive documentation hub |
@@ -154,14 +165,23 @@ Need Permission
 | ![Expo](https://img.shields.io/badge/-Expo-000020?style=flat-square&logo=expo&logoColor=white) | ~50.0.0 | Development Platform |
 | ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) | 5.1.3 | Type Safety |
 | ![Firebase](https://img.shields.io/badge/-Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black) | 10.7.1 | Backend Services |
-| ![Expo Router](https://img.shields.io/badge/-Expo_Router-000020?style=flat-square&logo=expo&logoColor=white) | ~3.4.0 | Navigation |
+| ![Expo Router](https://img.shields.io/badge/-Expo_Router-000020?style=flat-square&logo=expo&logoColor=white) | ~3.4.0 | File-based Navigation |
+
+### UI and Visualization
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| expo-linear-gradient | ~13.0.0 | Themed gradient backgrounds |
+| react-native-chart-kit | ^6.12.0 | Match statistics charts |
+| react-native-svg | ^15.15.1 | SVG support for charts |
+| @expo/vector-icons | (bundled) | Ionicons icon set |
 
 ### Firebase Services
 
-- **Authentication** — Email/password auth
-- **Cloud Firestore** — Real-time database
-- **Real-time Listeners** — Live data synchronization
-- **Security Rules** — Access control
+- **Authentication** — Email/password auth with AsyncStorage persistence
+- **Cloud Firestore** — Real-time database with typed collection refs
+- **Real-time Listeners** — Live data synchronization across devices
+- **Security Rules** — Role-based access control
 
 </div>
 
@@ -176,39 +196,75 @@ crease/
 │   ├── (auth)/                  # Authentication flow
 │   │   ├── login.tsx
 │   │   └── signup.tsx
-│   ├── (tabs)/                  # Tab navigation
-│   │   ├── index.tsx             # Home screen
-│   │   ├── search.tsx            # Search players/teams
-│   │   └── profile.tsx           # User profile
-│   ├── admin/                   # Admin features
-│   │   └── create-match.tsx
-│   ├── umpire/                  # Live scoring
-│   │   └── [id].tsx
-│   ├── match/                   # Match details
-│   │   └── [id].tsx
-│   └── _layout.tsx              # Root layout
+│   ├── (tabs)/                  # Bottom tab navigation
+│   │   ├── index.tsx             # Home — live/upcoming/final matches
+│   │   ├── search.tsx            # Search players, teams, matches
+│   │   └── profile.tsx           # User profile with stats
+│   ├── admin/
+│   │   └── create-match.tsx      # Create match (admin/president only)
+│   ├── match/
+│   │   └── [id].tsx              # Match details with real-time updates
+│   ├── umpire/
+│   │   ├── [id].tsx              # Live scoring panel (umpire only)
+│   │   └── toss/[id].tsx         # Toss setup — coin flip, opening batsmen
+│   ├── profile/
+│   │   ├── setup.tsx             # Profile creation / edit
+│   │   └── settings.tsx          # Privacy settings
+│   ├── user/
+│   │   └── [username].tsx        # Public profile by username
+│   └── _layout.tsx              # Root layout with route guards
 │
 ├── src/
 │   ├── components/              # Reusable UI components
 │   │   ├── Button.tsx
 │   │   ├── Input.tsx
 │   │   ├── CountdownTimer.tsx
-│   │   └── match-stats/         # Match statistics components
+│   │   ├── DateTimePicker.tsx
+│   │   ├── ThemedBackground.tsx
+│   │   ├── match-stats/         # Match statistics components
+│   │   │   ├── MatchStatsView.tsx
+│   │   │   ├── BattingStatsTable.tsx
+│   │   │   ├── BowlingStatsTable.tsx
+│   │   │   ├── OverSummary.tsx
+│   │   │   ├── Partnerships.tsx
+│   │   │   ├── FallOfWickets.tsx
+│   │   │   ├── ExtrasBreakdown.tsx
+│   │   │   ├── MatchHighlights.tsx
+│   │   │   ├── TeamComparison.tsx
+│   │   │   └── UpcomingMatchStatsView.tsx
+│   │   ├── profile/             # Profile section components
+│   │   │   ├── ProfileContent.tsx
+│   │   │   ├── RecentlyPlayedSection.tsx
+│   │   │   ├── PinnedPerformanceSection.tsx
+│   │   │   └── MatchHistorySection.tsx
+│   │   └── search/              # Search result cards
+│   │       ├── PlayerResultCard.tsx
+│   │       ├── TeamResultCard.tsx
+│   │       └── MatchResultCard.tsx
 │   ├── firebase/                # Firebase configuration
 │   │   ├── config.ts
 │   │   ├── auth.ts
 │   │   └── firestore.ts
+│   ├── hooks/
+│   │   └── useSafeAreaHeader.ts
 │   ├── models/                  # TypeScript interfaces
 │   │   ├── User.ts
 │   │   └── Match.ts
 │   ├── providers/               # Context providers
-│   │   └── AuthProvider.tsx
+│   │   ├── AuthProvider.tsx
+│   │   └── ThemeProvider.tsx    # Dark/light mode with AsyncStorage persistence
 │   ├── services/                # Business logic
 │   │   ├── users.ts
-│   │   └── matches.ts
-│   └── utils/                   # Helper functions
+│   │   ├── matches.ts
+│   │   ├── matchStats.ts
+│   │   └── playerStats.ts
+│   ├── theme/
+│   │   └── colors.ts            # Dark and light theme color palettes
+│   ├── types/                   # Shared TypeScript type definitions
+│   └── utils/
+│       ├── recentSearches.ts
+│       └── usernameValidation.ts
 │
-├── wiki/                        # Documentation
 ├── app.config.ts                # Expo configuration
 └── package.json
 ```
@@ -231,7 +287,7 @@ graph LR
     H --> I[Match Details]
     I --> J{User Role?}
     J -->|Admin| K[Create Match]
-    J -->|Umpire| L[Scoring Panel]
+    J -->|Umpire| L[Toss Setup → Scoring Panel]
     J -->|Player| M[View Stats]
 ```
 
@@ -251,6 +307,10 @@ users/{uid}
   studentId: string;
   username: string;
   role: 'player' | 'admin' | 'president' | 'umpire';
+  pinnedPerformance?: { matchId: string; type: 'batting' | 'bowling' };
+  showRecentlyPlayed?: boolean;
+  showMatchHistory?: boolean;
+  showPinnedPerformance?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -291,6 +351,16 @@ matches/{matchId}
 
 ## Key Features Explained
 
+### Toss and Match Setup
+
+Before live scoring begins, the umpire conducts the toss:
+
+- **Coin flip animation** — visual toss simulation
+- **Toss winner selection** — choose which team won
+- **Bat or bowl decision** — winning team decides
+- **Opening batsmen selection** — pick two openers from the batting team
+- **On-strike choice** — designate which batsman faces the first ball
+
 ### Live Scoring Panel
 
 The umpire scoring panel provides a comprehensive interface for real-time match scoring:
@@ -300,6 +370,7 @@ The umpire scoring panel provides a comprehensive interface for real-time match 
 - **Undo functionality** - Correct mistakes easily
 - **Over completion** - Automatic bowler rotation prompts
 - **Innings tracking** - Seamless transition between innings
+- **Target display** - Second innings shows runs needed
 
 ### Match Statistics
 
@@ -311,6 +382,17 @@ Detailed match statistics including:
 - **Fall of Wickets** - Dismissal timeline
 - **Over Summary** - Visual charts and graphs
 - **Player Highlights** - Top performers
+- **Team Comparison** - Side-by-side innings breakdown
+- **Extras Breakdown** - Wides, no-balls, byes, leg-byes
+
+### Player Profiles
+
+Rich profiles visible to all users (respecting privacy settings):
+
+- **Pinned Performance** - Highlight one batting or bowling effort
+- **Recently Played** - Latest matches at a glance
+- **Match History** - Full career log
+- **Privacy Controls** - Toggle each section on/off for public viewers
 
 ### Advanced Search
 
@@ -319,8 +401,15 @@ Multi-tab search functionality:
 - **Player Search** - Find players by name or username
 - **Team Search** - Search teams and view recent matches
 - **Match Search** - Search by team names
-- **Recent Searches** - Quick access to previous searches
-- **New Talents** - Discover recently joined players
+- **Recent Searches** - Quick access to previous searches (persisted locally)
+- **New Talents** - Discover the five most recently joined players
+
+### Dark / Light Theme
+
+- System-respecting default (dark mode)
+- Toggle from the Profile tab instantly
+- Preference persisted via AsyncStorage across sessions
+- Consistent themed gradient backgrounds throughout the app
 
 ---
 
@@ -348,13 +437,13 @@ Please read our [Contribution Guidelines](wiki/Contribution-Guide.md) for more d
 
 ## Roadmap
 
-- [ ] **Player Statistics Dashboard** - Comprehensive player analytics
 - [ ] **Tournament Management** - Multi-match tournament support
 - [ ] **Push Notifications** - Match updates and alerts
-- [ ] **Social Features** - Player profiles and social interactions
+- [ ] **Social Features** - Comments and reactions on match events
 - [ ] **Video Highlights** - Upload and share match highlights
-- [ ] **Analytics Dashboard** - Team and player performance insights
+- [ ] **Analytics Dashboard** - Team and player performance insights over time
 - [ ] **Offline Mode** - Continue scoring without internet
+- [ ] **Awards / Gallery** - Team photo albums and season awards
 
 See the full [Roadmap](wiki/Roadmap.md) for more details.
 
@@ -373,22 +462,22 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ---
 
 <div align="center">
-  
+
   ### Star this repository if you find it helpful
-  
+
   <p>
-    <a href="https://github.com/yourusername/crease/stargazers">
-      <img src="https://img.shields.io/github/stars/yourusername/crease?style=social" alt="Stars"/>
+    <a href="https://github.com/abhie2005/crease/stargazers">
+      <img src="https://img.shields.io/github/stars/abhie2005/crease?style=social" alt="Stars"/>
     </a>
-    <a href="https://github.com/yourusername/crease/network/members">
-      <img src="https://img.shields.io/github/forks/yourusername/crease?style=social" alt="Forks"/>
+    <a href="https://github.com/abhie2005/crease/network/members">
+      <img src="https://img.shields.io/github/forks/abhie2005/crease?style=social" alt="Forks"/>
     </a>
   </p>
-  
+
   **Crease Team**
-  
+
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="divider"/>
-  
+
   <sub>Built with React Native · Powered by Firebase · Designed for Cricket</sub>
-  
+
 </div>
