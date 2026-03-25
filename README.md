@@ -6,7 +6,7 @@
   ### *Where Every Ball Counts*
 
   <p align="center">
-    <strong>A cutting-edge mobile platform for cricket club management, live scoring, and match administration</strong>
+    <strong>A cutting edge mobile platform for cricket club management, live scoring, and match administration</strong>
   </p>
 
   <p align="center">
