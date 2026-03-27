@@ -48,13 +48,13 @@ Crease is a **production-ready** React Native application designed for cricket e
 - Role-based access control (Admin/President/Umpire/Player)
 - Automated route guarding
 - Profile management with student ID verification
-- Username-based public profiles
+- Username based public profiles
 
 ### Live Match Scoring
-- Real-time score updates via Firestore
-- Ball-by-ball commentary
+- Real time score updates via Firestore
+- Ball by ball commentary
 - Wicket tracking with dismissal types
-- Over-by-over statistics
+- Over by over statistics
 - Live leaderboards
 - Toss management (coin flip, team selection, opening batsmen)
 
@@ -71,8 +71,8 @@ Crease is a **production-ready** React Native application designed for cricket e
 
 ### Modern UI/UX
 - Dark and light theme with persistent preference
-- ESPN-style sectioned match list (Live / Upcoming / Final)
-- Pull-to-refresh functionality
+- ESPN style sectioned match list (Live / Upcoming / Final)
+- Pull to refresh functionality
 - Countdown timers for upcoming matches
 - Responsive design with smooth animations
 - Themed gradient backgrounds
